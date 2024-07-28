@@ -1,0 +1,29 @@
+<!-- design=frameset_community_reg -->
+<h1>
+%SERVER_SOFTWARE%-Chatnapping!!
+</h1>  
+<p style="font-weight: bold; color: #ff0000">
+Du kannst nur einen Raum registrieren!
+</p>
+<form action="%PATH_[account_com]%" method="POST" accept-charset="utf-8">
+  <input type="hidden" name="service" value="napping">
+  <input type="hidden" name="data" value="change">
+  <p style="font-weight: bold; font-style: italic; font-size: 18px; background-color: #cccccc">
+    Notwendige Angaben
+  </p>
+<p style="font-weight: bold;">
+    Raumname: <input type="text" size="50" maxlength="255" class="form-control form-control-sm"  name="room2" value="%room2%" placeholder="Raumname">
+    Dein Chattitel: <input type="text" size="50" maxlength="255" class="form-control form-control-sm"  name="title" value="%title%" placeholder="Dein Chattitel">
+    Hintergrundfarbe 1: <input type="text" size="50" maxlength="6" class="form-control form-control-sm"  name="bg_color_1" value="%bg_color_1%" placeholder="Hintergrundfarbe: RRGGBB">
+    Hintergrundfarbe 2: <input type="text" size="50" maxlength="6" class="form-control form-control-sm"  name="bg_color_2" value="%bg_color_2%" placeholder="Hintergrundfarbe Men&uuml;: RRGGBB">
+    Farbe des Textes: <input type="text" size="50" maxlength="6" class="form-control form-control-sm"  name="color" value="%color%" placeholder="Farbe des Textes: RRGGBB">
+    Farbe der Links: <input type="text" size="50" maxlength="6" class="form-control form-control-sm"  name="link_color" value="%link_color%" placeholder="Farbe der Links im Men&uuml;: RRGGBB">
+    Rahmenfarbe:<input type="text" size="50" maxlength="6" class="form-control form-control-sm"  name="border_color" value="%border_color%" placeholder="Rahmenfarbe: RRGGBB">
+  </p>
+  <p style="font-weight: bold; font-style: italic; font-size: 18px; background-color: #cccccc">
+    Und schon Fertig...
+  </p>
+  <p>
+  <input type="submit" class="input-group-append btn btn-secondary btn-sm" name="OK" value="&Auml;nderung abschicken!!">
+  </p>
+</form>

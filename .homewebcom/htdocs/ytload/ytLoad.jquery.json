@@ -1,0 +1,36 @@
+{
+    "name": "ytLoad",
+    "title": "jquery.ytLoad",
+    "description": "A youtube inspired, simple, lightweight jQuery plugin to visualize ajax progress.",
+    "keywords": [
+        "effect",
+        "youtube",
+        "loader",
+        "image",
+        "ajax",
+        "wait",
+        "progress",
+        "progressbar"
+
+    ],
+    "version": "1.1.0",
+    "author": {
+        "name": "Tobias Anhalt",
+        "email": "github@mythli.net",
+        "url": "http://mythli.net"
+    },
+    "licenses": [
+        {
+            "type": "Apache License",
+            "url": "https://github.com/Mythli/jquery.ytload/blob/master/LICENSE"
+        }
+    ],
+    "bugs": "https://github.com/Mythli/jquery.ytload/issues",
+    "homepage": "https://github.com/Mythli/jquery.ytload",
+    "docs": "https://github.com/Mythli/jquery.ytload",
+    "download": "https://github.com/Mythli/jquery.ytload",
+    "demo": "http://ytload.mythli.net",
+    "dependencies": {
+        "jquery": ">=1.7"
+    }
+}

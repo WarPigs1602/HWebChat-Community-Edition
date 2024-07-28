@@ -1,0 +1,13 @@
+[
+{"command":"bier","content":"<span style=\"color: #%color%\">%nick%</span> gibt <span style=\"color: #%fun_color%\">%fun_nick%</span> ein frisches kühles Bier!","description":"Damit gibst Du den Chatter &lt;nick&gt; ein Bier!"},
+{"command":"dart","content":"<span style=\"color: #%color%\">%nick%</span> benutzt <span style=\"color: #%fun_color%\">%fun_nick%</span> als Dartpfeil und trifft die Triple-20!","description":"Damit benutzt Du den Chatter &lt;nick&gt; als Dartpfeil!"},
+{"command":"euro","content":"<span style=\"color: #%color%\">%nick%</span> bewirft <span style=\"color: #%fun_color%\">%fun_nick%</span> mit Euros!","description":"Damit bewirfst Du den Chatter &lt;nick&gt; mit Euros!"},
+{"command":"gitarre","content":"<span style=\"color: #%color%\">%nick%</span> haut <span style=\"color: #%fun_color%\">%fun_nick%</span> eine Gitarre auf dem Kopf!","description":"Damit haust Du den Chatter &lt;nick&gt; mit einer Gitarre!"},
+{"command":"hau","content":"<span style=\"color: #%color%\">%nick%</span> haut <span style=\"color: #%fun_color%\">%fun_nick%</span> mit einem Lineal!","description":"Damit haust Du den Chatter &lt;nick&gt;!"},
+{"command":"knuddel","content":"<span style=\"color: #%color%\">%nick%</span> knuddelt <span style=\"color: #%fun_color%\">%fun_nick%</span> ganz doll!","description":"Damit knuddeltst Du den Chatter &lt;nick&gt;!"},
+{"command":"kuss","content":"<span style=\"color: #%color%\">%nick%</span> küsst <span style=\"color: #%fun_color%\">%fun_nick%</span>","description":"Damit k&uuml;sst Du den Chatter &lt;nick&gt;!"},
+{"command":"lamer","content":"<span style=\"color: #%color%\">%nick%</span> glaubt dass <span style=\"color: #%fun_color%\">%fun_nick%</span> ein Lamer ist!","description":"Damit erkl&auml;rst Du den Chatter &lt;nick&gt; zum Lamer!"},
+{"command":"schlag","content":"<span style=\"color: #%color%\">%nick%</span> schlägt <span style=\"color: #%fun_color%\">%fun_nick%</span> mit einer großen Forelle!","description":"Damit schl&auml;gst Du den Chatter &lt;nick&gt; mit einer Forelle!"},
+{"command":"slap","content":"<span style=\"color: #%color%\">%nick%</span> slaps <span style=\"color: #%fun_color%\">%fun_nick%</span> around a bit with a large trout!","description":"You will slap &lt;nick&gt; with a trout!"},
+{"command":"umarm","content":"<span style=\"color: #%color%\">%nick%</span> umarmt <span style=\"color: #%fun_color%\">%fun_nick%</span> ganz fest!","description":"Damit umarmst Du den Chatter &lt;nick&gt;!"}
+]

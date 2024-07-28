@@ -1,0 +1,125 @@
+<!-- design=console -->
+<h1>%SERVER_SOFTWARE%-Benutzerkonfiguration</h1>
+<span style="font-weight: bold">%success%</span>
+<p>
+<form action="%PATH_[config_users]%&update=true&change=profile_change" method="POST">
+	      <input type="hidden" name="user" value="%nick%">
+    <table>
+	  <tr>
+        <td>
+	      <span style="font-weight: bold">Homepage: </span>
+		</td>
+		<td>
+	      <input type="url" size="50" maxlength="255" class="form-control form-control-sm" name="homepage" value="%homepage%">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span style="font-weight: bold">Wohnort: </span>
+      </td>
+      <td>
+       <input type="text" size="50" maxlength="255" class="form-control form-control-sm" name="city" value="%city%">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span style="font-weight: bold">Hobby: </span>
+      </td>
+      <td>
+       <input type="text" size="50" maxlength="255" class="form-control form-control-sm" name="hobby" value="%hobby%">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span style="font-weight: bold">Beschreibung: </span>
+      </td>
+      <td>
+       <input type="text" size="50" maxlength="255" class="form-control form-control-sm" name="description" value="%description%">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span style="font-weight: bold">Motto: </span>
+      </td>
+      <td>
+       <input type="text" size="50" maxlength="255" class="form-control form-control-sm" name="slogan" value="%slogan%">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span style="font-weight: bold">Signatur: </span>
+      </td>
+      <td>
+       <input type="text" size="50" maxlength="255" class="form-control form-control-sm" name="signature" value="%signature%">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span style="font-weight: bold">ICQ-UIN: </span>
+      </td>
+      <td>
+       <input type="text" size="50" maxlength="255" class="form-control form-control-sm" name="icq" value="%icq%">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span style="font-weight: bold">Skype: </span>
+      </td>
+      <td>
+       <input type="text" size="50" maxlength="255" class="form-control form-control-sm" name="live" value="%live%">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span style="font-weight: bold">Yahoo: </span>
+      </td>
+      <td>
+       <input type="text" size="50" maxlength="255" class="form-control form-control-sm" name="yahoo" value="%yahoo%">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span style="font-weight: bold">Facebook: </span>
+      </td>
+      <td>
+       <input type="text" size="50" maxlength="255" class="form-control form-control-sm" name="facebook" value="%facebook%">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span style="font-weight: bold">Twitter: </span>
+      </td>
+      <td>
+       <input type="text" size="50" maxlength="255" class="form-control form-control-sm" name="twitter" value="%twitter%">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span style="font-weight: bold">IRC: </span>
+      </td>
+      <td>
+       <input type="url" size="50" maxlength="255" class="form-control form-control-sm" name="irc" value="%irc%">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span style="font-weight: bold">Youtube: </span>
+        </td>
+        <td>
+          <input type="text" size="50" maxlength="255" class="form-control form-control-sm" name="youtube" value="%youtube%">
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span style="font-weight: bold">Familienstatus: </span>
+        </td>
+        <td>
+          <input type="text" size="50" maxlength="255" class="form-control form-control-sm" name="fam_status" value="%fam_status%">
+	    </td>
+	  </tr>
+    </table>
+  <p>
+  <input type="submit" class="input-group-append btn btn-secondary btn-sm" name="OK" value="&Auml;nderung abschicken!!">
+  </p>
+</form>
+</p>

@@ -1,0 +1,13 @@
+<!-- design=console -->
+<h1>%SERVER_SOFTWARE%-Befehlskonfiguration</h1>
+<span style="font-weight: bold">%success%</span>
+<p>
+<table>
+<form [formGroup]="form" action="%PATH_[config_cmd]%&update=true" method="POST">
+%config%
+<td>&nbsp;</td><td>
+<input type="submit" class="input-group-append btn btn-secondary btn-sm" name="" value="Senden!">
+</form>
+</td></tr>
+</table>
+</p>

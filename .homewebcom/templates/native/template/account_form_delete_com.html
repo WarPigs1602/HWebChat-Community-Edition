@@ -1,0 +1,26 @@
+<!-- design=frameset_community_reg -->
+<h1>
+%SERVER_SOFTWARE%-Account l&ouml;schen!!
+</h1>
+
+<form action="%PATH_[account_com]%" method="POST" accept-charset="utf-8">%account_error_if_one%
+  <input type="hidden" name="service" value="delete">
+  <input type="hidden" name="data" value="delete">
+  <p style="font-weight: bold; font-style: italic; font-size: 18px; background-color: #cccccc">
+    Notwendige Angaben
+  </p>
+  <p>
+  Dein Passwort:<br />
+  <span style="font-size: 9px;">Sollte mindestens vier Zeichen lang sein!</span><br />
+  <input type="password" size="10" maxlength="30" class="form-control form-control-sm col-md-5 mb-2" name="pwd" value="">
+  Dein Passwort wiederholen:<br />
+  <span style="font-size: 9px;">Um sicherzustellen das Du Dich nicht verschrieben hast!</span><br />
+  <input type="password" size="10" maxlength="30" class="form-control form-control-sm col-md-5 mb-2" name="pwd2" value="">
+  </p>
+  <p style="font-weight: bold; font-style: italic; font-size: 18px; background-color: #cccccc">
+    Und schon Fertig...
+  </p>
+  <p>
+  <input type="submit" class="input-group-append btn btn-secondary btn-sm" name="OK" value="&Auml;nderung abschicken!!">
+  </p>
+</form>

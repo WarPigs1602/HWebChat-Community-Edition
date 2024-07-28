@@ -1,0 +1,82 @@
+[
+{
+   "title": "homepage",
+   "text":  "<p><span style=\"font-weight: bold;\">Homepage:</span> <a href=\"%host_http%%PATH_[redirect]%%homepage%\" target=\"_blank\">%homepage%</a></p>"
+},
+{
+   "title": "hobby",
+   "text": "<p><span style=\"font-weight: bold;\">Hobbys:</span> %hobby%</p>"
+},
+{
+   "title": "status",
+   "text": "<p><span style=\"font-weight: bold;\">Status:</span> %status%</p>"
+},
+{
+   "title": "description",
+   "text": "<p><span style=\"font-weight: bold;\">Beschreibung:</span> %description%</p>"
+},
+{
+   "title": "slogan",
+   "text": "<p><span style=\"font-weight: bold;\">Motto:</span> %slogan%</p>"
+},
+{
+   "title": "signature",
+   "text": "<p><span style=\"font-weight: bold;\">Signatur:</span> %signature%</p>"
+},
+{
+   "title": "icq",
+   "text": "<p><span style=\"font-weight: bold;\">ICQ:</span> %icq%</p>"
+},
+{
+   "title": "skype",
+   "text": "<p><span style=\"font-weight: bold;\">Skype:</span> %live%</p>"
+},
+{
+   "title": "yahoo",
+   "text": "<p><span style=\"font-weight: bold;\">Yahoo:</span> %yahoo%</p>"
+},
+{
+   "title": "facebook",
+   "text": "<p><span style=\"font-weight: bold;\">Facebook:</span> %facebook%</p>"
+},
+{
+   "title": "twitter",
+   "text": "<p><span style=\"font-weight: bold;\">Twitter:</span> %twitter%</p>"
+},
+{
+   "title": "irc",
+   "text": "<p><span style=\"font-weight: bold;\">IRC:</span> %irc%</p>"
+},
+{
+   "title": "youtube",
+   "text": "<p><span style=\"font-weight: bold;\">YouTube:</span> %youtube%</p>"
+},
+{
+   "title": "last_visitor",
+   "text": "<p><span style=\"font-weight: bold;\">Zuletzt besucht von:</span> %visitors%</p>"
+ },
+{
+   "title": "fam_status",
+   "text": "<p><span style=\"font-weight: bold;\">Beziehungsstatus:</span> %fam_status%</p>"
+},
+{
+   "title": "image",
+   "text": "<img src=\"%path_hwebchat%?page=image&nick=%user%\" style=\"float: right; border-bottom: 1px solid #000000; border-left: 1px solid #000000; border-right: 1px solid #666666; border-top: 1px solid #666666; top: -4px; right: -4px; z-index: 4; position: relative; width: 200px;\"></img>"
+},
+{
+   "title": "gender_m",
+   "text": "m&auml;nnlich"
+},
+{
+   "title": "gender_f",
+   "text": "weiblich"
+},
+{
+   "title": "gender_n",
+   "text": "ein Etwas" 
+},
+{
+  "title": "unknown",
+   "text": "Unbekannt"
+}
+]

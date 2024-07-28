@@ -1,0 +1,23 @@
+<!-- design=console -->
+<h1>%SERVER_SOFTWARE%-Benutzerkonfiguration</h1>
+
+
+<form action="%PATH_[config_users]%&update=true&user=%nick%&change=password" method="POST" accept-charset="utf-8">%account_error_if_one%
+  <p style="font-weight: bold; font-style: italic; font-size: 18px; background-color: #cccccc">
+    Notwendige Angaben
+  </p>
+  <p>
+  Das neue Passwort:<br />
+  <span style="font-size: 9px;">Sollte mindestens vier Zeichen lang sein!</span><br />
+  <input type="password" size="10" maxlength="30" class="form-control form-control-sm col-md-5 mb-2" name="new_pwd" value="">
+  Neues Passwort wiederholen:<br />
+  <span style="font-size: 9px;">Um sicherzustellen das Du Dich nicht verschrieben hast!</span><br />
+  <input type="password" size="10" maxlength="30" class="form-control form-control-sm col-md-5 mb-2" name="new_pwd2" value="">
+  </p>
+  <p style="font-weight: bold; font-style: italic; font-size: 18px; background-color: #cccccc">
+    Und schon Fertig...
+  </p>
+  <p>
+  <input type="submit" class="input-group-append btn btn-secondary btn-sm" name="OK" value="&Auml;nderung abschicken!!">
+  </p>
+</form>

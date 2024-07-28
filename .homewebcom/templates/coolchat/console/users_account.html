@@ -1,0 +1,55 @@
+<!-- design=console -->
+<h1>%SERVER_SOFTWARE%-Benutzerkonfiguration</h1>
+<form action="%PATH_[config_users]%&update=true&user=%nick%&change=data" method="POST" accept-charset="utf-8">%account_error_if_one%
+  <p style="font-weight: bold; font-style: italic; font-size: 18px; background-color: #cccccc">
+    Notwendige Angaben
+  </p>
+  <p>
+    <table>
+	  <tr>
+        <td>
+	      <span style="font-weight: bold">Das Geschlecht: </span>
+		</td>
+		<td>
+            <select class="form-control form-control-sm col-md-3 mb-2" name="gender" size="1">
+            <option value="-"%selected_no%>Nicht angegeben</option>
+            <option value="m"%selected_male%>Mann</option>
+            <option value="f"%selected_female%>Frau</option>
+          </select>
+        </td>
+      </tr>
+	  <tr>
+        <td>
+	      <span style="font-weight: bold">Die E-Mail-Adresse: </span>
+		</td>
+		<td>
+	      <input type="email" size="50" maxlength="255" class="form-control form-control-sm"  name="mail" value="%mail%">
+        </td>
+      </tr>
+	  <tr>
+        <td>
+	      <span style="font-weight: bold">Das Geburtsdatum: </span>
+		</td>
+		<td>
+		  <div class="input-group">
+	      <input type="text" size="2" maxlength="2" class="form-control form-control-sm col-md-2 mb-1" name="day" value="%day%">.<input type="text" size="2" maxlength="2" class="form-control form-control-sm col-md-2 mb-1" name="month" value="%month%">.<input type="text" size="4" maxlength="4" class="form-control form-control-sm col-md-2 mb-1" name="year" value="%year%">
+          </div>
+		</td>
+      </tr>
+	  <tr>
+        <td>
+	      <span style="font-weight: bold">Der Status: </span>
+		</td>
+		<td>
+	      <input type="text" size="3" maxlength="3" class="form-control form-control-sm"  name="status" value="%status%">
+        </td>
+      </tr>
+    </table>
+  </p>
+  <p style="font-weight: bold; font-style: italic; font-size: 18px; background-color: #cccccc">
+    Und schon Fertig...
+  </p>
+  <p>
+  <input type="submit" class="input-group-append btn btn-secondary btn-sm" name="OK" value="&Auml;nderung abschicken!!">
+  </p>
+</form>
