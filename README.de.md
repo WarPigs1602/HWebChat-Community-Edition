@@ -56,15 +56,15 @@ Antwort: Konfiguriere Tomcat entsprechend für SSL (siehe Tomcat-Dokumentation).
 
 ## Kontakt & Community
 
-- Codeberg Issues: https://codeberg.org/WarPigs1602/HWebChat-Community-Edition/issues
+- Codeberg Issues: https://github.com/WarPigs1602/HWebChat-Community-Edition/issues
 - Pull Requests willkommen!
 - Für größere Beiträge oder Support: Siehe Issues oder Projektseite auf Codeberg.
 
 ## Screenshots & Links
 
-![Screenshot Chat-Oberfläche](https://codeberg.org/WarPigs1602/HWebChat-Community-Edition/raw/branch/main/screenshots/chat.png)
+![Screenshot Chat-Oberfläche](https://github.com/WarPigs1602/HWebChat-Community-Edition/raw/branch/main/screenshots/chat.png)
 
-Weitere Infos und aktuelle Versionen: https://codeberg.org/WarPigs1602/HWebChat-Community-Edition
+Weitere Infos und aktuelle Versionen: https://github.com/WarPigs1602/HWebChat-Community-Edition
 
 
 ## Voraussetzungen
@@ -78,7 +78,7 @@ Weitere Infos und aktuelle Versionen: https://codeberg.org/WarPigs1602/HWebChat-
 
 1. Klone dieses Repository:
    ```bash
-   git clone https://codeberg.org/WarPigs1602/HWebChat-Community-Edition.git
+   git clone https://github.com/WarPigs1602/HWebChat-Community-Edition.git
    ```
 2. Lege das Verzeichnis `.homewebcom` in deinem Benutzerverzeichnis an (falls nicht vorhanden).
 3. Öffne das Projekt mit Netbeans und kompiliere es im `src`-Verzeichnis zu einer **.war-Datei**.
