@@ -1,5 +1,26 @@
-<p>
-<a href="%PATH_[board]%&id=%id%">%topic%</a> <span style="font-weight: bold">%topics%</span> Beitr&auml;ge <span style="font-weight: bold">%threads%</span> Threads %del% %edit% %lock%<br>
-%description%
-</p>
-
+<div class="card forum-board-card mb-3">
+  <div class="card-body">
+    <div class="row align-items-center">
+      <div class="col-auto">
+        <div class="forum-board-icon">
+          <i class="fa fa-comments"></i>
+        </div>
+      </div>
+      <div class="col">
+        <h5 class="card-title mb-1">
+          <a href="%PATH_[board]%&id=%id%" class="text-decoration-none">%topic%</a>
+        </h5>
+        <p class="card-text text-dark mb-2">%description%</p>
+        <div class="forum-board-stats small text-dark">
+          <span class="mr-3"><i class="fa fa-file-text-o"></i> <strong>%topics%</strong> Beitr&auml;ge</span>
+          <span><i class="fa fa-comments-o"></i> <strong>%threads%</strong> Threads</span>
+        </div>
+      </div>
+      <div class="col-auto">
+        <div class="btn-group btn-group-sm forum-board-actions" role="group">
+          %lock% %del% %edit%
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

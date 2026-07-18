@@ -1,18 +1,39 @@
 <!-- design=frameset_community_reg -->
-<h1>%SERVER_SOFTWARE%-Forum!</h1>
-<p style="text-align:center">
-%prev% %pages% %next%
-</p>
-<p>
-<form method="POST" name="login" action="%PATH_[board]%" target="_top" accept-charset="utf-8">
-  <input class="form-control form-control-sm" name="search"  placeholder="Suchbegriff">
-  <input name="skin" value="%skin%" type="hidden">
-  <input class="btn btn-secondary btn-sm" value="Suchen" type="submit">
-</form>
-</p>
-<p>
-%boards%
-</p>
-<p style="text-align:center">
-%prev% %pages% %next%
-</p>
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">%SERVER_SOFTWARE%-Forum</h1>
+        <a href="%PATH_[board]%" class="btn btn-outline-secondary btn-sm">
+          <i class="fa fa-home"></i> Foren&uuml;bersicht
+        </a>
+      </div>
+
+      <nav aria-label="Forum-Navigation" class="mb-3">
+        <ul class="pagination justify-content-center">%prev% %pages% %next%</ul>
+      </nav>
+
+      <div class="card mb-4">
+        <div class="card-body">
+          <form method="POST" name="login" action="%PATH_[board]%" target="_top" accept-charset="utf-8" class="form-row align-items-center">
+            <div class="col-md-9 mb-2 mb-md-0">
+              <input class="form-control" name="search" placeholder="Forum durchsuchen...">
+            </div>
+            <div class="col-md-3">
+              <button class="btn btn-primary w-100" type="submit">
+                <i class="fa fa-search"></i> Suchen
+              </button>
+            </div>
+            <input name="skin" value="%skin%" type="hidden">
+          </form>
+        </div>
+      </div>
+
+      <div class="forum-threads mb-4">%boards%</div>
+
+      <nav aria-label="Forum-Navigation" class="mt-4">
+        <ul class="pagination justify-content-center">%prev% %pages% %next%</ul>
+      </nav>
+    </div>
+  </div>
+</div>

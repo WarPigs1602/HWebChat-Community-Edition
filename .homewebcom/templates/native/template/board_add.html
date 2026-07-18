@@ -1,8 +1,28 @@
 <!-- design=frameset_community_reg -->
-<h1>%SERVER_SOFTWARE%-Forum!</h1>
-<h2>Neue Kategorie er&ouml;ffnen!</h2>
-<form method="POST" name="tread" action="%PATH_[board]%&add_board=true" target="_top" accept-charset="utf-8"> 
-  <input class="form-control form-control-sm" name="topic">
-  <textarea class="form-control form-control-sm" name="description"></textarea>
-  <input class="btn btn-secondary btn-sm" value="Kategorie er&ouml;ffnen!" type="submit">
-</form>
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card forum-form-card">
+        <div class="card-header">
+          <h2 class="h4 mb-0"><i class="fa fa-folder-open"></i> Neue Kategorie er&ouml;ffnen</h2>
+        </div>
+        <div class="card-body">
+          <form method="POST" name="tread" action="%PATH_[board]%&add_board=true" target="_top" accept-charset="utf-8">
+            <div class="form-group">
+              <label for="cat-topic">Name</label>
+              <input id="cat-topic" class="form-control" name="topic" required autofocus>
+            </div>
+            <div class="form-group">
+              <label for="cat-description">Beschreibung</label>
+              <textarea id="cat-description" class="form-control" name="description" rows="4" required></textarea>
+            </div>
+            <div class="d-flex justify-content-between">
+              <a href="%PATH_[board]%" class="btn btn-outline-secondary"><i class="fa fa-times"></i> Abbrechen</a>
+              <button class="btn btn-success" type="submit"><i class="fa fa-plus"></i> Kategorie er&ouml;ffnen</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -2148,6 +2148,43 @@ public class Database {
     }
 
     /**
+     * Fragt einen einzelnen Foreneintrag anhand der ID ab
+     *
+     * @param id Die ID des Eintrags
+     * @return Die Daten oder null
+     */
+    protected Object[] getBoardThreadById(long id) {
+        try {
+            if (!getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            try (var statement = getCon().prepareStatement("SELECT id,topic,content,ref,user,board,posted,ip,cat,deleted,closed FROM `" + getPrefix() + "board` WHERE id=?")) {
+                statement.setLong(1, id);
+                try (var resultset = statement.executeQuery()) {
+                    if (resultset.next()) {
+                        Object[] list = new Object[11];
+                        list[0] = resultset.getString("topic");
+                        list[1] = resultset.getString("content");
+                        list[2] = resultset.getLong("ref");
+                        list[3] = resultset.getLong("user");
+                        list[4] = resultset.getLong("board");
+                        list[5] = resultset.getLong("posted");
+                        list[6] = resultset.getString("ip");
+                        list[7] = resultset.getLong("cat");
+                        list[8] = resultset.getLong("id");
+                        list[9] = resultset.getLong("closed");
+                        list[10] = resultset.getLong("deleted");
+                        return list;
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return null;
+    }
+
+    /**
      * Fr&auml;gt Daten aus den Forum ab
      *
      * @return Die Daten

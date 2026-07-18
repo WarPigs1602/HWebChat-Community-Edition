@@ -1,21 +1,49 @@
 <!-- design=frameset_community_reg -->
-<h1>%SERVER_SOFTWARE%-Forum!</h1>
-<p style="text-align:center">
-%prev% %pages% %next%
-</p>
-<p>
-<form method="POST" name="login" action="%PATH_[board]%" target="_top" accept-charset="utf-8">
-  <input class="form-control form-control-sm" name="search"  placeholder="Suchbegriff">
-  <input name="skin" value="%skin%" type="hidden">
-  <input class="btn btn-secondary btn-sm" value="Suchen" type="submit">
-</form>
-</p>
-<p>
-%boards%
-</p>
-<p>
-Sie k&ouml;nnen <a href="%PATH_[board]%&id=%id%&new=true">hier</a> einen neuen Eintrag hinzuf&uuml;gen<br>
-</p>
-<p style="text-align:center">
-%prev% %pages% %next%
-</p>
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <h1 class="mb-4">%SERVER_SOFTWARE%-Forum</h1>
+      
+      <!-- Pagination oben -->
+      <nav aria-label="Forum-Navigation" class="mb-3">
+        <ul class="pagination justify-content-center">
+          %prev% %pages% %next%
+        </ul>
+      </nav>
+      
+      <!-- Suchleiste -->
+      <div class="card mb-4">
+        <div class="card-body">
+          <form method="POST" name="login" action="%PATH_[board]%" target="_top" accept-charset="utf-8" class="form-row align-items-center">
+            <div class="col-md-8">
+              <input class="form-control" name="search" placeholder="Forum durchsuchen...">
+            </div>
+            <div class="col-md-2">
+              <button class="btn btn-primary w-100" type="submit">
+                <i class="fa fa-search"></i> Suchen
+              </button>
+            </div>
+            <div class="col-md-2">
+              <a href="%PATH_[board]%&id=%id%&new=true" class="btn btn-success w-100">
+                <i class="fa fa-plus"></i> Neuer Beitrag
+              </a>
+            </div>
+            <input name="skin" value="%skin%" type="hidden">
+          </form>
+        </div>
+      </div>
+      
+      <!-- Boards-Liste -->
+      <div class="boards-list">
+        %boards%
+      </div>
+      
+      <!-- Pagination unten -->
+      <nav aria-label="Forum-Navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+          %prev% %pages% %next%
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>

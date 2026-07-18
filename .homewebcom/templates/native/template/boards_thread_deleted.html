@@ -1,13 +1,14 @@
-<table style="border-color: #000000; border: 1px solid #000000; width: 100%">
-<tr>
-<td style="background-color: #CCCCCC; border: 1px solid #000000">
-Eintrag am <span style="font-weight: bold">%posted%</span> von <span style="font-weight: bold; color: #%color%">%user%</span> %delete%
-</td>
-</tr>
-<tr>
-<td style="background-color: #FFFFFF; border: 1px solid #000000">
-Dieser Eintrag wurde gelöscht!
-</td>
-</tr>
-</table>
-&nbsp;<br>
+<article class="card forum-thread-card mb-3 border-secondary">
+  <div class="card-header bg-light">
+    <div class="d-flex justify-content-between align-items-center flex-wrap">
+      <small class="text-muted">
+        <i class="fa fa-clock-o"></i> %posted% &middot;
+        <i class="fa fa-user"></i> <strong style="color: #%color%">%user%</strong>
+      </small>
+      <div class="forum-thread-actions btn-group btn-group-sm" role="group">%delete%</div>
+    </div>
+  </div>
+  <div class="card-body forum-thread-content text-muted">
+    <i class="fa fa-trash-o"></i> Dieser Eintrag wurde gel&ouml;scht.
+  </div>
+</article>

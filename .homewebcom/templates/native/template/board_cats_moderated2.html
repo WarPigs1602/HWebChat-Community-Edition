@@ -1,17 +1,17 @@
-<table style="border-color: #000000; border: 1px solid #000000; width: 100%">
-<tr>
-<td style="background-color: #CCCCCC; font-weight: bold; font-style: italic; border: 1px solid #000000">
-%topic% %delete% %edit%
-</td>
-</tr>
-<tr>
-<td style="background-color: #FFFFFF; border: 1px solid #000000">
-%description%<br>
-%boards%
-<p>
-<a href="%PATH_[board]%&add_cat=true&cat=%id%">Hier</a> kannst Du eine neues Forum anlegen!<br>
-</p>
-</td>
-</tr>
-</table>
-&nbsp;
+<section class="card forum-category-card mb-4">
+  <div class="card-header bg-dark text-white">
+    <div class="d-flex justify-content-between align-items-center flex-wrap">
+      <h3 class="h5 mb-0" style="color: #fff !important;"><i class="fa fa-folder-open" style="color: #fff !important;"></i> %topic%</h3>
+      <div class="btn-group btn-group-sm mt-2 mt-sm-0" role="group">%edit% %delete%</div>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="forum-category-description px-3 py-2 text-dark border-bottom">%description%</div>
+    <div class="forum-category-boards p-3">%boards%</div>
+  </div>
+  <div class="card-footer bg-light border-top-0">
+    <a href="%PATH_[board]%&add_cat=true&cat=%id%" class="btn btn-success btn-sm">
+      <i class="fa fa-plus"></i> Neues Forum anlegen
+    </a>
+  </div>
+</section>

@@ -1,14 +1,22 @@
-<p>
-<table style="border-color: #000000; border: 1px solid #000000; width: 100%">
-<tr>
-<td style="background-color: #CCCCCC; border: 1px solid #000000">
-<a href="%PATH_[board]%&pid=%id%&id=%cat%">%topic%</a> am <span style="font-weight: bold">%posted%</span> von <span style="font-weight: bold; color: #%color%">%user%</span>%banned% %delete% %close% %edit% %ban%<br>
-</td>
-</tr>
-<tr>
-<td style="background-color: #FFFFFF; border: 1px solid #000000">
-%content%
-</td>
-</tr>
-</table>
-</p>
+<article class="card forum-thread-card mb-3">
+  <div class="card-header bg-light">
+    <div class="d-flex justify-content-between align-items-start flex-wrap">
+      <div>
+        <h5 class="mb-1">
+          <a href="%PATH_[board]%&pid=%id%&id=%cat%" class="text-decoration-none">%topic%</a>
+        </h5>
+        <small class="text-muted">
+          <i class="fa fa-clock-o"></i> %posted% &middot;
+          <i class="fa fa-user"></i> <strong style="color: #%color%">%user%</strong>
+          %banned%
+        </small>
+      </div>
+      <div class="forum-thread-actions btn-group btn-group-sm" role="group">
+        %edit% %close% %delete% %ban%
+      </div>
+    </div>
+  </div>
+  <div class="card-body forum-thread-content">
+    %content%
+  </div>
+</article>

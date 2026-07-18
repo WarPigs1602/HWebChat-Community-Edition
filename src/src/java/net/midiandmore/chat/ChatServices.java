@@ -2149,6 +2149,7 @@ public class ChatServices {
         var delBoards = map.getOrDefault("delete_boards", "");
         var closeBoards = map.getOrDefault("close_boards", "");
         var editBoards = map.getOrDefault("edit_boards", "");
+        var edit = map.getOrDefault("edit", "");
         var close = map.getOrDefault("close", "");
         var open = map.getOrDefault("open", "");
         var del = map.getOrDefault("del", "");
@@ -2333,6 +2334,31 @@ public class ChatServices {
                     text = text.replace("%description%", ut.parseHtml(description));
                 }
             }
+        } else if (!edit.isBlank()) {
+            var edited = map.getOrDefault("edited", "").equalsIgnoreCase("true");
+            var threadId = Long.valueOf(pid);
+            var thread = db.getBoardThreadById(threadId);
+            if (thread == null) {
+                text = getTemplate("boards_not_exists", request, map);
+            } else if (!moderator && !((Long) thread[3]).equals(Long.valueOf(db.getData(nick, "id")))) {
+                text = getTemplate("boards_thread_moderator", request, map);
+            } else {
+                if (edited) {
+                    var topic = map.getOrDefault("topic", "");
+                    var content = map.getOrDefault("thread", "");
+                    db.updateThread(threadId, "topic", topic);
+                    db.updateThread(threadId, "content", content);
+                    text = getTemplate("boards_thread_edited", request, map);
+                    text = text.replace("%id%", bid);
+                    text = text.replace("%pid%", pid);
+                } else {
+                    text = getTemplate("boards_thread_edit_form", request, map);
+                    text = text.replace("%id%", bid);
+                    text = text.replace("%pid%", pid);
+                    text = text.replace("%topic%", ut.parseHtml(String.valueOf(thread[0])));
+                    text = text.replace("%content%", ut.parseHtml(String.valueOf(thread[1])));
+                }
+            }
         } else if (!delBoards.isBlank()) {
             var deleted = db.getBoards(Long.valueOf(bid), "deleted").equals("1");
             if (!moderator) {
@@ -2390,6 +2416,9 @@ public class ChatServices {
                 long[] id = new long[1];
                 id[0] = 0;
                 long pages = (long) Math.ceil((float) count / conf.getLong("board_pages"));
+                if (pages == 0) {
+                    pages = 1;
+                }
                 StringBuilder pageContent = new StringBuilder();
                 for (long l = 1; l <= pages; l++) {
                     if (l != Long.valueOf(page)) {
@@ -2531,6 +2560,9 @@ public class ChatServices {
             long[] id = new long[1];
             id[0] = 0;
             long pages = (long) Math.ceil((float) count / conf.getLong("board_pages"));
+            if (pages == 0) {
+                pages = 1;
+            }
             text = getTemplate("boards3", request, map);
             StringBuilder pageContent = new StringBuilder();
             for (long l = 1; l <= pages; l++) {
@@ -2835,10 +2867,10 @@ public class ChatServices {
             }
             ArrayList<Object[]> board = db.getBoardFromIdStripped2(Long.valueOf(bid), Long.valueOf(page));
             var count = db.countBoardTreads2(Long.valueOf(bid));
-            if (count == 0) {
-                count = 1;
-            }
             long pages = (long) Math.ceil((float) count / conf.getLong("board_pages"));
+            if (pages == 0) {
+                pages = 1;
+            }
             StringBuilder pageContent = new StringBuilder();
             for (long l = 1; l <= pages; l++) {
                 if (l != Long.valueOf(page)) {

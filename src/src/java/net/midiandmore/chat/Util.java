@@ -362,6 +362,8 @@ public final class Util implements Software {
         value = value.replaceAll("\\[color=(.*?)\\](.*?)\\[\\/color\\]", "$2");
         value = value.replaceAll("\\[url=(.*?)\\](.*?)\\[\\/url\\]", "$1");
         value = value.replaceAll("\\[url=\\](.*?)\\[\\/url\\]", "$1");
+        value = value.replaceAll("\\[img\\](.*?)\\[\\/img\\]", "");
+        value = value.replaceAll("\\[email\\](.*?)\\[\\/email\\]", "$1");
         return value;
     }
 
@@ -400,6 +402,8 @@ public final class Util implements Software {
         value = value.replaceAll("\\[color=(.*?)\\](.*?)\\[\\/color\\]", "<span style=\"color: #$1\">$2</span>");
         value = value.replaceAll("\\[url=(.*?)\\](.*?)\\[\\/url\\]", "<a href=\"" + conf.getString("path_hwebchat") + "?page=" + conf.getString("path_link") + "&url=$1\" target=\"_blank\">$2</a>");
         value = value.replaceAll("\\[url\\](.*?)\\[\\/url\\]", "<a href=\"" + conf.getString("path_hwebchat") + "?page=" + conf.getString("path_link") + "&url=$1\" target=\"_blank\">$1</a>");
+        value = value.replaceAll("\\[img\\](.*?)\\[\\/img\\]", "<img src=\"$1\" alt=\"Bild\" class=\"img-fluid\">");
+        value = value.replaceAll("\\[email\\](.*?)\\[\\/email\\]", "<a href=\"mailto:$1\">$1</a>");
         value = value.replaceAll("\\[(.*?)\\](.*?)\\[\\/(.*?)\\]", "$2");
         return value;
     }
@@ -411,16 +415,8 @@ public final class Util implements Software {
      * @return
      */
     protected String parseBbChat(String value) {
-        var conf = Bootstrap.boot.getConfig();
         value = value.replace("\n", "<br>\n");
-        value = value.replaceAll("\\[b\\](.*?)\\[\\/b\\]", "<b>$1</b>");
-        value = value.replaceAll("\\[i\\](.*?)\\[\\/i\\]", "<i>$1</i>");
-        value = value.replaceAll("\\[u\\](.*?)\\[\\/u\\]", "<span style=\"text-decoration:underline;\">$1</span>");
-        value = value.replaceAll("\\[s\\](.*?)\\[\\/s\\]", "<span style=\"text-decoration:line-trough;\">$1</span>");
-        value = value.replaceAll("\\[color=(.*?)\\](.*?)\\[\\/color\\]", "<span style=\"color: #$1\">$2</span>");
-        value = value.replaceAll("\\[url=(.*?)\\](.*?)\\[\\/url\\]", "<a href=\"" + conf.getString("path_hwebchat") + "?page=" + conf.getString("path_link") + "&url=$1\" target=\"_blank\">$2</a>");
-        value = value.replaceAll("\\[url\\](.*?)\\[\\/url\\]", "<a href=\"" + conf.getString("path_hwebchat") + "?page=" + conf.getString("path_link") + "&url=$1\" target=\"_blank\">$1</a>");
-        value = value.replaceAll("\\[(.*?)\\](.*?)\\[\\/(.*?)\\]", "$2");
+        value = removeBb(value);
         return value;
     }
 

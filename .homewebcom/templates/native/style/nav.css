@@ -593,3 +593,207 @@
   border: none !important;
   padding: 0.3rem 0.7rem;
 }
+
+/* ---------- Modernes Forum ---------- */
+.forum-board-card,
+.forum-thread-card,
+.forum-category-card,
+.forum-form-card,
+.forum-reply-card {
+  border: 1px solid #dee2e6;
+  border-radius: 0.6rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.forum-board-card:hover {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.forum-board-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  font-size: 1.25rem;
+}
+
+.forum-board-card .card-title a {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.forum-board-card .card-title a:hover {
+  color: #007bff;
+}
+
+.forum-board-stats {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.forum-category-card > .card-header {
+  border-radius: 0.55rem 0.55rem 0 0;
+  background: linear-gradient(135deg, #343a40, #212529) !important;
+}
+
+.forum-category-description {
+  background: #f8f9fa;
+}
+
+.forum-thread-card .card-header {
+  border-bottom: 1px solid #e9ecef;
+}
+
+.forum-thread-content {
+  min-height: 5rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.forum-thread-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.forum-thread-signature {
+  color: #6c757d;
+  font-size: 0.85rem;
+  border-top: 1px dashed #dee2e6;
+}
+
+.forum-thread-signature:empty {
+  display: none;
+}
+
+.forum-thread-actions {
+  gap: 0.2rem;
+}
+
+.forum-thread-actions:empty {
+  display: none;
+}
+
+.forum-form-card .card-header,
+.forum-reply-card .card-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.forum-form-card textarea,
+.forum-reply-card textarea {
+  resize: vertical;
+  min-height: 10rem;
+}
+
+.pagination .page-link {
+  min-width: 2.4rem;
+  text-align: center;
+  border-radius: 0.3rem;
+  margin: 0 0.12rem;
+}
+
+@media (max-width: 575.98px) {
+  .forum-board-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .forum-board-card .row > .col-auto:last-child {
+    display: none;
+  }
+
+  .forum-thread-actions {
+    width: 100%;
+    margin-top: 0.75rem;
+  }
+
+  .forum-board-stats {
+    gap: 0.65rem;
+  }
+}
+
+/* ---------- Zusätzliche Forum-Verbesserungen ---------- */
+.forum-category-card > .card-header {
+  background: linear-gradient(135deg, #495057, #343a40) !important;
+  border-bottom: none;
+  color: #fff !important;
+}
+
+.forum-category-card > .card-header h3,
+.forum-category-card > .card-header h3 i,
+.forum-category-card > .card-header .h5,
+.forum-category-card > .card-header .h5 i {
+  color: #fff !important;
+}
+
+.forum-category-description {
+  background: #f8f9fa;
+  color: #343a40 !important;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.forum-category-card .card-footer {
+  border-radius: 0 0 0.55rem 0.55rem;
+}
+
+.forum-board-actions .btn {
+  margin-left: 0.15rem;
+}
+
+.pagination {
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin-bottom: 0;
+}
+
+.pagination .page-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.6rem;
+  min-height: 2.6rem;
+  padding: 0.5rem 0.75rem;
+  font-weight: 500;
+  border-radius: 0.4rem;
+  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.pagination .page-item.active .page-link {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: #fff;
+  box-shadow: 0 2px 5px rgba(13, 110, 253, 0.3);
+}
+
+.pagination .page-item.disabled .page-link {
+  color: #adb5bd;
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+.pagination .page-link:hover:not(:disabled) {
+  background-color: #e9ecef;
+  border-color: #dee2e6;
+  color: #0a58ca;
+}
+
+.forum-thread-card .forum-thread-actions {
+  flex-wrap: wrap;
+}
+
+.forum-thread-card .forum-thread-actions .btn {
+  margin: 0.1rem;
+}
+
+.alert h4.alert-heading {
+  font-size: 1.25rem;
+  margin-bottom: 0.75rem;
+}
