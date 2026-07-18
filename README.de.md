@@ -2,8 +2,6 @@
 
 Webbasierter Community-Chat (Jakarta EE / WebSocket) für Apache Tomcat.
 
-> **Achtung:** Dieses Projekt gilt als **Legacy** und wird nur eingeschränkt gepflegt. Für neue Projekte besser aktuelle Alternativen prüfen.
-
 - **Demo:** https://www.hwebchat.de  
 - **Issues:** https://github.com/WarPigs1602/HWebChat-Community-Edition/issues  
 
