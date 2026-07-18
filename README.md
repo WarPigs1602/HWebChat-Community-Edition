@@ -70,11 +70,16 @@ Example DB settings in `config.json`:
 ### 3. Database
 
 ```bash
-mysql -u root -p -e "CREATE DATABASE just_chatting CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-mysql -u root -p just_chatting < database.sql
+mysql -u root -p -e "CREATE DATABASE hwebchat CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p hwebchat < database.sql
 ```
 
 Create a DB user matching `config.json` and grant rights on that database.
+
+Create the database user:
+```bash
+mysql -u root -p -e "CREATE USER 'hwebchat'@'localhost' IDENTIFIED BY 'secure_password'; GRANT ALL ON hwebchat.* TO 'hwebchat'@'localhost'; FLUSH PRIVILEGES;"
+```
 
 **Collation tip:** Prefer one collation for all tables (e.g. `utf8mb4_unicode_ci`). Mixing collations can break JOINs on nicknames/messages.
 
