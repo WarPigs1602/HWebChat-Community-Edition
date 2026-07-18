@@ -1,9 +1,22 @@
-/* Set the width of the side navigation to 250px */
+/* ============================================================
+ * Kompatibilitaets-Layer fuer alte inline-Handler (openNav, ...)
+ * Die neue Dropdown-Logik liegt komplett in userlist.js.
+ * ============================================================ */
+
 function openNav(username) {
-  document.getElementById("mySidenav"+username).style.width = "150px";
+    if (typeof openUserDropdown === "function") {
+        openUserDropdown(username);
+    }
 }
 
-/* Set the width of the side navigation to 0 */
 function closeNav(username) {
-  document.getElementById("mySidenav"+username).style.width = "0";
-}	
+    if (typeof closeAllUserDropdowns === "function") {
+        closeAllUserDropdowns();
+    }
+}
+
+function closeAllNavs() {
+    if (typeof closeAllUserDropdowns === "function") {
+        closeAllUserDropdowns();
+    }
+}

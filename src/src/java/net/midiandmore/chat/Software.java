@@ -14,7 +14,7 @@ public interface Software {
     /**
      * 
      */
-    public static final String SERVER_HOMEPAGE     = "www.hwebchat.de";
+    public static final String SERVER_HOMEPAGE     = "github.com/WarPigs1602/HWebChat-Community-Edition";
     /**
      * 
      */
@@ -42,5 +42,5 @@ public interface Software {
     /**
      * 
      */
-    public static final String SERVER_YEAR         = "2005-2024";
+    public static final String SERVER_YEAR         = "2005-2026";
 }

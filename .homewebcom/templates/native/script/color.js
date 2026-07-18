@@ -1,10 +1,10 @@
 var browserCol = navigator.appName;
 
 function submitChatInputCol(keyEvent) {
-   if(browserCol=="Opera") {
+   if (browserCol == "Opera") {
        return true;
    }
-   if(keyEvent.keyCode=="13") {
+   if (keyEvent.keyCode == "13") {
        sendTextCol();
        return false;
    } else {
@@ -17,9 +17,9 @@ function focusTextCol() {
 }
 
 function sendTextCol() {
-   var oldMessage = msg.value;
+   const oldMessage = msg.value;
    if (msg.value != "") { 
-    msg.value = "/col "+msg.value.substring(1);
+    msg.value = `/col ${msg.value.substring(1)}`;
     submitTextCol();
    }
    msg.value = oldMessage;
@@ -29,7 +29,7 @@ function sendTextCol() {
 function submitTextCol() 
 {
     msg.value = escapeHtml(msg.value);
-    var mesg = {
+    const mesg = {
        category: "chat",
        message: msg.value,
        target: ""
@@ -42,5 +42,5 @@ function clearMessageCol() {
 	
 }
 
-function escapeHtmlCol(e){let n=document.createElement("p");return n.appendChild(document.createTextNode(e)),n.innerHTML}
-function unescapeHtmlCol(e){let n=document.createElement("p");return n.innerHTML=e,0==n.childNodes.length?"":n.childNodes[0].nodeValue}
+function escapeHtmlCol(e){const n=document.createElement("p");return n.appendChild(document.createTextNode(e)),n.innerHTML}
+function unescapeHtmlCol(e){const n=document.createElement("p");return n.innerHTML=e,0==n.childNodes.length?"":n.childNodes[0].nodeValue}

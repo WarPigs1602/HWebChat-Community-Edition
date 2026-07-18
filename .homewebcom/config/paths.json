@@ -104,6 +104,8 @@
 {"name":"style_bootstrap","path":"%path_hwebchat%?page=%path_output%&service=style&skin=%skin%&doc=bootstrap"},
 {"name":"style_chat","path":"%path_hwebchat%?page=%path_output%&service=style&skin=%skin%&doc=chat"},
 {"name":"style_chat_napping","path":"%path_hwebchat%?page=%path_output%&service=style&skin=%skin%&doc=chat_napping&owener=%owner%"},
+{"name":"style_chat_privchat","path":"%path_hwebchat%?page=%path_output%&service=style&skin=%skin%&doc=chat_privchat"},
+{"name":"style_chat_privchat_napping","path":"%path_hwebchat%?page=%path_output%&service=style&skin=%skin%&doc=chat_privchat_napping"},
 {"name":"style_colorpicker","path":"%path_hwebchat%?page=%path_output%&service=style&skin=%skin%&doc=farbtastic"},
 {"name":"style_iframe","path":"%path_hwebchat%?page=%path_output%&service=style&skin=%skin%&doc=iframe"},
 {"name":"style_napping","path":"%path_hwebchat%?page=%path_output%&service=style&skin=%skin%&doc=page_napping&owner=%owner%"},

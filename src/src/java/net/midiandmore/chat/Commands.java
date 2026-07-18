@@ -358,7 +358,7 @@ public class Commands implements Software {
         cm.sendToOne(SERVER_SOFTWARE + " " + SERVER_VERSION + "-" + SERVER_STATUS + "<br>", nick);
         cm.sendToOne("&copy; " + SERVER_YEAR + " by <a href=\"mailto:" + SERVER_MAIL + "\">" + SERVER_VENDOR + "</a><br>", nick);
         cm.sendToOne("All rights reserved.<br>", nick);
-        cm.sendToOne("<a href=\"" + getMaster().getConfig().getString("path_hwebchat") + "?page=" + getMaster().getConfig().getString("path_link") + "&url=http://" + SERVER_HOMEPAGE + "\" target=\"_blank\">" + SERVER_HOMEPAGE + "</a><br>", nick);
+        cm.sendToOne("<a href=\"" + getMaster().getConfig().getString("path_hwebchat") + "?page=" + getMaster().getConfig().getString("path_link") + "&url=https://" + SERVER_HOMEPAGE + "\" target=\"_blank\">" + SERVER_HOMEPAGE + "</a><br>", nick);
         cm.sendToOne("<br>", nick);
         cm.sendToOne("<span style=\"font-weight: bold\">Backend information:</span><br>", nick);
         cm.sendToOne("Running on system: <span style=\"font-weight: bold\">" + getProperty("os.name") + " (" + getProperty("os.version") + ", " + getProperty("os.arch") + ")</span><br>", nick);

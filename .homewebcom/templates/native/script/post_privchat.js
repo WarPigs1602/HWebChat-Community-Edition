@@ -1,21 +1,21 @@
 var messageHistory = new Array(20);
 var messageCounter = -1;
 var browser = navigator.appName;
-let message = document.getElementById("message");
-let messageForm = document.getElementById("messageForm");
-let sid = document.getElementById("sid");
-let target = document.getElementById("target");
+var message = document.getElementById("message");
+var messageForm = document.getElementById("messageForm");
+var sid = document.getElementById("sid");
+var target = document.getElementById("target");
 clearMessageHistory();
 
 function clearMessageHistory() {
-    for(var i = 0; i <= 20; i++) {
+    for (let i = 0; i <= 20; i++) {
         messageHistory[i] = "";
     }
 }
 
 function addMessageHistory(message) {
-    for(var i = 20; i >= 0; i--) {
-        if(i != 0) {
+    for (let i = 20; i >= 0; i--) {
+        if (i != 0) {
             messageHistory[i] = messageHistory[i - 1];
         } else {
             messageHistory[i] = message;
@@ -24,25 +24,25 @@ function addMessageHistory(message) {
 }
 
 function submitOpera() {
-   if(browser=="Opera") {
+   if (browser == "Opera") {
        sendText();
        return false;
    }
 }
 
 function submitChatInput(keyEvent) {
-   if(browser=="Opera") {
+   if (browser == "Opera") {
        return true;
    }
-   if(keyEvent.keyCode=="38") {
+   if (keyEvent.keyCode == "38") {
        messageUp();
        return true;
    } 
-   if(keyEvent.keyCode=="40") {
+   if (keyEvent.keyCode == "40") {
        messageDown();
        return true;
    }
-   if(keyEvent.keyCode=="13") {
+   if (keyEvent.keyCode == "13") {
        sendText();
        return false;
    } else {
@@ -86,12 +86,12 @@ function setTextMessage(text)
 }
 
 function clearMessage() { 
-    message.value=""; 
+    message.value = ""; 
     message.focus();
 }
 
 function emoticon(text) {
-    message.value=message.value+text;
+    message.value = `${message.value}${text}`;
     message.focus();
 }
 
@@ -115,5 +115,5 @@ function messageDown() {
     }
 }
 
-function escapeHtml(e){let n=document.createElement("p");return n.appendChild(document.createTextNode(e)),n.innerHTML}
-function unescapeHtml(e){let n=document.createElement("p");return n.innerHTML=e,0==n.childNodes.length?"":n.childNodes[0].nodeValue}
+function escapeHtml(e){const n=document.createElement("p");return n.appendChild(document.createTextNode(e)),n.innerHTML}
+function unescapeHtml(e){const n=document.createElement("p");return n.innerHTML=e,0==n.childNodes.length?"":n.childNodes[0].nodeValue}

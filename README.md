@@ -1,108 +1,195 @@
-
-
-> **Note:** This project is considered **legacy** and only receives limited support. For new projects, it is recommended to look for more up-to-date alternatives.
-
 # HWebChat Community Edition
 
-HWebChat is a community-based chat solution for the web.
-**Note:** The chat configuration is currently in German but can be customized.
+Web-based community chat (Jakarta EE / WebSocket) for Apache Tomcat.
+
+> **Note:** This project is **legacy** and receives limited support. Prefer more modern alternatives for new projects.
+
+- **Demo:** https://www.hwebchat.de  
+- **Issues:** https://github.com/WarPigs1602/HWebChat-Community-Edition/issues  
+- **German docs:** [README.de.md](README.de.md)
+
+---
 
 ## Features
 
-- Public and private chat rooms
-- User registration and authentication
-- Emoji and file upload support
-- Moderation features (e.g. kick/ban)
-- Customizable configuration (language, permissions, etc.)
-- WebSocket-based real-time chat
-- Database-backed storage (MySQL/MariaDB)
+- Public and private chat rooms (WebSocket real-time)
+- Guest login and registered users
+- Offline messages (whisper while offline)
+- Emoji support, file uploads
+- Moderation (kick, ban, gag, …)
+- Admin console, communities / napping rooms
+- Skins and templates under `~/.homewebcom`
+- MySQL / MariaDB storage
 
-## Example Configuration
-
-In the `config` subdirectory of `.homewebcom`, you will find a file `config.json` with a structure like this:
-
-```json
-[
-   {"name": "admin_password", "value": "passwort", "description": "The password for the admin console"},
-   {"name": "sql.host", "value": "localhost:3306", "description": "The MySQL host"},
-   {"name": "sql.user", "value": "user", "description": "The MySQL user"},
-   {"name": "sql.pw", "value": "password", "description": "The MySQL password"},
-   {"name": "sql.db", "value": "hwebchat", "description": "The MySQL database name"},
-   {"name": "language", "value": "en", "description": "The language setting (e.g. 'en' or 'de')"},
-   {"name": "max_nick_length", "value": "20", "description": "Maximum nickname length"}
-   // ... more settings ...
-]
-```
-
-Each entry is an object with `name`, `value`, and `description`. You can edit or add settings as needed. See the provided `config.json` for all available options.
-
-## Security Notes
-
-- Use strong passwords for database and admin accounts.
-- Make sure your Tomcat server is not publicly accessible unless intended.
-- Keep your Java and Tomcat versions up to date.
-- Regularly check permissions of the `.homewebcom/config` directory.
-
-## FAQ
-
-**Q:** Can I change the language to German?
-A: Yes, set the `language` option in the configuration.
-
-**Q:** How can I add more emojis?
-A: Add new emoji fonts to the `web/fonts/` directory and adjust the configuration if needed.
-
-**Q:** How do I enable HTTPS for the chat?
-A: Configure Tomcat for SSL (see Tomcat documentation).
-
-## Contact & Community
-
-- Codeberg Issues: https://github.com/WarPigs1602/HWebChat-Community-Edition/issues
-- Pull requests welcome!
-- For larger contributions or support: see Issues or the project page on Codeberg.
-
-## Screenshots & Links
-
-![Screenshot chat interface](https://github.com/WarPigs1602/HWebChat-Community-Edition/raw/branch/main/screenshots/chat.png)
-
-More info and latest versions: https://github.com/WarPigs1602/HWebChat-Community-Edition
-
+---
 
 ## Requirements
 
-- **Apache Tomcat** is required to run the application.
-- A **.homewebcom** directory must exist in your user home directory.
-- **Netbeans IDE** is recommended for compiling (in the `src` directory).
-- **MySQL** or **MariaDB** for the database.
+| Component | Version / notes |
+|-----------|-----------------|
+| **JDK** | **21** (source/target in `pom.xml`) |
+| **Maven** | 3.8+ |
+| **Apache Tomcat** | 10.1+ (Jakarta EE 9+, Servlet 6 / WebSocket) |
+| **MySQL or MariaDB** | 10.6+ recommended |
+| **Config home** | `~/.homewebcom` (user home of the Tomcat process user) |
 
-## Installation
+---
 
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/WarPigs1602/HWebChat-Community-Edition.git
-   ```
-2. Create the `.homewebcom` directory in your user home directory (if it does not exist).
-3. Open the project with Netbeans and compile it in the `src` directory to a **.war file**.
-4. Import the `database.sql` file into your MySQL or MariaDB database:
-   ```bash
-   mysql -u <user> -p <databasename> < path/to/database.sql
-   ```
-5. Adjust the configuration in the `config` subdirectory of the `.homewebcom` directory as needed (default: German).
-6. Deploy the generated **.war file** to your **Tomcat** server (`webapps` directory).
+## Quick start
 
-## Configuration
+### 1. Clone
 
-- The configuration files are located in the `config` subdirectory inside the `.homewebcom` directory (i.e. `~/.homewebcom/config`).
-- Language, credentials, and other settings can be adjusted there.
+```bash
+git clone https://github.com/WarPigs1602/HWebChat-Community-Edition.git
+cd HWebChat-Community-Edition
+```
 
-## Usage
+### 2. Runtime config (`~/.homewebcom`)
 
-After successful installation and configuration, the chat can be accessed in your browser via your Tomcat server
-(e.g. at `http://localhost:8080/HWebChat-Community-Edition`).
+The app loads configuration from the **home directory of the user running Tomcat**:
 
-## Support
+```bash
+cp -a .homewebcom ~/.homewebcom
+# or merge into an existing ~/.homewebcom
+```
 
-For questions or community contributions:
-> Please submit Codeberg Issues or Pull Requests!
+Edit at least:
+
+- `~/.homewebcom/config/config.json` — DB credentials, admin password, chat settings  
+- `~/.homewebcom/config/hosts.json` — host → skin mapping  
+
+Example DB settings in `config.json`:
+
+```json
+{"name":"sql.host","value":"localhost:3306","description":"MySQL host"},
+{"name":"sql.user","value":"hwebchat","description":"MySQL user"},
+{"name":"sql.pw","value":"secret","description":"MySQL password"},
+{"name":"sql.db","value":"hwebchat","description":"MySQL database"},
+{"name":"sql.prefix","value":"hwc_","description":"Table prefix"}
+```
+
+### 3. Database
+
+```bash
+mysql -u root -p -e "CREATE DATABASE just_chatting CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+mysql -u root -p just_chatting < database.sql
+```
+
+Create a DB user matching `config.json` and grant rights on that database.
+
+**Collation tip:** Prefer one collation for all tables (e.g. `utf8mb4_unicode_ci`). Mixing collations can break JOINs on nicknames/messages.
+
+### 4. Build with Maven
+
+```bash
+cd src/web/WEB-INF
+mvn clean package
+```
+
+Artifact:
+
+```text
+src/target/HWebChat_Community_Edition.war
+```
+
+Useful variants:
+
+```bash
+mvn clean package -DskipTests   # skip tests
+mvn clean compile               # compile only
+mvn -o package                  # offline (local repo only)
+```
+
+**NetBeans:** You can still open the project; the build is defined by this Maven `pom.xml` (not only Ant).
+
+### 5. Deploy to Tomcat
+
+```bash
+# Stop Tomcat if needed, then:
+cp src/target/HWebChat_Community_Edition.war "$CATALINA_HOME/webapps/"
+# Start Tomcat — it expands the WAR automatically
+```
+
+Or copy into your existing `webapps` path (e.g. `/home/you/tomcat/webapps/`).
+
+After deploy, context path is typically:
+
+```text
+http://localhost:8080/HWebChat_Community_Edition/
+```
+
+Start page redirects to `/HWebChat_Community_Edition/Start`.
+
+### 6. Redeploy after code changes
+
+```bash
+cd src/web/WEB-INF
+mvn clean package
+rm -rf "$CATALINA_HOME/webapps/HWebChat_Community_Edition"
+cp ../../target/HWebChat_Community_Edition.war "$CATALINA_HOME/webapps/"
+# restart Tomcat or wait for auto-redeploy
+```
+
+Templates/config under `~/.homewebcom` are **not** inside the WAR — edit them live; restart Tomcat only if classes/config loaders cache aggressively.
+
+---
+
+## Configuration reference
+
+| Path | Purpose |
+|------|---------|
+| `~/.homewebcom/config/config.json` | Main settings (SQL, timeouts, status levels, …) |
+| `~/.homewebcom/config/hosts.json` | Virtual host → skin |
+| `~/.homewebcom/config/commands.json` | Chat command texts |
+| `~/.homewebcom/config/paths.json` | URL path names |
+| `~/.homewebcom/templates/native/` | Default skin (HTML, JS, CSS) |
+
+Repo copy `.homewebcom/` is a template; **production uses `~/.homewebcom`**.
+
+---
+
+## Development notes
+
+- **Package:** `net.midiandmore.chat`
+- **Entry servlet:** `ChatPages` → `/Start`
+- **WebSocket:** `Chat` endpoint (see `@ServerEndpoint` in sources)
+- **Upload:** `/UploadFile`
+- **Jakarta EE:** `jakarta.*` APIs (not `javax.*` for Servlet/WebSocket)
+
+Java sources: `src/src/java/net/midiandmore/chat/`  
+Web resources: `src/web/`
+
+---
+
+## Security
+
+- Strong passwords for MySQL and admin console (`admin_password` in config)
+- Do not expose Tomcat Manager publicly without auth
+- Keep JDK and Tomcat updated
+- Restrict permissions on `~/.homewebcom/config` (contains DB password)
+- Prefer HTTPS (Tomcat SSL connector or reverse proxy)
+
+---
+
+## FAQ
+
+**Language?**  
+UI/templates ship largely in German; adjust templates and `config.json` as needed.
+
+**HTTPS?**  
+Terminate TLS on Tomcat or a reverse proxy (nginx/Caddy). Align `secure` cookie flags in `web.xml` with your setup.
+
+**Wrong DB / empty messages?**  
+Confirm `sql.db` / user in **`~/.homewebcom/config/config.json`** (not only the repo copy) matches the database you imported.
+
+**Build fails on Java version?**  
+Use JDK 21: `java -version` and `mvn -v` should both report 21.
+
+---
+
+## License
+
+See [LICENSE](LICENSE).
 
 ---
 

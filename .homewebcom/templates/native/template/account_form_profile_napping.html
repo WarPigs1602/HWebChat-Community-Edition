@@ -1,11 +1,11 @@
 <!-- design=napping_account -->
-<h1>%SERVER_SOFTWARE%-Account!</h1>
+<h1>%SERVER_SOFTWARE% &ndash; Account</h1>
 
 <form action="%PATH_[account]%" method="POST" accept-charset="utf-8">%account_error_if_one%
   <input type="hidden" name="service" value="account">
   <input type="hidden" name="data" value="change">
   <input type="hidden" name="owner" value="%owner%">
-  <p style="font-weight: bold; font-style: italic; font-size: 18px; background-color: #cccccc">
+  <p class="form-section-title">
     Freiwillige Angaben
   </p>
   <p>
@@ -124,10 +124,10 @@
 	  </tr>
     </table>
   </p>
-  <p style="font-weight: bold; font-style: italic; font-size: 18px; background-color: #cccccc">
-    Und schon Fertig...
+  <p class="form-section-title">
+    Und schon fertig&hellip;
   </p>
   <p>
-  <input type="submit" class="input-group-append btn btn-secondary btn-sm" name="OK" value="&Auml;nderung abschicken!!">
+  <input type="submit" class="btn btn-secondary btn-sm" name="OK" value="&Auml;nderung abschicken">
   </p>
 </form>

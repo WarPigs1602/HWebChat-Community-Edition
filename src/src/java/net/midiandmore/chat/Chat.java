@@ -225,6 +225,17 @@ public class Chat {
                         wr = wr.replace("%skin%", skin);
                         wr = wr.replace("%owner%", owner);
                         ut.sendText(wr, getSession(), "chat", "");
+                        ut.sendText("<!-- set_message_count: \"" + db.countMessage(oldNick) + "\" -->", getSession(), "chat", "");
+                        var msgCount = db.countMessage(oldNick);
+                        if (msgCount > 0) {
+                            var msgs = db.getMessages(oldNick);
+                            var block = getTemplate("chat_messages_box");
+                            block = block.replace("%count%", String.valueOf(msgCount));
+                            block = block.replace("%messages%", msgs);
+                            ut.sendText(block, getSession(), "chat", "");
+                            db.delMessages(oldNick);
+                            ut.sendText("<!-- set_message_count: \"0\" -->", getSession(), "chat", "");
+                        }
                     }
                     if (!realIp.equals("")) {
                         ut.sendText(getTemplate("proxy_warn"), getSession(), "chat", "");
@@ -732,7 +743,9 @@ public class Chat {
             }
             sec.getUserProperties().put("ip", request.getRemoteAddr()); // lower-case!
             var httpSession = (HttpSession) request.getSession(false);
-            sec.getUserProperties().put(HttpSession.class.getName(), httpSession);
+            if (httpSession != null) {
+                sec.getUserProperties().put(HttpSession.class.getName(), httpSession);
+            }
         }
 
         //hacking reflector to expose fields...

@@ -5,7 +5,9 @@
  */
 package net.midiandmore.chat;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
@@ -31,17 +33,8 @@ public class UploadFile extends HttpServlet {
             jakarta.servlet.http.HttpServletResponse response)
             throws ServletException, java.io.IOException {
         var partAttr = request.getPart("file");
-        var is = partAttr.getInputStream();
-        var sb = new StringBuilder();
-        var co = boot.getConfig();
-        sb.append(co.getUh());
-        sb.append(co.getFs());
-        sb.append(".homewebcom");
-        sb.append(co.getFs());
-        sb.append("temp");
-        sb.append(co.getFs());
-        var files = new File(sb.toString() + partAttr.getSubmittedFileName());
         var contentType = partAttr.getContentType();
+        var co = boot.getConfig();
         response.setContentType("text/html; charset=" + co.getString("charset"));
         var out = response.getWriter();
         var cs = boot.getChatServices();
@@ -56,7 +49,7 @@ public class UploadFile extends HttpServlet {
             var db = co.getDb();
             var nick = (String) request.getSession().getAttribute("nick");
             var community = request.getSession().getAttribute("community") != null;
-            if (!contentType.startsWith("image/")) {
+            if (contentType == null || !contentType.toLowerCase().startsWith("image/")) {
                 if (community) {
                     cs.printTemplate("picture_not_picture_com", request, response, map);
                 } else {
@@ -65,13 +58,15 @@ public class UploadFile extends HttpServlet {
                 return;
             }
             if (nick != null && db.isRegistered(nick)) {
-                var outputStream = new FileOutputStream(files);
-                var read = 0;
-                var bytes = new byte[1024];
-                while ((read = is.read(bytes)) != -1) {
-                    outputStream.write(bytes, 0, read);
+                byte[] imageBytes;
+                try (var is = partAttr.getInputStream(); var baos = new ByteArrayOutputStream()) {
+                    is.transferTo(baos);
+                    imageBytes = baos.toByteArray();
                 }
-                db.updatePicture(nick, partAttr.getInputStream(), contentType);
+                if (imageBytes.length == 0) {
+                    throw new IOException("Upload ist leer");
+                }
+                db.updatePicture(nick, new ByteArrayInputStream(imageBytes), contentType);
                 if (community) {
                     cs.printTemplate("picture_success_com", request, response, map);
                 } else {

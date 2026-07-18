@@ -1,7 +1,7 @@
 <!-- design=console -->
 <h1>%SERVER_SOFTWARE%-Benutzerkonfiguration</h1>
 <form action="%PATH_[config_users]%&update=true&user=%nick%&change=data" method="POST" accept-charset="utf-8">%account_error_if_one%
-  <p style="font-weight: bold; font-style: italic; font-size: 18px; background-color: #cccccc">
+  <p class="form-section-title">
     Notwendige Angaben
   </p>
   <p>
@@ -32,7 +32,7 @@
 		</td>
 		<td>
 		  <div class="input-group">
-	      <input type="text" size="2" maxlength="2" class="form-control form-control-sm col-md-2 mb-1" name="day" value="%day%">.<input type="text" size="2" maxlength="2" class="form-control form-control-sm col-md-2 mb-1" name="month" value="%month%">.<input type="text" size="4" maxlength="4" class="form-control form-control-sm col-md-2 mb-1" name="year" value="%year%">
+	      <input type="text" size="2" maxlength="2" class="form-control form-control-sm col-md-2 mb-1" name="day" value="%day%"><input type="text" size="2" maxlength="2" class="form-control form-control-sm col-md-2 mb-1" name="month" value="%month%"><input type="text" size="4" maxlength="4" class="form-control form-control-sm col-md-2 mb-1" name="year" value="%year%">
           </div>
 		</td>
       </tr>
@@ -46,10 +46,10 @@
       </tr>
     </table>
   </p>
-  <p style="font-weight: bold; font-style: italic; font-size: 18px; background-color: #cccccc">
+  <p class="form-section-title">
     Und schon Fertig...
   </p>
   <p>
-  <input type="submit" class="input-group-append btn btn-secondary btn-sm" name="OK" value="&Auml;nderung abschicken!!">
+  <input type="submit" class="btn btn-secondary btn-sm" name="OK" value="&Auml;nderung abschicken!!">
   </p>
 </form>

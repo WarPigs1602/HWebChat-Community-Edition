@@ -5,14 +5,13 @@
  */
 package net.midiandmore.chat;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Random;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.ServletException;
@@ -22,7 +21,6 @@ import jakarta.servlet.http.HttpSession;
 import static java.lang.Runtime.getRuntime;
 import static java.lang.System.currentTimeMillis;
 import static java.net.InetAddress.getByName;
-import static java.net.URLConnection.guessContentTypeFromStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -1076,42 +1074,45 @@ public class ChatServices {
      * @param out Die Output-Klasse
      */
     private void profilePicture(HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
-        OutputStream out = null;
-        try {
-            var nick = map.getOrDefault("nick", "");
-            var co = Bootstrap.boot.getConfig();
-            var db = co.getDb();
-            var contentType = "image/gif";
-            byte[] picture = null;
-            if (!nick.equals("") && db.isRegistered(nick)) {
-                picture = db.getPicture(nick);
-                contentType = db.getData(nick, "image_url");
-            }
-            if (picture == null) {
-                InputStream in = null;
-                try {
-                    var sb = new StringBuilder();
-                    sb.append(co.getUh());
-                    sb.append(co.getFs());
-                    sb.append(".homeweb");
-                    sb.append(co.getFs());
-                    sb.append("pictures");
-                    sb.append(co.getFs());
-                    sb.append("notfound.gif");
-                    var filename = sb.toString();
-                    in = new BufferedInputStream(
-                            new FileInputStream(filename));
-                    var s = guessContentTypeFromStream(in);
-                    response.setContentType(s);
-                    picture = new byte[in.available()];
-                    in.read(picture);
-                } catch (FileNotFoundException ex) {
-                } catch (IOException ex) {
+        var nick = map.getOrDefault("nick", "");
+        var co = Bootstrap.boot.getConfig();
+        var db = co.getDb();
+        byte[] picture = null;
+        String contentType = "image/png";
+        if (!nick.isEmpty() && db.isRegistered(nick)) {
+            picture = db.getPicture(nick);
+            if (picture != null && picture.length > 0) {
+                var dbContentType = db.getData(nick, "image_url");
+                if (dbContentType != null && !dbContentType.isEmpty()) {
+                    contentType = dbContentType;
                 }
             }
-            out = response.getOutputStream();
+        }
+        if (picture == null || picture.length == 0) {
+            var sb = new StringBuilder();
+            sb.append(co.getUh());
+            sb.append(co.getFs());
+            sb.append(".homewebcom");
+            sb.append(co.getFs());
+            sb.append("pictures");
+            sb.append(co.getFs());
+            sb.append("notfound.svg");
+            var path = Paths.get(sb.toString());
+            try {
+                picture = Files.readAllBytes(path);
+                contentType = "image/svg+xml";
+            } catch (IOException ex) {
+                Logger.getLogger(ChatServices.class.getName()).log(Level.SEVERE, "Failed to load default profile picture", ex);
+                picture = new byte[0];
+            }
+        }
+        response.setContentType(contentType);
+        response.setContentLength(picture.length);
+        try (OutputStream out = response.getOutputStream()) {
             out.write(picture);
+            out.flush();
         } catch (IOException ex) {
+            Logger.getLogger(ChatServices.class.getName()).log(Level.SEVERE, "Failed to send profile picture", ex);
         }
     }
 
@@ -1121,11 +1122,22 @@ public class ChatServices {
      * @param out Die Output-Klasse
      */
     private void toplist(HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
-        var skin = map.getOrDefault("skin", "");
-        var text = getTemplate("toplist", request, map);
         var conf = Bootstrap.boot.getConfig();
         var ut = Bootstrap.boot.getUtil();
         var db = conf.getDb();
+        String text;
+        var session = request.getSession(false);
+        if (session != null && !session.isNew() && "true".equals(session.getAttribute("community"))) {
+            var nick = (String) session.getAttribute("nick");
+            var reg = nick != null && db.isRegistered(nick);
+            if (reg) {
+                text = getTemplate("toplist_com_reg", request, map);
+            } else {
+                text = getTemplate("toplist_com", request, map);
+            }
+        } else {
+            text = getTemplate("toplist", request, map);
+        }
         text = text.replace("%toplist%", db.getToplist(request, response, map));
         ut.submitContent(text, response);
     }
@@ -1172,7 +1184,9 @@ public class ChatServices {
         var db = conf.getDb();
         var ut = Bootstrap.boot.getUtil();
         var session = request.getSession(false);
-        sid = (String) session.getAttribute("sid");
+        if (session != null) {
+            sid = (String) session.getAttribute("sid");
+        }
         sid = sid != null ? sid : map.getOrDefault("sid", "");
         int status;
         if (cm.isValidConnectionId(sid)) {
@@ -3690,7 +3704,7 @@ public class ChatServices {
         reg = db.isRegistered(nick);
         if (session == null) {
             printTemplate("timeout", request, response, map);
-        } else if (!nick.matches(conf.getString("allowed_chars"))) {
+        } else if (nick == null || !nick.matches(conf.getString("allowed_chars"))) {
             printTemplate("chars", request, response, map);
         } else if (!online && nick.toLowerCase().startsWith(conf.getString("guest_prefix").toLowerCase())) {
             printTemplate("guest", request, response, map);
@@ -3739,7 +3753,8 @@ public class ChatServices {
             printTemplate("reg", request, response, map);
         } else {
             var context = request.getServletContext();
-            if (session.isNew() || cm.getUsersCommunity().get((String) session.getAttribute("nick")) == null) {
+            var sessionNick = (String) session.getAttribute("nick");
+            if (session.isNew() || sessionNick == null || cm.getUsersCommunity().get(sessionNick) == null) {
                 if (conf.getInt("guest") == 1 && nick.equals("")) {
                     var i = 1;
                     while (cm.getUsersCommunity().containsKey(conf.getString("guest_prefix") + Integer.toString(i))) {

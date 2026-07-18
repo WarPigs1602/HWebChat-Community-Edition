@@ -6,59 +6,75 @@
   <meta content="&copy;%SERVER_YEAR% by %SERVER_VENDOR%" name="description">
   <meta content="CoolChat" name="software">
   <meta content="text/html; charset=UTF-8" http-equiv="content-type">
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="preload" href="file/fonts/TwitterColorEmoji-SVGinOT.ttf" as="font">
   <link rel="preload" href="file/fonts/NotoColorEmoji.ttf" as="font">
-  <link rel="stylesheet" href="%path_file%bootstrap/css/bootstrap.min.css" type="text/css">  
-  <link rel="stylesheet" media="screen" href="%PATH_[style]%" type="text/css">  
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> 
+  <link rel="stylesheet" href="%path_file%bootstrap/css/bootstrap.min.css" type="text/css">
+  <link rel="stylesheet" media="screen" href="%PATH_[style]%" type="text/css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <script src="%PATH_[script_jquery]%"></script>
   <script src="%path_file%popper/js/popper.min.js"></script>
-  <script src="%path_file%bootstrap/js/bootstrap.min.js"></script>  
+  <script src="%path_file%bootstrap/js/bootstrap.min.js"></script>
   <script src="%PATH_[script_framekiller]%"></script>
 </head>
 <body>
-<div id="logo"></div>
-<nav>
-		<menu>
-		    <menuitem id="Start">
-				<a>Start</a>
-				<menu>
-				  <menuitem><a href="%PATH_[index_com]%">Startseite</a></menuitem>		          
-		          <menuitem><a href="%PATH_[rules_com]%">Chattiquette</a></menuitem>
-		          <menuitem><a href="%PATH_[logout]%">Ausloggen</a></menuitem>
-				</menu>				  
-			</menuitem>
-		    <menuitem id="Chatten">
-				<a>Chatten</a>
-				<menu>
-				<menuitem style="background:#666666;">
-<form method="POST" name="login" action="%PATH_[login_chat]%" target="chat" accept-charset="utf-8"> 			
-  <input name="sid" value="%sid%" type="hidden">
-  <select class="form-control form-control-sm" name="room"  placeholder="Raumauswahl">
-    <option selected value="Lounge">Lounge</option>
-    <option value="Staff-Lounge">Staff-Lounge</option>
-    <option value="Development">Development</option>
-    <option value="Exil">Exil</option>
-  </select>
-  <input name="skin" value="%skin%" type="hidden">
-  <input class="input-group-append btn btn-secondary btn-sm" value="Chat starten!" type="submit">
-</form>
-				</menuitem>				
-		</menu>
-	</nav>
-<div id="pagecontent">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="%PATH_[index_com]%">
+      <img src="file/gfx/logo.svg" alt="HWebChat" style="height: 40px;">
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Navigation umschalten">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item active">
+          <a class="nav-link" href="%PATH_[index_com]%"><i class="fa fa-home"></i> Startseite</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="%PATH_[rules_com]%"><i class="fa fa-info-circle"></i> Chattiquette</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="%PATH_[toplist]%"><i class="fa fa-trophy"></i> Topliste</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="%PATH_[logout]%"><i class="fa fa-sign-out"></i> Ausloggen</a>
+        </li>
+      </ul>
+      <ul class="navbar-nav">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="chatDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fa fa-comments"></i> Chatten
+          </a>
+          <div class="dropdown-menu dropdown-menu-right p-2" aria-labelledby="chatDropdown">
+            <form method="POST" name="login" action="%PATH_[login_chat]%" target="chat" accept-charset="utf-8" class="form-inline">
+              <input name="sid" value="%sid%" type="hidden">
+              <select class="form-control form-control-sm mr-2 mb-2" name="room" style="width: 150px;">
+                <option selected value="Lounge">Lounge</option>
+                <option value="Staff-Lounge">Staff-Lounge</option>
+                <option value="Development">Development</option>
+                <option value="Exil">Exil</option>
+              </select>
+              <input name="skin" value="%skin%" type="hidden">
+              <input class="btn btn-sm btn-primary mb-2" value="Chat starten!" type="submit">
+            </form>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div id="pagecontent" class="container-fluid page-main">
 %content%
 </div>
-<div id="pagecontent" style="text-align: center">
-<small>
-<p>
-&copy;%SERVER_YEAR% by <a href="mailto:%SERVER_MAIL%">%SERVER_VENDOR%</a>
-<br>
-  <a href="%PATH_[dataprotection]%" target="_blank">Datenschutz</a> | <a href="%PATH_[impressum]%" target="_blank">Impressum</a>        		
-</p>
-</small>
+<div class="container-fluid text-center page-footer">
+  <small>
+    <p>
+      &copy;%SERVER_YEAR% by <a href="mailto:%SERVER_MAIL%">%SERVER_VENDOR%</a>
+      <br>
+      <a href="%PATH_[dataprotection]%" target="_blank">Datenschutz</a> | <a href="%PATH_[impressum]%" target="_blank">Impressum</a>
+    </p>
+  </small>
 </div>
 </body>
 </html>

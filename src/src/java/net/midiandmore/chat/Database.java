@@ -214,9 +214,9 @@ public class Database {
             sb.append("' contains invalid content!\r\n");
             text = sb.toString();
         } else {
-            var uh = getProperty("user.home");
+            var base = getProperty("homewebcom.dir", getProperty("user.home"));
             var fs = getProperty("file.separator");
-            sb.append(uh);
+            sb.append(base);
             sb.append(fs);
             sb.append(".homewebcom");
             sb.append(fs);
@@ -855,13 +855,17 @@ public class Database {
      * @return Die Nachrichten
      */
     protected String getMessages(String nick, HttpServletRequest request, Map<String, String> map) {
+        return getMessages(nick);
+    }
+
+    protected String getMessages(String nick) {
         var ut = getMaster().getUtil();
         var sb = new StringBuilder();
         try {
             if (!getCon().isValid(1000)) {
                 connectDatabase();
             }
-            try (var statement = getCon().prepareStatement("SELECT sender,target,text,time FROM `" + getPrefix() + "messages` WHERE target=? ORDER BY time DESC")) {
+            try (var statement = getCon().prepareStatement("SELECT sender,target,text,time FROM `" + getPrefix() + "messages` WHERE LOWER(target) = ? ORDER BY time DESC")) {
                 statement.setString(1, nick.toLowerCase());
                 try (var resultset = statement.executeQuery()) {
                     while (resultset.next()) {
@@ -878,7 +882,7 @@ public class Database {
                         } else {
                             color = getMaster().getConfig().getString("default_color");
                         }
-                        var text = getMaster().getChatServices().getTemplate("message_view", request, map);
+                        var text = getTemplate("message_view", getMaster().getConfig().getString("default_skin"));
                         text = text.replace("%msg_nick%", sender);
                         text = text.replace("%msg_color%", color);
                         text = text.replace("%msg_time%", ts);
@@ -974,12 +978,12 @@ public class Database {
      * @return Die Anzahl der Nachrichten
      */
     protected int countMessage(String nick) {
-        var count = -1;
+        var count = 0;
         try {
             if (!getCon().isValid(1000)) {
                 connectDatabase();
             }
-            try (var statement = getCon().prepareStatement("SELECT count(*) FROM `" + getPrefix() + "messages` WHERE target=?")) {
+            try (var statement = getCon().prepareStatement("SELECT count(*) FROM `" + getPrefix() + "messages` WHERE LOWER(target) = ?")) {
                 statement.setString(1, nick.toLowerCase());
                 try (var resultset = statement.executeQuery()) {
                     while (resultset.next()) {
@@ -1003,8 +1007,8 @@ public class Database {
             if (!getCon().isValid(1000)) {
                 connectDatabase();
             }
-            try (var statement = getCon().prepareStatement("DELETE FROM `" + getPrefix() + "messages` WHERE target=?")) {
-                statement.setString(1, target);
+            try (var statement = getCon().prepareStatement("DELETE FROM `" + getPrefix() + "messages` WHERE LOWER(target) = ?")) {
+                statement.setString(1, target.toLowerCase());
                 statement.executeUpdate();
             }
         } catch (SQLException se) {
@@ -1115,7 +1119,7 @@ public class Database {
             }
             try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "messages` (`sender`, `target`, `text`, `time`) VALUES (?, ?, ?, ?)")) {
                 statement.setString(1, nick1);
-                statement.setString(2, nick2);
+                statement.setString(2, nick2.toLowerCase());
                 statement.setString(3, content);
                 statement.setLong(4, currentTimeMillis());
                 statement.executeUpdate();

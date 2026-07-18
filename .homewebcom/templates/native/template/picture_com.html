@@ -1,21 +1,21 @@
 <!-- design=frameset_community_reg -->
-<h1>%SERVER_SOFTWARE%-Profilbild!!</h1>
+<h1>%SERVER_SOFTWARE% &ndash; Profilbild</h1>
 
 
 <form action="UploadFile" method="post" enctype="multipart/form-data">  
   <input type="hidden" name="service" value="password">
   <input type="hidden" name="data" value="change">
-  <p style="font-weight: bold; font-style: italic; font-size: 18px; background-color: #cccccc">
+  <p class="form-section-title">
     W&auml;hle eine Datei zum hochladen!
   </p>
   <p>
-  <input type="file" name="file" size="50" class="input-group-append btn btn-secondary btn-sm"/>
+  <input type="file" name="file" size="50" class="form-control-file mb-2"/>
   <a href="%path_hwebchat%?page=account_com&service=picture_del&data=delete&skin=%skin%">Hier klicken um ein bestehendes Profilbild zu l&ouml;schen!</a>
   </p>
-  <p style="font-weight: bold; font-style: italic; font-size: 18px; background-color: #cccccc">
-    Und schon Fertig...
+  <p class="form-section-title">
+    Und schon fertig&hellip;
   </p>
   <p>
-  <input type="submit" class="input-group-append btn btn-secondary btn-sm" name="OK" value="&Auml;nderung abschicken!!">
+  <input type="submit" class="btn btn-secondary btn-sm" name="OK" value="&Auml;nderung abschicken">
   </p>
 </form>

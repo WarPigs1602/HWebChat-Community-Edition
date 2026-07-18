@@ -1,6 +1,6 @@
 <!-- design=start -->
 <h1>
-%SERVER_SOFTWARE%-Registrierung!
+%SERVER_SOFTWARE% &ndash; Passwort zur&uuml;cksetzen
 </h1>
 <form action="%PATH_[password]%" method="POST">%reg_error_if_one%
   <input type="hidden" name="service" value="pass_accept">
@@ -14,23 +14,25 @@
   <input type="hidden" name="reg_day" value="%reg_day%">
   <input type="hidden" name="reg_month" value="%reg_month%">
   <input type="hidden" name="reg_year" value="%reg_year%">
-  <p style="font-weight: bold; font-style: italic; font-size: 12px; background-color: #cccccc">
+  <p class="form-section-title">
     Notwendige Angaben
   </p>
   <p>
-  Deine Sicherheitsfrage f&uuml;r %reg_nick%: <span style="font-weight: bold;">%reg_reminder_question%</span><br />
+  Deine Sicherheitsfrage f&uuml;r <strong>%reg_nick%</strong>:<br />
+  <span style="font-weight: bold;">%reg_reminder_question%</span><br /><br />
   Deine Antwort:<br />
-    <input type="text" size="50" maxlength="255" class="reg" name="reg_reminder_answer" value="%reg_reminder_answer%"></br>  Dein Passwort:<br />
-  <span style="font-size: 9px;">Sollte mindestens vier Zeichen lang sein!</span><br />
-  <input type="password" size="10" maxlength="30" class="reg" name="reg_pwd" value="%reg_pwd%"><br />
+  <input type="text" size="50" maxlength="255" class="form-control form-control-sm mb-2" name="reg_reminder_answer" value="%reg_reminder_answer%"><br />
+  Dein Passwort:<br />
+  <span class="form-hint">Sollte mindestens vier Zeichen lang sein!</span>
+  <input type="password" size="10" maxlength="30" class="form-control form-control-sm mb-2" name="reg_pwd" value="%reg_pwd%"><br />
   Passwortwiederholung:<br />
-  <span style="font-size: 9px;">Um sicherzustellen das Du Dich nicht verschrieben hast!</span><br />
-  <input type="password" size="10" maxlength="30" class="reg" name="reg_pwd2" value=""></br>
+  <span class="form-hint">Um sicherzustellen, dass Du Dich nicht verschrieben hast!</span>
+  <input type="password" size="10" maxlength="30" class="form-control form-control-sm mb-2" name="reg_pwd2" value="">
   </p>
-  <p style="font-weight: bold; font-style: italic; font-size: 12px; background-color: #cccccc">
-    Und schon Fertig...
+  <p class="form-section-title">
+    Und schon fertig&hellip;
   </p>
   <p>
-  <input type="submit" class="reg" name="OK" value="Anfrage senden...">
+  <input type="submit" class="btn btn-secondary btn-sm" name="OK" value="Anfrage senden">
   </p>
 </form>

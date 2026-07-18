@@ -1,18 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>Informationen!</title>
   <meta content="%SERVER_VENDOR%" name="author">
   <meta content="&copy;%SERVER_YEAR% by %SERVER_VENDOR%" name="description">
-  <meta content="%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS%" name="software">
-  <meta content="text/html; charset=UTF-8" http-equiv="content-type">
-  <link rel="preload" href="file/fonts/TwitterColorEmoji-SVGinOT.ttf" as="font">
-  <link rel="preload" href="file/fonts/NotoColorEmoji.ttf" as="font">  
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="%path_file%bootstrap/css/bootstrap.min.css" type="text/css">
   <link rel="stylesheet" href="%PATH_[style]%" type="text/css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <style>
+    body, #profilecontent, #profilecontent * { color: #212529 !important; }
+    body { background-color: #f8f9fa; }
+    #profilecontent { background-color: #ffffff; padding: 1rem; }
+    a { color: #0d6efd !important; }
+    body.embedded nav.navbar { display: none !important; }
+    body.embedded { padding-top: 0 !important; }
+  </style>
 </head>
 <body>
-<div id="profilecontent">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">
+      <img src="file/gfx/logo.svg" alt="HWebChat" style="height: 40px;">
+    </a>
+  </div>
+</nav>
+<div id="profilecontent" class="container-fluid shadow rounded">
 %content%
 </div>
+<script>
+if (window.self !== window.top) {
+  document.body.classList.add('embedded');
+}
+</script>
 </body>
 </html>
