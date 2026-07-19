@@ -229,7 +229,7 @@
 {"name":"status_9","command":"Trial Admin"},
 {"name":"status_low","command":"You are not authorized to use the command <span style=\"font-weight: bold\">/%command%</span>!"},
 {"name":"status_low_supervisor","command":"<span style=\"color: #%color%\">%nick%</span> (%host%) has just tried to use the command <span style=\"font-weight: bold\">/%command%</span>!"},
-{"name":"system_message","command":"<span style=\"font-weight: bold\">System message from <span style=\"color: #%color%\">%nick%</span>: %text%</span>"},
+{"name":"system_message","command":"<div class=\"chat-sys-broadcast\" style=\"margin:0.5rem 0;border:1px solid #b6d4fe;border-left:4px solid #0d6efd;border-radius:0.6rem;background:#eef5ff;box-shadow:0 1px 3px rgba(13,110,253,0.08);overflow:hidden;\"><div class=\"chat-sys-broadcast-header\" style=\"display:flex;align-items:center;gap:0.4rem;padding:0.4rem 0.7rem;background:#0d6efd;color:#ffffff;font-weight:600;font-size:0.85rem;\"><span aria-hidden=\"true\">&#128226;</span><span>System message from <span style=\"color:#%color%;background:rgba(255,255,255,0.85);padding:0 0.35rem;border-radius:0.3rem;\">%nick%</span></span></div><div class=\"chat-sys-broadcast-body\" style=\"padding:0.55rem 0.75rem;color:#0b2e59;\">%text%</div></div>"},
 {"name":"system_msg","command":"<span style=\"font-weight: bold\">System:</span> %content%"},
 {"name":"time_format","command":"H:mm:ss"},
 {"name":"time_format_extended","command":"dd.MM.yyyy H:mm:ss"},

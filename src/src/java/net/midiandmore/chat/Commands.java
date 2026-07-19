@@ -387,32 +387,9 @@ public class Commands implements Software {
             low("info", nick);
             return;
         }
-        var line = line();
-        cm.sendToOne(line, nick);
-        cm.sendToOne(SERVER_SOFTWARE + " " + SERVER_VERSION + "-" + SERVER_STATUS + "<br>", nick);
-        cm.sendToOne("&copy; " + SERVER_YEAR + " by <a href=\"mailto:" + SERVER_MAIL + "\">" + SERVER_VENDOR + "</a><br>", nick);
-        cm.sendToOne("All rights reserved.<br>", nick);
-        cm.sendToOne("<a href=\"" + getMaster().getConfig().getString("path_hwebchat") + "?page=" + getMaster().getConfig().getString("path_link") + "&url=https://" + SERVER_HOMEPAGE + "\" target=\"_blank\">" + SERVER_HOMEPAGE + "</a><br>", nick);
-        cm.sendToOne("<br>", nick);
-        cm.sendToOne("<span style=\"font-weight: bold\">Backend information:</span><br>", nick);
-        cm.sendToOne("Running on system: <span style=\"font-weight: bold\">" + getProperty("os.name") + " (" + getProperty("os.version") + ", " + getProperty("os.arch") + ")</span><br>", nick);
-        cm.sendToOne("Java version: <span style=\"font-weight: bold\">" + getProperty("java.version") + " (" + getProperty("java.vendor") + ")</span><br>", nick);
-        cm.sendToOne("Running on container: <span style=\"font-weight: bold\">" + u.getServerInfo() + "</span><br>", nick);
-        cm.sendToOne("<br>", nick);
-        cm.sendToOne("<span style=\"font-weight: bold\">Frontend information:</span><br>", nick);
-        cm.sendToOne("Browser: <span style=\"font-weight: bold\">" + ut.getBrowser(ut.parseHtml(u.getUserAgent()), ut.parseHtml(u.getBrowser())) + "</span><br>", nick);
-        cm.sendToOne("Operating system: <span style=\"font-weight: bold\">" + ut.getOs(ut.parseHtml(u.getUserAgent()), u.getOsName(), u.getOsVersion()) + "</span><br>", nick);
-        cm.sendToOne("<br>", nick);
-        cm.sendToOne("<span style=\"font-weight: bold\">Time information:</span><br>", nick);
-        cm.sendToOne("The chat is running since: <span style=\"font-weight: bold\">" + ut.getTime(getMaster().getStartTime()) + " " + ut.getCurrentUsTimeZone() + "</span><br>", nick);
-        cm.sendToOne("The current time is: <span style=\"font-weight: bold\">" + ut.getTime(currentTimeMillis()) + " " + ut.getCurrentUsTimeZone() + "</span><br>", nick);
-        cm.sendToOne("The current runtime is: <span style=\"font-weight: bold\">" + ut.getCalculatedTime(currentTimeMillis(), getMaster().getStartTime()) + "</span><br>", nick);
-        cm.sendToOne("<br>", nick);
         var ht = db.getStaffList();
         var adminTable = new ArrayList<String>();
         var staffTable = new ArrayList<String>();
-        var admins = new StringBuilder();
-        var staff = new StringBuilder();
         ht.keySet().forEach((elemnt) -> {
             if (ht.get(elemnt) >= 9) {
                 adminTable.add(elemnt);
@@ -421,49 +398,80 @@ public class Commands implements Software {
                 staffTable.add(elemnt);
             }
         });
+        var admins = new StringBuilder();
         if (!adminTable.isEmpty()) {
-            admins.append("<span style=\"font-weight: bold\">Admin:</span><br>");
-        } else {
-            admins.append("<span style=\"font-weight: bold\">Admin:</span> This chat has no administrative users (Please add an administrator in the admin console)...<br><br>");
-        }
-        var i = 0;
-        for (var element : adminTable) {
-            admins.append("<span style=\"color: #");
-            admins.append(db.getData(element, "color"));
-            admins.append("\">");
-            admins.append(element);
-            admins.append("</span>");
-            if (adminTable.size() - 1 != i) {
-                admins.append(", ");
-            } else {
-                admins.append("<br>");
-                admins.append("<br>");
+            var i = 0;
+            for (var element : adminTable) {
+                admins.append("<span style=\"color: #");
+                admins.append(db.getData(element, "color"));
+                admins.append("; font-weight: 600;\">");
+                admins.append(element);
+                admins.append("</span>");
+                if (adminTable.size() - 1 != i) {
+                    admins.append(", ");
+                }
+                i++;
             }
-            i++;
+        } else {
+            admins.append("<span style=\"color:#6c757d; font-style:italic;\">This chat has no administrative users (please add an administrator in the admin console)...</span>");
         }
+        var staff = new StringBuilder();
         if (!staffTable.isEmpty()) {
-            staff.append("<span style=\"font-weight: bold\">VIP:</span><br>");
-        } else {
-            staff.append("<span style=\"font-weight: bold\">VIP:</span> This chat has no VIP's...<br><br>");
-        }
-        i = 0;
-        for (var element : staffTable) {
-            staff.append("<span style=\"color: #");
-            staff.append(db.getData(element, "color"));
-            staff.append("\">");
-            staff.append(element);
-            staff.append("</span>");
-            if (staffTable.size() - 1 != i) {
-                staff.append(", ");
-            } else {
-                staff.append("<br>");
-                staff.append("<br>");
+            var i = 0;
+            for (var element : staffTable) {
+                staff.append("<span style=\"color: #");
+                staff.append(db.getData(element, "color"));
+                staff.append("; font-weight: 600;\">");
+                staff.append(element);
+                staff.append("</span>");
+                if (staffTable.size() - 1 != i) {
+                    staff.append(", ");
+                }
+                i++;
             }
-            i++;
+        } else {
+            staff.append("<span style=\"color:#6c757d; font-style:italic;\">This chat has no VIP's...</span>");
         }
-        cm.sendToOne(admins.toString(), nick);
-        cm.sendToOne(staff.toString(), nick);
-        cm.sendToOne(line, nick);
+
+        var homepageLink = "<a href=\"" + getMaster().getConfig().getString("path_hwebchat") + "?page=" + getMaster().getConfig().getString("path_link") + "&url=https://" + SERVER_HOMEPAGE + "\" target=\"_blank\">" + SERVER_HOMEPAGE + "</a>";
+        var backend = "Running on system: <b>" + getProperty("os.name") + " (" + getProperty("os.version") + ", " + getProperty("os.arch") + ")</b><br>"
+                + "Java version: <b>" + getProperty("java.version") + " (" + getProperty("java.vendor") + ")</b><br>"
+                + "Running on container: <b>" + u.getServerInfo() + "</b>";
+        var frontend = "Browser: <b>" + ut.getBrowser(ut.parseHtml(u.getUserAgent()), ut.parseHtml(u.getBrowser())) + "</b><br>"
+                + "Operating system: <b>" + ut.getOs(ut.parseHtml(u.getUserAgent()), u.getOsName(), u.getOsVersion()) + "</b>";
+        var time = "The chat is running since: <b>" + ut.getTime(getMaster().getStartTime()) + " " + ut.getCurrentUsTimeZone() + "</b><br>"
+                + "The current time is: <b>" + ut.getTime(currentTimeMillis()) + " " + ut.getCurrentUsTimeZone() + "</b><br>"
+                + "The current runtime is: <b>" + ut.getCalculatedTime(currentTimeMillis(), getMaster().getStartTime()) + "</b>";
+
+        var sectionStyle = "padding:0.6rem 0.85rem;border-top:1px solid #e3e9f2;";
+        var labelStyle = "display:flex;align-items:center;gap:0.4rem;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#0d6efd;margin-bottom:0.35rem;";
+        var bodyStyle = "color:#0b2e59;line-height:1.5;";
+
+        var card = new StringBuilder();
+        card.append("<div class=\"chat-info-card\" style=\"margin:0.5rem 0;border:1px solid #b6d4fe;border-radius:0.75rem;background:#ffffff;box-shadow:0 1px 3px rgba(13,110,253,0.08);overflow:hidden;\">");
+        // Header
+        card.append("<div class=\"chat-info-card-header\" style=\"display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.85rem;background:linear-gradient(90deg,#0d6efd 0%,#0a58ca 100%);color:#ffffff;\">");
+        card.append("<span aria-hidden=\"true\" style=\"font-size:1.05rem;\">&#8505;</span>");
+        card.append("<span style=\"font-weight:700;font-size:0.95rem;\">").append(SERVER_SOFTWARE).append("</span>");
+        card.append("<span style=\"margin-left:auto;font-size:0.75rem;background:rgba(255,255,255,0.18);padding:0.1rem 0.45rem;border-radius:0.4rem;\">").append(SERVER_VERSION).append("-").append(SERVER_STATUS).append("</span>");
+        card.append("</div>");
+        // Copyright / homepage
+        card.append("<div style=\"padding:0.55rem 0.85rem;font-size:0.82rem;color:#495057;background:#f6f9ff;\">");
+        card.append("&copy;").append(String.valueOf(SERVER_YEAR)).append(" by <a href=\"mailto:").append(SERVER_MAIL).append("\">").append(SERVER_VENDOR).append("</a> &middot; All rights reserved.<br>");
+        card.append(homepageLink);
+        card.append("</div>");
+        // Backend
+        card.append("<div style=\"").append(sectionStyle).append("\"><div style=\"").append(labelStyle).append("\"><span aria-hidden=\"true\">&#128421;</span>Backend</div><div style=\"").append(bodyStyle).append("\">").append(backend).append("</div></div>");
+        // Frontend
+        card.append("<div style=\"").append(sectionStyle).append("\"><div style=\"").append(labelStyle).append("\"><span aria-hidden=\"true\">&#128187;</span>Frontend</div><div style=\"").append(bodyStyle).append("\">").append(frontend).append("</div></div>");
+        // Time
+        card.append("<div style=\"").append(sectionStyle).append("\"><div style=\"").append(labelStyle).append("\"><span aria-hidden=\"true\">&#128337;</span>Time</div><div style=\"").append(bodyStyle).append("\">").append(time).append("</div></div>");
+        // Admin
+        card.append("<div style=\"").append(sectionStyle).append("\"><div style=\"").append(labelStyle).append("\"><span aria-hidden=\"true\">&#128081;</span>Admin</div><div style=\"").append(bodyStyle).append("\">").append(admins).append("</div></div>");
+        // VIP
+        card.append("<div style=\"").append(sectionStyle).append("\"><div style=\"").append(labelStyle).append("\"><span aria-hidden=\"true\">&#11088;</span>VIP</div><div style=\"").append(bodyStyle).append("\">").append(staff).append("</div></div>");
+        card.append("</div>");
+        cm.sendToOne(card.toString(), nick);
     }
 
     /**
@@ -515,6 +523,7 @@ public class Commands implements Software {
             if (cm.getRoom(room).isStandard() && !cm.isPrivileged("topic_standard", u.getStatus())) {
                 low("t", nick);
             } else {
+                String cmdKey;
                 if (topic == null) {
                     if (db.roomExists(room)) {
                         db.updateRoomData(room, "topic", "");
@@ -522,7 +531,7 @@ public class Commands implements Software {
                     cm.getRoom(room).setTopic(null);
                     text = getCommand("script_topic_del");
                     cm.sendToAllUsersInRoomWithNoSmilies(text, u.getNewName());
-                    text = getCommand("del_topic");
+                    cmdKey = "del_topic";
                 } else {
                     text = getCommand("script_topic_add");
                     text = text.replace("%topic%", ut.preReplace(topic));
@@ -531,13 +540,13 @@ public class Commands implements Software {
                         db.updateRoomData(room, "topic", topic);
                     }
                     cm.getRoom(room).setTopic(topic);
-                    text = getCommand("set_topic");
-                    text = text.replace("%topic%", ut.preReplace(topic));
+                    cmdKey = "set_topic";
                 }
-                text = text.replace("%color%", ut.preReplace(u.getColor()));
-                text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-                text = text.replace("%room%", ut.preReplace(room));
-                cm.sendTimedMsgToAllUsersInRoom(text, room);
+                cm.sendCommandToRoom(cmdKey, room, java.util.Map.of(
+                        "%topic%", ut.preReplace(topic == null ? "" : topic),
+                        "%color%", ut.preReplace(u.getColor()),
+                        "%nick%", ut.preReplace(u.getNewName()),
+                        "%room%", ut.preReplace(room)));
 
             }
         }
@@ -618,21 +627,22 @@ public class Commands implements Software {
                 text = text.replace("%room%", ut.preReplace(room));
                 cm.sendSystemToOne(text, nick);
             } else {
+                String cmdKey;
                 if (cm.getRoom(room).isOpen()) {
                     text = getCommand("script_room_close");
                     cm.sendToAllUsersInRoom(text, u.getNewName(), false);
-                    text = getCommand("close_room");
+                    cmdKey = "close_room";
                     cm.getRoom(room).setOpen(false);
                 } else {
                     text = getCommand("script_room_open");
                     cm.sendToAllUsersInRoom(text, u.getNewName(), false);
-                    text = getCommand("open_room");
+                    cmdKey = "open_room";
                     cm.getRoom(room).setOpen(true);
                 }
-                text = text.replace("%color%", ut.preReplace(u.getColor()));
-                text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-                text = text.replace("%room%", ut.preReplace(room));
-                cm.sendTimedMsgToAllUsersInRoom(text, room);
+                cm.sendCommandToRoom(cmdKey, room, java.util.Map.of(
+                        "%color%", ut.preReplace(u.getColor()),
+                        "%nick%", ut.preReplace(u.getNewName()),
+                        "%room%", ut.preReplace(room)));
             }
         }
     }
@@ -974,15 +984,14 @@ public class Commands implements Software {
         } else if (u1.isSuperuser()) {
             isSuperuser(input, nick);
         } else {
-            var text = getCommand("set_su");
             var room = u.getRoom();
-            text = text.replace("%color%", ut.preReplace(u.getColor()));
-            text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-            text = text.replace("%su_color%", ut.preReplace(u1.getColor()));
-            text = text.replace("%su_nick%", ut.preReplace(u1.getNewName()));
-            cm.sendTimedMsgToAllUsersInRoom(text, room);
+            cm.sendCommandToRoom("set_su", room, java.util.Map.of(
+                    "%color%", ut.preReplace(u.getColor()),
+                    "%nick%", ut.preReplace(u.getNewName()),
+                    "%su_color%", ut.preReplace(u1.getColor()),
+                    "%su_nick%", ut.preReplace(u1.getNewName())));
             u1.setStatus(3);
-            text = getCommand("script_su_give");
+            var text = getCommand("script_su_give");
             text = text.replace("%nick%", ut.preReplace(u1.getNewName()));
             text = text.replace("%status%", "3");
             cm.sendToAllUsersInRoom(text, room);
@@ -1042,7 +1051,10 @@ public class Commands implements Software {
             text = text.replace("%color%", ut.preReplace(u.getColor()));
             text = text.replace("%nick%", ut.preReplace(u.getNewName()));
             text = text.replace("%newnick%", ut.preReplace(input));
-            cm.sendTimedMsgToAllUsersInRoom(text, u.getRoom());
+            cm.sendCommandToRoom("user_nick", u.getRoom(), java.util.Map.of(
+                    "%color%", ut.preReplace(u.getColor()),
+                    "%nick%", ut.preReplace(u.getNewName()),
+                    "%newnick%", ut.preReplace(input)));
             ArrayList<UsersPrivchat> target = cm.getTarget(u.getName());
             for (UsersPrivchat u1 : cm.getUsersPrivchat().values()) {
                 if (u1.getName().equalsIgnoreCase(u.getName())) {
@@ -1114,12 +1126,11 @@ public class Commands implements Software {
             isNotRegistered(input, nick);
         } else {
             if (cm.isOnline(input)) {
-                var text = getCommand("set_room_su");
-                text = text.replace("%color%", ut.preReplace(u.getColor()));
-                text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-                text = text.replace("%su_color%", ut.preReplace(u1.getColor()));
-                text = text.replace("%su_nick%", ut.preReplace(u1.getNewName()));
-                cm.sendTimedMsgToAllUsersInRoom(text, r.getName());
+                cm.sendCommandToRoom("set_room_su", r.getName(), java.util.Map.of(
+                        "%color%", ut.preReplace(u.getColor()),
+                        "%nick%", ut.preReplace(u.getNewName()),
+                        "%su_color%", ut.preReplace(u1.getColor()),
+                        "%su_nick%", ut.preReplace(u1.getNewName())));
                 u1.setStatus(3);
                 list.add(u1.getNewName().toLowerCase());
                 var users = list.toString();
@@ -1128,7 +1139,7 @@ public class Commands implements Software {
                 users = users.replace(",", "");
                 getMaster().getConfig().getDb().updateRoomData(r.getName(), "su", users.trim().toLowerCase());
                 r.setSus(list);
-                text = getCommand("script_su_give");
+                var text = getCommand("script_su_give");
                 text = text.replace("%nick%", ut.preReplace(u1.getNewName()));
                 text = text.replace("%status%", "3");
                 cm.sendToAllUsersInRoom(text, r.getName());
@@ -1182,12 +1193,11 @@ public class Commands implements Software {
             isNotRegistered(input, nick);
         } else {
             if (cm.isOnline(input)) {
-                var text = getCommand("del_room_su");
-                text = text.replace("%color%", ut.preReplace(u.getColor()));
-                text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-                text = text.replace("%su_color%", ut.preReplace(u1.getColor()));
-                text = text.replace("%su_nick%", ut.preReplace(u1.getNewName()));
-                cm.sendTimedMsgToAllUsersInRoom(text, u.getRoom());
+                cm.sendCommandToRoom("del_room_su", u.getRoom(), java.util.Map.of(
+                        "%color%", ut.preReplace(u.getColor()),
+                        "%nick%", ut.preReplace(u.getNewName()),
+                        "%su_color%", ut.preReplace(u1.getColor()),
+                        "%su_nick%", ut.preReplace(u1.getNewName())));
                 u1.setStatus(1);
                 list.remove(u1.getNewName().toLowerCase());
                 var users = list.toString();
@@ -1196,7 +1206,7 @@ public class Commands implements Software {
                 users = users.replace(",", "");
                 getMaster().getConfig().getDb().updateRoomData(r.getName(), "su", users.trim().toLowerCase());
                 r.setSus(list);
-                text = getCommand("script_su_remove");
+                var text = getCommand("script_su_remove");
                 text = text.replace("%nick%", ut.preReplace(u1.getNewName()));
                 text = text.replace("%status%", "1");
                 cm.sendToAllUsersInRoom(text, u1.getName(), false);
@@ -1292,15 +1302,14 @@ public class Commands implements Software {
         } else if (!u1.isVoice()) {
             noVoice(input, nick);
         } else {
-            var text = getCommand("moderator_remove");
-            text = text.replace("%color%", ut.preReplace(u.getColor()));
-            text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-            text = text.replace("%moderator_color%", ut.preReplace(u1.getColor()));
-            text = text.replace("%moderator_nick%", ut.preReplace(u1.getNewName()));
-            text = text.replace("%room%", ut.preReplace(u.getRoom()));
-            cm.sendTimedMsgToAllUsersInRoom(text, u.getRoom());
+            cm.sendCommandToRoom("moderator_remove", u.getRoom(), java.util.Map.of(
+                    "%color%", ut.preReplace(u.getColor()),
+                    "%nick%", ut.preReplace(u.getNewName()),
+                    "%moderator_color%", ut.preReplace(u1.getColor()),
+                    "%moderator_nick%", ut.preReplace(u1.getNewName()),
+                    "%room%", ut.preReplace(u.getRoom())));
             u1.setStatus(1);
-            text = getCommand("script_moderator_remove");
+            var text = getCommand("script_moderator_remove");
             text = text.replace("%nick%", ut.preReplace(u1.getNewName()));
             text = text.replace("%status%", "1");
             cm.sendToAllUsersInRoom(text, u1.getName(), false);
@@ -1331,15 +1340,14 @@ public class Commands implements Software {
         } else if (u1.isVoice()) {
             isVoice(input, nick);
         } else {
-            var text = getCommand("set_moderator");
-            text = text.replace("%color%", ut.preReplace(u.getColor()));
-            text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-            text = text.replace("%moderator_color%", ut.preReplace(u1.getColor()));
-            text = text.replace("%moderator_nick%", ut.preReplace(u1.getNewName()));
-            text = text.replace("%room%", ut.preReplace(u.getRoom()));
-            cm.sendTimedMsgToAllUsersInRoom(text, u.getRoom());
+            cm.sendCommandToRoom("set_moderator", u.getRoom(), java.util.Map.of(
+                    "%color%", ut.preReplace(u.getColor()),
+                    "%nick%", ut.preReplace(u.getNewName()),
+                    "%moderator_color%", ut.preReplace(u1.getColor()),
+                    "%moderator_nick%", ut.preReplace(u1.getNewName()),
+                    "%room%", ut.preReplace(u.getRoom())));
             u1.setStatus(2);
-            text = getCommand("script_moderator_give");
+            var text = getCommand("script_moderator_give");
             text = text.replace("%nick%", ut.preReplace(u1.getNewName()));
             text = text.replace("%status%", "2");
             cm.sendToAllUsersInRoom(text, u1.getName(), false);
@@ -1372,14 +1380,13 @@ public class Commands implements Software {
         } else if (!u1.isSuperuser()) {
             noSuperuser(input, nick);
         } else {
-            var text = getCommand("del_su");
-            text = text.replace("%color%", ut.preReplace(u.getColor()));
-            text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-            text = text.replace("%su_color%", ut.preReplace(u1.getColor()));
-            text = text.replace("%su_nick%", ut.preReplace(u1.getNewName()));
-            cm.sendTimedMsgToAllUsersInRoom(text, u.getRoom());
+            cm.sendCommandToRoom("del_su", u.getRoom(), java.util.Map.of(
+                    "%color%", ut.preReplace(u.getColor()),
+                    "%nick%", ut.preReplace(u.getNewName()),
+                    "%su_color%", ut.preReplace(u1.getColor()),
+                    "%su_nick%", ut.preReplace(u1.getNewName())));
             u1.setStatus(1);
-            text = getCommand("script_su_remove");
+            var text = getCommand("script_su_remove");
             text = text.replace("%nick%", ut.preReplace(u1.getNewName()));
             text = text.replace("%status%", "1");
             cm.sendToAllUsersInRoom(text, u1.getName(), false);
@@ -1510,12 +1517,11 @@ public class Commands implements Software {
             cm.sendSystemToOne(text, nick);
         } else {
             var oldroom = u.getRoom();
-            var text = getCommand("sepa_room");
-            text = text.replace("%color%", ut.preReplace(u.getColor()));
-            text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-            text = text.replace("%room%", ut.preReplace(room));
-            cm.sendTimedMsgToAllUsersInRoom(text, oldroom);
-            text = getCommand("sepa");
+            cm.sendCommandToRoom("sepa_room", oldroom, java.util.Map.of(
+                    "%color%", ut.preReplace(u.getColor()),
+                    "%nick%", ut.preReplace(u.getNewName()),
+                    "%room%", ut.preReplace(room)));
+            var text = getCommand("sepa");
             text = text.replace("%room%", ut.preReplace(room));
             cm.sendSystemToOne(text, nick);
 
@@ -1602,25 +1608,23 @@ public class Commands implements Software {
              * Raumwechselnachricht wird an alle Chatter im Raum
              * &uuml;bermittelt!
              */
-            var text = getCommand("change_room");
-            text = text.replace("%color%", ut.preReplace(u.getColor()));
-            text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-            text = text.replace("%room%", ut.preReplace(room));
-            cm.sendTimedMsgToAllUsersInRoom(text, oldroom);
+            cm.sendCommandToRoom("change_room", oldroom, java.util.Map.of(
+                    "%color%", ut.preReplace(u.getColor()),
+                    "%nick%", ut.preReplace(u.getNewName()),
+                    "%room%", ut.preReplace(room)));
 
             /**
              * Dieses Script entfernt den Chatter aus den altem Raum.
              */
-            text = getCommand("script_change_remove");
+            var text = getCommand("script_change_remove");
             text = text.replace("%nick%", ut.preReplace(u.getName()));
             cm.sendToAllUsersInRoomWithNoSmilies(text, u.getName());
             cm.sendToOne(cm.clearUserlist(), u.getName());
 
-            text = getCommand("join_room");
-            text = text.replace("%color%", ut.preReplace(u.getColor()));
-            text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-            text = text.replace("%room%", ut.preReplace(oldroom));
-            cm.sendTimedMsgToAllUsersInRoom(text, room);
+            cm.sendCommandToRoom("join_room", room, java.util.Map.of(
+                    "%color%", ut.preReplace(u.getColor()),
+                    "%nick%", ut.preReplace(u.getNewName()),
+                    "%room%", ut.preReplace(oldroom)));
             /**
              * Hier wird der Raum gewechselt
              */
@@ -1706,31 +1710,35 @@ public class Commands implements Software {
                     text = text.replace("%nick%", ut.preReplace(u.getNewName()));
                     cm.sendSystemToOne(text, nick);
                 } else {
-                    var text = getCommand("change_room_beam");
-                    text = text.replace("%beamer_color%", ut.preReplace(u1.getColor()));
-                    text = text.replace("%beamer_nick%", ut.preReplace(u1.getNewName()));
-                    text = text.replace("%color%", ut.preReplace(u.getColor()));
-                    text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-                    text = text.replace("%room%", ut.preReplace(room));
-                    cm.sendTimedMsgToAllUsersInRoom(text, oldroom);
+                    cm.sendCommandToRoom("change_room_beam", oldroom, java.util.Map.of(
+                            "%beamer_color%", ut.preReplace(u1.getColor()),
+                            "%beamer_nick%", ut.preReplace(u1.getNewName()),
+                            "%color%", ut.preReplace(u.getColor()),
+                            "%nick%", ut.preReplace(u.getNewName()),
+                            "%room%", ut.preReplace(room)));
                     if (!u.getRoom().equals(u1.getRoom())) {
-                        cm.sendSystemToOne(text, nick);
+                        var beamerText = cm.getCommand(nick, "change_room_beam");
+                        beamerText = beamerText.replace("%beamer_color%", ut.preReplace(u1.getColor()));
+                        beamerText = beamerText.replace("%beamer_nick%", ut.preReplace(u1.getNewName()));
+                        beamerText = beamerText.replace("%color%", ut.preReplace(u.getColor()));
+                        beamerText = beamerText.replace("%nick%", ut.preReplace(u.getNewName()));
+                        beamerText = beamerText.replace("%room%", ut.preReplace(room));
+                        cm.sendSystemToOne(beamerText, nick);
                     }
                     /**
                      * Dieses Script entfernt den Chatter aus den altem Raum.
                      */
-                    text = getCommand("script_change_remove");
+                    var text = getCommand("script_change_remove");
                     text = text.replace("%nick%", ut.preReplace(u.getName()));
                     cm.sendToAllUsersInRoomWithNoSmilies(text, u.getName());
                     cm.sendToOneWithNoSmilies(cm.clearUserlist(), u.getName());
                     if (cm.roomExists(room)) {
-                        text = getCommand("join_room_beam");
-                        text = text.replace("%beamer_color%", ut.preReplace(u1.getColor()));
-                        text = text.replace("%beamer_nick%", ut.preReplace(u1.getNewName()));
-                        text = text.replace("%color%", ut.preReplace(u.getColor()));
-                        text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-                        text = text.replace("%room%", ut.preReplace(oldroom));
-                        cm.sendTimedMsgToAllUsersInRoom(text, room);
+                        cm.sendCommandToRoom("join_room_beam", room, java.util.Map.of(
+                                "%beamer_color%", ut.preReplace(u1.getColor()),
+                                "%beamer_nick%", ut.preReplace(u1.getNewName()),
+                                "%color%", ut.preReplace(u.getColor()),
+                                "%nick%", ut.preReplace(u.getNewName()),
+                                "%room%", ut.preReplace(oldroom)));
                         /**
                          * Hier wird der Raum gewechselt
                          */
@@ -1822,21 +1830,21 @@ public class Commands implements Software {
                 text = text.replace("%nick%", ut.preReplace(u.getNewName()));
                 cm.sendSystemToOne(text, nick);
             } else {
-                var text = getCommand("change_room_catch");
-                text = text.replace("%catcher_color%", ut.preReplace(u1.getColor()));
-                text = text.replace("%catcher_nick%", ut.preReplace(u1.getNewName()));
-                text = text.replace("%color%", ut.preReplace(u.getColor()));
-                text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-                text = text.replace("%room%", ut.preReplace(room));
-                cm.sendTimedMsgToAllUsersInRoom(text, u.getRoom());
+                java.util.Map<String, String> catchRepl = java.util.Map.of(
+                        "%catcher_color%", ut.preReplace(u1.getColor()),
+                        "%catcher_nick%", ut.preReplace(u1.getNewName()),
+                        "%color%", ut.preReplace(u.getColor()),
+                        "%nick%", ut.preReplace(u.getNewName()),
+                        "%room%", ut.preReplace(room));
+                cm.sendCommandToRoom("change_room_catch", u.getRoom(), catchRepl);
                 if (!u.getRoom().equals(u1.getRoom())) {
-                    cm.sendTimedMsgToAllUsersInRoom(text, u1.getRoom());
+                    cm.sendCommandToRoom("change_room_catch", u1.getRoom(), catchRepl);
                 }
 
                 /**
                  * Dieses Script entfernt den Chatter aus den altem Raum.
                  */
-                text = getCommand("script_change_remove");
+                var text = getCommand("script_change_remove");
                 text = text.replace("%nick%", ut.preReplace(u.getName()));
                 cm.sendToAllUsersInRoomWithNoSmilies(text, u.getName());
                 cm.sendToOne(cm.clearUserlist(), u.getName());
@@ -1963,16 +1971,15 @@ public class Commands implements Software {
              * Raumwechselnachricht wird an alle Chatter im Raum
              * &uuml;bermittelt!
              */
-            var text = getCommand("change_room");
-            text = text.replace("%color%", ut.preReplace(u.getColor()));
-            text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-            text = text.replace("%room%", ut.preReplace(room));
-            cm.sendTimedMsgToAllUsersInRoom(text, oldroom);
+            cm.sendCommandToRoom("change_room", oldroom, java.util.Map.of(
+                    "%color%", ut.preReplace(u.getColor()),
+                    "%nick%", ut.preReplace(u.getNewName()),
+                    "%room%", ut.preReplace(room)));
 
             /**
              * Dieses Script entfernt den Chatter aus den altem Raum.
              */
-            text = getCommand("script_change_remove");
+            var text = getCommand("script_change_remove");
             text = text.replace("%nick%", ut.preReplace(u.getName()));
             cm.sendToAllUsersInRoomWithNoSmilies(text, u.getName());
             cm.sendToOne(cm.clearUserlist(), u.getName());
@@ -1983,11 +1990,10 @@ public class Commands implements Software {
              * Chatter den Raum betritt!
              */
             if (cm.roomExists(room)) {
-                text = getCommand("join_room");
-                text = text.replace("%color%", ut.preReplace(u.getColor()));
-                text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-                text = text.replace("%room%", ut.preReplace(oldroom));
-                cm.sendTimedMsgToAllUsersInRoom(text, room);
+                cm.sendCommandToRoom("join_room", room, java.util.Map.of(
+                        "%color%", ut.preReplace(u.getColor()),
+                        "%nick%", ut.preReplace(u.getNewName()),
+                        "%room%", ut.preReplace(oldroom)));
                 /**
                  * Hier wird der Raum gewechselt
                  */
@@ -2089,29 +2095,27 @@ public class Commands implements Software {
             morePower(input, nick);
         } else {
             u1.setKicked(true);
-            var text = getCommand("kick_room");
-            text = text.replace("%kick_color%", ut.preReplace(u1.getColor()));
-            text = text.replace("%kick_nick%", ut.preReplace(u1.getNewName()));
-            text = text.replace("%color%", ut.preReplace(u.getColor()));
-            text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-            text = text.replace("%room%", ut.preReplace(room));
-            cm.sendTimedMsgToAllUsersInRoom(text, oldroom);
+            cm.sendCommandToRoom("kick_room", oldroom, java.util.Map.of(
+                    "%kick_color%", ut.preReplace(u1.getColor()),
+                    "%kick_nick%", ut.preReplace(u1.getNewName()),
+                    "%color%", ut.preReplace(u.getColor()),
+                    "%nick%", ut.preReplace(u.getNewName()),
+                    "%room%", ut.preReplace(room)));
             /**
              * Dieses Script entfernt den Chatter aus den altem Raum.
              */
-            text = getCommand("script_change_remove");
+            var text = getCommand("script_change_remove");
             text = text.replace("%nick%", u1.getNewName());
             cm.sendToAllUsersInRoomWithNoSmilies(text, u1.getName());
             cm.sendToOneWithNoSmilies(cm.clearUserlist(), u1.getName());
             if (cm.roomExists(room)) {
-                text = getCommand("land_room");
-                text = text.replace("%kick_color%", ut.preReplace(u1.getColor()));
-                text = text.replace("%kick_nick%", ut.preReplace(u1.getNewName()));
-                text = text.replace("%old_room%", ut.preReplace(oldroom));
-                text = text.replace("%color%", ut.preReplace(u.getColor()));
-                text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-                text = text.replace("%room%", ut.preReplace(room));
-                cm.sendTimedMsgToAllUsersInRoom(text, room);
+                cm.sendCommandToRoom("land_room", room, java.util.Map.of(
+                        "%kick_color%", ut.preReplace(u1.getColor()),
+                        "%kick_nick%", ut.preReplace(u1.getNewName()),
+                        "%old_room%", ut.preReplace(oldroom),
+                        "%color%", ut.preReplace(u.getColor()),
+                        "%nick%", ut.preReplace(u.getNewName()),
+                        "%room%", ut.preReplace(room)));
 
                 /**
                  * Hier wird der Raum gewechselt
@@ -2185,13 +2189,12 @@ public class Commands implements Software {
         } else if (u1.getStatus() > u.getStatus()) {
             morePower(input, nick);
         } else if (!u1.isGagged()) {
-            var text = getCommand("user_gag");
-            text = text.replace("%gag_color%", ut.preReplace(u1.getColor()));
-            text = text.replace("%gag_nick%", ut.preReplace(u1.getNewName()));
-            text = text.replace("%color%", ut.preReplace(u.getColor()));
-            text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-            cm.sendTimedMsgToAllUsersInRoom(text, room);
-            text = getCommand("script_gag_add");
+            cm.sendCommandToRoom("user_gag", room, java.util.Map.of(
+                    "%gag_color%", ut.preReplace(u1.getColor()),
+                    "%gag_nick%", ut.preReplace(u1.getNewName()),
+                    "%color%", ut.preReplace(u.getColor()),
+                    "%nick%", ut.preReplace(u.getNewName())));
+            var text = getCommand("script_gag_add");
             text = text.replace("%nick%", ut.preReplace(u1.getNewName()));
             cm.sendToAllUsersInRoomWithNoSmilies(text, u1.getName());
             u1.setGagged(true);
@@ -2199,13 +2202,12 @@ public class Commands implements Software {
         } else {
             u1.setGagged(false);
             db.updateSession(u1.getName(), "gag", "0");
-            var text = getCommand("user_ungag");
-            text = text.replace("%gag_color%", ut.preReplace(u1.getColor()));
-            text = text.replace("%gag_nick%", ut.preReplace(u1.getNewName()));
-            text = text.replace("%color%", ut.preReplace(u.getColor()));
-            text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-            cm.sendTimedMsgToAllUsersInRoom(text, room);
-            text = getCommand("script_gag_remove");
+            cm.sendCommandToRoom("user_ungag", room, java.util.Map.of(
+                    "%gag_color%", ut.preReplace(u1.getColor()),
+                    "%gag_nick%", ut.preReplace(u1.getNewName()),
+                    "%color%", ut.preReplace(u.getColor()),
+                    "%nick%", ut.preReplace(u.getNewName())));
+            var text = getCommand("script_gag_remove");
             text = text.replace("%nick%", ut.preReplace(u1.getNewName()));
             cm.sendToAllUsersInRoomWithNoSmilies(text, u1.getName());
         }
@@ -2250,12 +2252,11 @@ public class Commands implements Software {
                 cm.sendSystemToOne(text, nick);
             } else {
                 number = round(ut.getRnd().nextFloat() * eyes);
-                text = getCommand("dice");
-                text = text.replace("%color%", ut.preReplace(u.getColor()));
-                text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-                text = text.replace("%eyes%", ut.preReplace(Integer.toString(eyes)));
-                text = text.replace("%number%", ut.preReplace(Integer.toString(number)));
-                cm.sendTimedMsgToAllUsersInRoom(text, u.getRoom());
+                cm.sendCommandToRoom("dice", u.getRoom(), java.util.Map.of(
+                        "%color%", ut.preReplace(u.getColor()),
+                        "%nick%", ut.preReplace(u.getNewName()),
+                        "%eyes%", ut.preReplace(Integer.toString(eyes)),
+                        "%number%", ut.preReplace(Integer.toString(number))));
             }
         }
     }
@@ -2360,12 +2361,11 @@ public class Commands implements Software {
         if (u.isAway()) {
             var reason = u.getAwayReason();
             reason = ut.replaceLinks(reason);
-            var text = getCommand("away_end");
-            text = text.replace("%color%", ut.preReplace(u.getColor()));
-            text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-            text = text.replace("%reason%", ut.preReplace(reason));
-            cm.sendTimedMsgToAllUsersInRoom(text, u.getRoom());
-            text = getCommand("script_away_remove");
+            cm.sendCommandToRoom("away_end", u.getRoom(), java.util.Map.of(
+                    "%color%", ut.preReplace(u.getColor()),
+                    "%nick%", ut.preReplace(u.getNewName()),
+                    "%reason%", ut.preReplace(reason)));
+            var text = getCommand("script_away_remove");
             text = text.replace("%nick%", ut.preReplace(u.getNewName()));
             text = text.replace("%away_reason%", "");
             text = text.replace("%away_status%", "0");
@@ -2395,16 +2395,15 @@ public class Commands implements Software {
         if (u.isGagged()) {
             gagged(nick, u.getRoom());
         } else {
-            var text = getCommand("away_start");
-            text = text.replace("%color%", ut.preReplace(u.getColor()));
-            text = text.replace("%nick%", ut.preReplace(u.getNewName()));
             u.setAwayReason(input);
-            input = ut.replaceLinks(input);
-            text = text.replace("%reason%", ut.preReplace(input));
-            cm.sendTimedMsgToAllUsersInRoom(text, u.getRoom());
+            var awayReason = ut.replaceLinks(input);
+            cm.sendCommandToRoom("away_start", u.getRoom(), java.util.Map.of(
+                    "%color%", ut.preReplace(u.getColor()),
+                    "%nick%", ut.preReplace(u.getNewName()),
+                    "%reason%", ut.preReplace(awayReason)));
             u.setAway(true);
             input = u.getAwayReason();
-            text = getCommand("script_away_add");
+            var text = getCommand("script_away_add");
             text = text.replace("%nick%", ut.preReplace(u.getNewName()));
             text = text.replace("%away_reason%", ut.preReplace(input));
             text = text.replace("%away_status%", "1");
@@ -2942,14 +2941,10 @@ public class Commands implements Software {
         if (!cm.isPrivileged("system", u.getStatus())) {
             low("sys", nick);
         } else {
-            var line = line();
-            cm.sendToAllUsersInChat(line);
-            var text = getCommand("system_message");
-            text = text.replace("%color%", ut.preReplace(u.getColor()));
-            text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-            text = text.replace("%text%", ut.preReplace(input));
-            cm.sendToAllUsersInChat(text);
-            cm.sendToAllUsersInChat(line);
+            cm.sendCommandToAllUsersInChat("system_message", java.util.Map.of(
+                    "%color%", ut.preReplace(u.getColor()),
+                    "%nick%", ut.preReplace(u.getNewName()),
+                    "%text%", ut.preReplace(input)));
         }
     }
 
@@ -2970,15 +2965,6 @@ public class Commands implements Software {
         text = getCommand("refresh");
         cm.sendSystemToOne(text, nick);
         gc();
-    }
-
-    /**
-     * Zeichnet eine einfache Linie
-     */
-    private String line() {
-        var conf = getMaster().getConfig().getMaster().getConfig();
-        var db = conf.getDb();
-        return getCommand("draw_line");
     }
 
     /**
@@ -3055,7 +3041,6 @@ public class Commands implements Software {
         var db = conf.getDb();
         var ut = getMaster().getUtil();
         var u = cm.getUser(nick);
-        String text = null;
         var color = u.getColor();
         var name = u.getNewName();
         var room = u.getRoom();
@@ -3063,18 +3048,16 @@ public class Commands implements Software {
         if (!cm.isPrivileged("moderate_room", u.getStatus())) {
             low("mod", nick);
         } else if (r.isModerated()) {
-            text = getCommand("moderate_room_remove");
-            text = text.replace("%room%", ut.preReplace(room));
-            text = text.replace("%color%", ut.preReplace(color));
-            text = text.replace("%nick%", ut.preReplace(name));
-            cm.sendSystemToAllUsersInRoom(text, room);
+            cm.sendCommandSystemToRoom("moderate_room_remove", room, java.util.Map.of(
+                    "%room%", ut.preReplace(room),
+                    "%color%", ut.preReplace(color),
+                    "%nick%", ut.preReplace(name)));
             r.setModerated(false);
         } else {
-            text = getCommand("moderate_room_add");
-            text = text.replace("%room%", ut.preReplace(room));
-            text = text.replace("%color%", ut.preReplace(color));
-            text = text.replace("%nick%", ut.preReplace(name));
-            cm.sendSystemToAllUsersInRoom(text, room);
+            cm.sendCommandSystemToRoom("moderate_room_add", room, java.util.Map.of(
+                    "%room%", ut.preReplace(room),
+                    "%color%", ut.preReplace(color),
+                    "%nick%", ut.preReplace(name)));
             r.setModerated(true);
         }
     }

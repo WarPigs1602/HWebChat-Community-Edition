@@ -1028,6 +1028,53 @@ public final class Util implements Software {
     }
 
     /**
+     * Liest den Wert eines beliebigen Cookies aus dem Request.
+     *
+     * @param request Der HTTP-Request
+     * @param name Der Cookie-Name
+     * @return Der Cookie-Wert oder ein leerer String, falls nicht vorhanden
+     */
+    protected String readCookieValue(HttpServletRequest request, String name) {
+        if (request == null || name == null) {
+            return "";
+        }
+        var cookies = request.getCookies();
+        if (cookies != null) {
+            for (var cookie : cookies) {
+                if (name.equals(cookie.getName())) {
+                    return cookie.getValue() != null ? cookie.getValue() : "";
+                }
+            }
+        }
+        return "";
+    }
+
+    /**
+     * Liest den Wert eines Cookies aus einem rohen Cookie-Header
+     * (z.&nbsp;B. aus dem WebSocket-Handshake).
+     *
+     * @param cookieHeader Der komplette Cookie-Header
+     * @param name Der Cookie-Name
+     * @return Der Cookie-Wert oder ein leerer String, falls nicht vorhanden
+     */
+    protected String readCookieFromHeader(String cookieHeader, String name) {
+        if (cookieHeader == null || cookieHeader.isBlank() || name == null) {
+            return "";
+        }
+        for (var part : cookieHeader.split(";")) {
+            var pair = part.trim();
+            var idx = pair.indexOf('=');
+            if (idx > 0) {
+                var key = pair.substring(0, idx).trim();
+                if (key.equals(name)) {
+                    return pair.substring(idx + 1).trim();
+                }
+            }
+        }
+        return "";
+    }
+
+    /**
      * Parst den Host und ermittelt den Skin
      *
      * @param skin Der vorgegebene Skin

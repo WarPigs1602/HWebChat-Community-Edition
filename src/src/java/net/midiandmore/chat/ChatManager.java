@@ -587,6 +587,28 @@ public final class ChatManager {
     }
 
     /**
+     * Sendet einen Befehl an alle im Chat und rendert ihn pro Empf&auml;nger in
+     * dessen eigener Sprache.
+     *
+     * @param commandName Der Command-Key
+     * @param replacements Die Platzhalter-Ersetzungen
+     */
+    protected void sendCommandToAllUsersInChat(String commandName, java.util.Map<String, String> replacements) {
+        var ut = getMaster().getUtil();
+        var db = getMaster().getConfig().getDb();
+        for (var name : getUsers().keySet()) {
+            var lang = getUserLang(name);
+            var text = db.getCommand(commandName, lang);
+            for (var entry : replacements.entrySet()) {
+                text = text.replace(entry.getKey(), entry.getValue());
+            }
+            text = ut.replaceSmilies(text);
+            sendText(text, name);
+            LOGGING.log(FINE, "{0}<br>", ut.removeHtml(text));
+        }
+    }
+
+    /**
      * Sendet eine Nachricht an alle im Chat (Mit optionalen Timestamp)
      *
      * @param text Der Text
@@ -859,6 +881,30 @@ public final class ChatManager {
                 text = ut.replaceSmilies(text);
             }
             sendTimedMsgToOne(text, nick);
+        }
+    }
+
+    /**
+     * Wie sendCommandToRoom, aber als Systemnachricht (mit system_msg-Rahmen).
+     * Rendert die Nachricht pro Empf&auml;nger in dessen Sprache.
+     */
+    protected void sendCommandSystemToRoom(String commandName, String room, java.util.Map<String, String> replacements) {
+        var ut = getMaster().getUtil();
+        var db = getMaster().getConfig().getDb();
+        var e = getAllUserNamesInRoom(room);
+        if (e == null) {
+            return;
+        }
+        for (var nick : e) {
+            var lang = getUserLang(nick);
+            var text = db.getCommand(commandName, lang);
+            for (var entry : replacements.entrySet()) {
+                text = text.replace(entry.getKey(), entry.getValue());
+            }
+            if (getRoom(room).isAllowSmilies()) {
+                text = ut.replaceSmilies(text);
+            }
+            sendSystemToOne(text, nick);
         }
     }
 

@@ -50,15 +50,31 @@ public class ChatServices {
      * @param response
      */
     private String readLang(HttpServletRequest request, Map<String, String> map) {
-        return map.getOrDefault("lang", "");
+        var lang = map.getOrDefault("lang", "");
+        if (lang != null && !lang.isBlank()) {
+            return lang;
+        }
+        // Kein ?lang= in der Anfrage -> auf das gespeicherte Cookie zur&uuml;ckgreifen
+        var ut = Bootstrap.boot.getUtil();
+        return ut.readCookieValue(request, "lang");
     }
 
-    private void applyLang(HttpServletRequest request, Map<String, String> map) {
+    private void applyLang(HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
         var lang = readLang(request, map);
         if (!lang.isBlank()) {
             var session = request.getSession(false);
             if (session != null) {
                 session.setAttribute("lang", lang);
+            }
+            // Sprache dauerhaft als Cookie speichern, damit sie Sitzungen &uuml;berdauert.
+            // Nur schreiben, wenn die Sprache explizit per ?lang= gesetzt wurde.
+            var requestedLang = map.getOrDefault("lang", "");
+            if (response != null && requestedLang != null && !requestedLang.isBlank()) {
+                var cookie = new jakarta.servlet.http.Cookie("lang", lang);
+                cookie.setPath("/");
+                cookie.setMaxAge(60 * 60 * 24 * 365);
+                cookie.setHttpOnly(false);
+                response.addCookie(cookie);
             }
         }
     }
@@ -74,7 +90,7 @@ public class ChatServices {
             var value = map.getOrDefault(key, arr);
             map2.put(key, value[0]);
         }
-        applyLang(request, map2);
+        applyLang(request, response, map2);
         if (map2.getOrDefault("page", "").isBlank()) {
             // Die Startseite
             response.setContentType("text/html; charset=" + conf.getString("charset"));
@@ -3698,7 +3714,7 @@ public class ChatServices {
             map.replace("nick", nick);
         }
         var session = request.getSession();
-        applyLang(request, map);
+        applyLang(request, response, map);
         var pwd = map.getOrDefault("pwd", "");
         var sid = map.getOrDefault("sid", "");
         sid = !sid.isBlank() ? sid : generateSid();
@@ -3852,7 +3868,7 @@ public class ChatServices {
         var target = map.getOrDefault("target", "");
         var skin = map.getOrDefault("skin", "");
         var session = request.getSession();
-        applyLang(request, map);
+        applyLang(request, response, map);
         if ((target.isBlank() && session == null) || (target.isBlank() && session.isNew())) {
             if (db.isRegistered(nick)) {
                 if (!nick.equalsIgnoreCase(db.getData(nick, "nick2"))) {

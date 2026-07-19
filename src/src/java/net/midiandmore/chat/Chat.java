@@ -62,6 +62,18 @@ public class Chat {
             var hs = (HttpSession) config.getUserProperties()
                     .get(HttpSession.class.getName());
             setHttpSession(hs);
+            // Sprache aus dem Cookie (oder ?lang=) &uuml;bernehmen, damit die
+            // gew&auml;hlte Sprache auch im Chat/WebSocket erhalten bleibt.
+            if (getHttpSession() != null && getHttpSession().getAttribute("lang") == null) {
+                var langParam = getMap().containsKey("lang") ? getMap().get("lang").get(0) : "";
+                if (langParam == null || langParam.isBlank()) {
+                    var cookieHeader = (String) config.getUserProperties().get("cookie");
+                    langParam = ut.readCookieFromHeader(cookieHeader, "lang");
+                }
+                if (langParam != null && !langParam.isBlank()) {
+                    getHttpSession().setAttribute("lang", langParam);
+                }
+            }
             var target = getMap().containsKey("target") ? getMap().get("target").get(0) : "";
             if (!getMap().containsKey("target")) {
                 var pwd = getMap().containsKey("pwd") ? getMap().get("pwd").get(0) : (String) getHttpSession().getAttribute("pwd");
