@@ -49,6 +49,20 @@ public class ChatServices {
      * @param request
      * @param response
      */
+    private String readLang(HttpServletRequest request, Map<String, String> map) {
+        return map.getOrDefault("lang", "");
+    }
+
+    private void applyLang(HttpServletRequest request, Map<String, String> map) {
+        var lang = readLang(request, map);
+        if (!lang.isBlank()) {
+            var session = request.getSession(false);
+            if (session != null) {
+                session.setAttribute("lang", lang);
+            }
+        }
+    }
+
     protected void parsePage(HttpServletRequest request, HttpServletResponse response) {
         var map = request.getParameterMap();
         var conf = Bootstrap.boot.getConfig();
@@ -60,6 +74,7 @@ public class ChatServices {
             var value = map.getOrDefault(key, arr);
             map2.put(key, value[0]);
         }
+        applyLang(request, map2);
         if (map2.getOrDefault("page", "").isBlank()) {
             // Die Startseite
             response.setContentType("text/html; charset=" + conf.getString("charset"));
@@ -1353,25 +1368,25 @@ public class ChatServices {
                 replacement = "%PROFILE_[status]%";
                 var stat = db.getLongData(user, "status").intValue();
                 if (stat >= 10) {
-                    buf = db.getCommand("status_10");
+                    buf = Bootstrap.boot.getChatManager().getCommand(nick, "status_10");
                 } else if (stat == 9) {
-                    buf = db.getCommand("status_9");
+                    buf = Bootstrap.boot.getChatManager().getCommand(nick, "status_9");
                 } else if (stat == 8) {
-                    buf = db.getCommand("status_8");
+                    buf = Bootstrap.boot.getChatManager().getCommand(nick, "status_8");
                 } else if (stat == 7) {
-                    buf = db.getCommand("status_7");
+                    buf = Bootstrap.boot.getChatManager().getCommand(nick, "status_7");
                 } else if (stat == 6) {
-                    buf = db.getCommand("status_6");
+                    buf = Bootstrap.boot.getChatManager().getCommand(nick, "status_6");
                 } else if (stat == 5) {
-                    buf = db.getCommand("status_5");
+                    buf = Bootstrap.boot.getChatManager().getCommand(nick, "status_5");
                 } else if (stat == 4) {
-                    buf = db.getCommand("status_4");
+                    buf = Bootstrap.boot.getChatManager().getCommand(nick, "status_4");
                 } else if (stat == 3) {
-                    buf = db.getCommand("status_3");
+                    buf = Bootstrap.boot.getChatManager().getCommand(nick, "status_3");
                 } else if (stat == 2) {
-                    buf = db.getCommand("status_2");
+                    buf = Bootstrap.boot.getChatManager().getCommand(nick, "status_2");
                 } else {
-                    buf = db.getCommand("status_1");
+                    buf = Bootstrap.boot.getChatManager().getCommand(nick, "status_1");
                 }
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, prof);
@@ -3683,6 +3698,7 @@ public class ChatServices {
             map.replace("nick", nick);
         }
         var session = request.getSession();
+        applyLang(request, map);
         var pwd = map.getOrDefault("pwd", "");
         var sid = map.getOrDefault("sid", "");
         sid = !sid.isBlank() ? sid : generateSid();
@@ -3836,6 +3852,7 @@ public class ChatServices {
         var target = map.getOrDefault("target", "");
         var skin = map.getOrDefault("skin", "");
         var session = request.getSession();
+        applyLang(request, map);
         if ((target.isBlank() && session == null) || (target.isBlank() && session.isNew())) {
             if (db.isRegistered(nick)) {
                 if (!nick.equalsIgnoreCase(db.getData(nick, "nick2"))) {

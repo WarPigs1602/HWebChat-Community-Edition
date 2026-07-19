@@ -80,6 +80,8 @@ public final class Config {
             getDb().setTimedBans(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
             out.printf("Done.\r\n* Loading commands ");
             getDb().setCom(loadDataFromJSON("commands.json", "name", "command"));
+            out.printf("Done.\r\n* Loading commands (en) ");
+            getDb().setComEn(loadDataFromJSON("commands_en.json", "name", "command"));
             out.printf("Done.\r\n* Loading commands configurations ");
             getDb().setCmd(loadDataFromJSON("cmdcfg.json", "name", "status"));
             out.printf("Done.\r\n* Loading smilies ");

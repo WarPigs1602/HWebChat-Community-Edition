@@ -137,7 +137,7 @@ public final class Util implements Software {
         var conf = Bootstrap.boot.getConfig();
         var db = conf.getDb();
         var dt = new Date();
-        var df = new SimpleDateFormat(db.getCommand("time_format"));
+        var df = new SimpleDateFormat(db.getCommand("time_format", "de"));
         df.setTimeZone(getTimeZone(conf.getString("time_zone")));
         return df.format(dt);
     }
@@ -152,7 +152,7 @@ public final class Util implements Software {
         var conf = Bootstrap.boot.getConfig();
         var db = conf.getDb();
         var dt = new Date(time);
-        var df = new SimpleDateFormat(db.getCommand("time_format"));
+        var df = new SimpleDateFormat(db.getCommand("time_format", "de"));
         df.setTimeZone(getTimeZone(conf.getString("time_zone")));
         return df.format(dt);
     }
@@ -167,7 +167,7 @@ public final class Util implements Software {
         var conf = Bootstrap.boot.getConfig();
         var db = conf.getDb();
         var dt = new Date(time);
-        var df = new SimpleDateFormat(db.getCommand("time_format_extended"));
+        var df = new SimpleDateFormat(db.getCommand("time_format_extended", "de"));
         df.setTimeZone(getTimeZone(conf.getString("time_zone")));
         return df.format(dt);
     }
@@ -993,7 +993,8 @@ public final class Util implements Software {
         text = text.replace("%room%", room);
         text = text.replace("%reason%", reason);
         text = text.replace("%host%", host);
-        text = text.replace("%ulist%", cm.getUserList(sid, skin));
+        var lang = cm.getUserLang(nick);
+        text = text.replace("%ulist%", cm.getUserList(sid, skin, lang));
         text = text.replace("%path_file%", conf.getString("path_file"));
         text = text.replace("%reg_count%", String.valueOf(db.countChatter()));
         text = text.replace("%user_count%", String.valueOf(cm.getUserSizeInChat()));

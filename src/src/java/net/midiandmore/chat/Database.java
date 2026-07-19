@@ -316,10 +316,19 @@ public class Database {
      * @return Der Command
      */
     protected String getCommand(String field) {
+        return getCommand(field, "de");
+    }
+
+    protected String getCommand(String field, String lang) {
         var ut = getMaster().getUtil();
         var value = getCom().get(field);
         if (value == null) {
             value = "<span style=\"font-weigt: bold\">(ERROR: The field " + field + " was not defined)</span><br>";
+        } else if (lang != null && lang.equalsIgnoreCase("en") && getComEn() != null) {
+            var enValue = getComEn().get(field);
+            if (enValue != null) {
+                value = enValue;
+            }
         }
         return ut.replaceFilePaths(ut.replacePaths(value));
     }
@@ -2774,6 +2783,7 @@ public class Database {
     }
 
     private TreeMap<String, String> com;
+    private TreeMap<String, String> com_en;
 
     /**
      * Speichert die Bans in ArrayListen
@@ -3009,6 +3019,14 @@ public class Database {
      */
     protected void setCom(TreeMap<String, String> com) {
         this.com = com;
+    }
+
+    protected TreeMap<String, String> getComEn() {
+        return com_en;
+    }
+
+    protected void setComEn(TreeMap<String, String> com_en) {
+        this.com_en = com_en;
     }
 
     /**

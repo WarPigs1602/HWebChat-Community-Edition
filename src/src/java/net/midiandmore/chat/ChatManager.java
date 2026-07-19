@@ -241,7 +241,7 @@ public final class ChatManager {
     protected void sendScroll(String name) {
         var conf = getMaster().getConfig();
         var db = conf.getDb();
-        sendText(db.getCommand("script_scroll"), name);
+        sendText(getCommand(name, "script_scroll"), name);
     }
 
     /**
@@ -309,7 +309,7 @@ public final class ChatManager {
      * @param name Der Nickname
      */
     protected void sendTimedMsgToOne(String text, String name) {
-        sendToOne(loadCommand("timed_msg", text), name);
+        sendToOne(loadCommand("timed_msg", text, name), name);
     }
 
     /**
@@ -319,7 +319,7 @@ public final class ChatManager {
      * @param name Der Nickname
      */
     protected void sendSystemToOne(String text, String name) {
-        sendTimedMsgToOne(loadCommand("system_msg", text), name);
+        sendTimedMsgToOne(loadCommand("system_msg", text, name), name);
     }
 
     /**
@@ -328,11 +328,11 @@ public final class ChatManager {
      * @param text Der Command
      * @param cmdText Der Inhalt
      */
-    private String loadCommand(String text, String cmdText) {
+    private String loadCommand(String text, String cmdText, String nick) {
         var ut = getMaster().getUtil();
-        var conf = getMaster().getConfig();
-        var db = conf.getDb();
-        text = db.getCommand(text);
+        var db = getMaster().getConfig().getDb();
+        var lang = getUserLang(nick);
+        text = db.getCommand(text, lang);
         text = text.replace("%time%", ut.getCurrentTime());
         text = text.replace("%content%", cmdText);
         return text;
@@ -348,7 +348,7 @@ public final class ChatManager {
         var db = conf.getDb();
         u.setWaitingForRefresh(false);
         u.setRefreshError(true);
-        u.setQuitReason(db.getCommand("quit_refresh_error"));
+        u.setQuitReason(getCommand(u.getName(), "quit_refresh_error"));
         quit(u.getName());
         gc();
     }
@@ -421,8 +421,8 @@ public final class ChatManager {
         getUsers().forEach((name, u) -> {
             var r = getRoom(u.getRoom());
             var owner = r.getOwner();
-            var text = db.getCommand("quit");
-            var text1 = db.getCommand("quit_supervisor");
+            var text = getCommand(u.getName(), "quit");
+            var text1 = getCommand(u.getName(), "quit_supervisor");
             var reason = "";
             text = text.replace("%color%", ut.preReplace(u.getColor()));
             text = text.replace("%nick%", ut.preReplace(u.getNewName()));
@@ -432,10 +432,10 @@ public final class ChatManager {
             text1 = text1.replace("%skin%", ut.preReplace(u.getSkin()));
             text1 = text1.replace("%ip%", ut.preReplace(u.getRealIp().equals("") ? u.getIp() : u.getRealIp() + "@" + u.getIp()));
             text1 = text1.replace("%host%", ut.preReplace(u.getRealIp().equals("") ? u.getHost() : u.getRealHost() + "@" + u.getHost()));
-            reason = db.getCommand("quit_reason_default");
-            text = text.replace("%reason%", db.getCommand("quit_reason").replace("%content%", reason));
+            reason = getCommand(u.getName(), "quit_reason_default");
+            text = text.replace("%reason%", getCommand(u.getName(), "quit_reason").replace("%content%", reason));
             text = text.replace("%skin%", ut.preReplace(u.getSkin()));
-            text1 = text1.replace("%reason%", db.getCommand("quit_reason").replace("%content%", reason));
+            text1 = text1.replace("%reason%", getCommand(u.getName(), "quit_reason").replace("%content%", reason));
             text1 = text1.replace("%skin%", ut.preReplace(u.getSkin()));
             sendTimedMsgToAllUsersInRoom(text, u.getRoom(), name);
             sendSystemToSupervisor(text1);
@@ -482,47 +482,43 @@ public final class ChatManager {
             flood = u == null ? false : u.getFlood();
             var r = getRoom(u.getRoom());
             var owner = r.getOwner();
-            var text = db.getCommand("quit");
-            var text1 = db.getCommand("quit_supervisor");
             var reason = "";
-            text = text.replace("%color%", ut.preReplace(u.getColor()));
-            text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-            text = text.replace("%skin%", ut.preReplace(u.getSkin()));
-            text1 = text1.replace("%color%", ut.preReplace(u.getColor()));
-            text1 = text1.replace("%nick%", ut.preReplace(u.getNewName()));
-            text1 = text1.replace("%skin%", ut.preReplace(u.getSkin()));
-            text1 = text1.replace("%ip%", ut.preReplace(u.getRealIp().equals("") ? u.getIp() : u.getRealIp() + "@" + u.getIp()));
-            text1 = text1.replace("%host%", ut.preReplace(u.getRealIp().equals("") ? u.getHost() : u.getRealHost() + "@" + u.getHost()));
             if (flood) {
-                u.setQuitReason(db.getCommand("quit_reason_flood"));
+                u.setQuitReason(getCommand(u.getName(), "quit_reason_flood"));
             }
             if (u.getQuitReason() != null) {
                 reason = u.getQuitReason();
             } else {
-                reason = db.getCommand("quit_reason_default");
+                reason = getCommand(u.getName(), "quit_reason_default");
             }
-            text = text.replace("%reason%", db.getCommand("quit_reason").replace("%content%", reason));
-            text = text.replace("%skin%", ut.preReplace(u.getSkin()));
-            text1 = text1.replace("%reason%", db.getCommand("quit_reason").replace("%content%", reason));
-            text1 = text1.replace("%skin%", ut.preReplace(u.getSkin()));
-            sendTimedMsgToAllUsersInRoom(text, u.getRoom(), name);
-            sendSystemToSupervisor(text1);
-            ArrayList<UsersPrivchat> target = getTarget(u.getName());
-            for (UsersPrivchat u1 : getUsersPrivchat().values()) {
-                if (u1.getName().equalsIgnoreCase(u.getName())) {
-                    quitPrivchat(u1.getName(), u1.getTarget());
-                }
+            var reasonReplacement = getCommand(u.getName(), "quit_reason").replace("%content%", reason);
+            java.util.Map<String, String> quitReplacements = new java.util.HashMap<>();
+            quitReplacements.put("%color%", ut.preReplace(u.getColor()));
+            quitReplacements.put("%nick%", ut.preReplace(u.getNewName()));
+            quitReplacements.put("%skin%", ut.preReplace(u.getSkin()));
+            quitReplacements.put("%reason%", reasonReplacement);
+            sendCommandToRoomExclude("quit", u.getRoom(), name, quitReplacements);
+            java.util.Map<String, String> supervisorReplacements = new java.util.HashMap<>();
+            supervisorReplacements.put("%color%", ut.preReplace(u.getColor()));
+            supervisorReplacements.put("%nick%", ut.preReplace(u.getNewName()));
+            supervisorReplacements.put("%skin%", ut.preReplace(u.getSkin()));
+            supervisorReplacements.put("%ip%", ut.preReplace(u.getRealIp().equals("") ? u.getIp() : u.getRealIp() + "@" + u.getIp()));
+            supervisorReplacements.put("%host%", ut.preReplace(u.getRealIp().equals("") ? u.getHost() : u.getRealHost() + "@" + u.getHost()));
+            supervisorReplacements.put("%reason%", reasonReplacement);
+            sendCommandToSupervisor("quit_supervisor", supervisorReplacements);
+            java.util.Map<String, String> scriptQuitReplacements = new java.util.HashMap<>();
+            scriptQuitReplacements.put("%nick%", ut.preReplace(name));
+            scriptQuitReplacements.put("%skin%", ut.preReplace(u.getSkin()));
+            var scriptQuitText = getCommand(u.getName(), "script_quit");
+            for (var entry : scriptQuitReplacements.entrySet()) {
+                scriptQuitText = scriptQuitText.replace(entry.getKey(), entry.getValue());
             }
-            text = db.getCommand("script_quit");
-            text = text.replace("%nick%", ut.preReplace(name));
-            text = text.replace("%skin%", ut.preReplace(u.getSkin()));
-
-            sendToAllUsersInRoomWithNoSmilies(text, name, true);
+            sendToAllUsersInRoomWithNoSmilies(scriptQuitText, name, true);
             if (u.isRegistered()) {
-                text = db.getCommand("quit_friends");
-                text = text.replace("%color%", ut.preReplace(u.getColor()));
-                text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-                sendToAllFriendsInChat(text, name);
+                java.util.Map<String, String> quitFriendsReplacements = new java.util.HashMap<>();
+                quitFriendsReplacements.put("%color%", ut.preReplace(u.getColor()));
+                quitFriendsReplacements.put("%nick%", ut.preReplace(u.getNewName()));
+                sendCommandToFriends("quit_friends", name, quitFriendsReplacements);
             }
             u.getSession().close();
         } catch (Exception e) {
@@ -541,6 +537,22 @@ public final class ChatManager {
         text = ut.replaceSmilies(text);
         for (var u : getUsers().values()) {
             if (u != null && name != null && u.getFriends() != null && u.getFriends().contains(name.toLowerCase())) {
+                sendSystemToOne(text, u.getName());
+            }
+        }
+    }
+
+    protected void sendCommandToFriends(String commandName, String friendNick, java.util.Map<String, String> replacements) {
+        var ut = getMaster().getUtil();
+        var db = getMaster().getConfig().getDb();
+        for (var u : getUsers().values()) {
+            if (u != null && friendNick != null && u.getFriends() != null && u.getFriends().contains(friendNick.toLowerCase())) {
+                var lang = getUserLang(u.getName());
+                var text = db.getCommand(commandName, lang);
+                for (var entry : replacements.entrySet()) {
+                    text = text.replace(entry.getKey(), entry.getValue());
+                }
+                text = ut.replaceSmilies(text);
                 sendSystemToOne(text, u.getName());
             }
         }
@@ -699,7 +711,7 @@ public final class ChatManager {
             text = ut.replaceSmilies(text);
         }
         if (!u.isVoice() && getRoom(room).isModerated()) {
-            text = db.getCommand("moderated_room");
+            text = getCommand(name, "moderated_room");
             text = text.replace("%room%", u.getRoom());
             text = ut.replaceSmilies(text);
             sendSystemToOne(text, name);
@@ -800,6 +812,93 @@ public final class ChatManager {
      *
      * @param room Der Raum
      */
+    protected String getUserLang(String nick) {
+        var u = getUser(nick);
+        if (u != null) {
+            var session = u.getHttpSession();
+            if (session != null) {
+                var lang = session.getAttribute("lang");
+                if (lang != null && !lang.toString().isBlank()) {
+                    return lang.toString();
+                }
+            }
+        }
+        return "de";
+    }
+
+    protected String getCommand(String nick, String commandName) {
+        var db = getMaster().getConfig().getDb();
+        return db.getCommand(commandName, getUserLang(nick));
+    }
+
+    protected void sendCommandToUser(String commandName, String nick, java.util.Map<String, String> replacements) {
+        var ut = getMaster().getUtil();
+        var db = getMaster().getConfig().getDb();
+        var lang = getUserLang(nick);
+        var text = db.getCommand(commandName, lang);
+        for (var entry : replacements.entrySet()) {
+            text = text.replace(entry.getKey(), entry.getValue());
+        }
+        sendToOne(text, nick);
+    }
+
+    protected void sendCommandToRoom(String commandName, String room, java.util.Map<String, String> replacements) {
+        var ut = getMaster().getUtil();
+        var db = getMaster().getConfig().getDb();
+        var e = getAllUserNamesInRoom(room);
+        if (e == null) {
+            return;
+        }
+        for (var nick : e) {
+            var lang = getUserLang(nick);
+            var text = db.getCommand(commandName, lang);
+            for (var entry : replacements.entrySet()) {
+                text = text.replace(entry.getKey(), entry.getValue());
+            }
+            if (getRoom(room).isAllowSmilies()) {
+                text = ut.replaceSmilies(text);
+            }
+            sendTimedMsgToOne(text, nick);
+        }
+    }
+
+    protected void sendCommandToRoomExclude(String commandName, String room, String excludeNick, java.util.Map<String, String> replacements) {
+        var ut = getMaster().getUtil();
+        var db = getMaster().getConfig().getDb();
+        var e = getAllUserNamesInRoom(room);
+        if (e == null) {
+            return;
+        }
+        for (var nick : e) {
+            if (nick.equalsIgnoreCase(excludeNick)) {
+                continue;
+            }
+            var lang = getUserLang(nick);
+            var text = db.getCommand(commandName, lang);
+            for (var entry : replacements.entrySet()) {
+                text = text.replace(entry.getKey(), entry.getValue());
+            }
+            if (getRoom(room).isAllowSmilies()) {
+                text = ut.replaceSmilies(text);
+            }
+            sendTimedMsgToOne(text, nick);
+        }
+    }
+
+    protected void sendCommandToSupervisor(String commandName, java.util.Map<String, String> replacements) {
+        var ut = getMaster().getUtil();
+        var db = getMaster().getConfig().getDb();
+        var supervisorList = getSupervisor();
+        for (var supervisor : supervisorList) {
+            var lang = getUserLang(supervisor.getName());
+            var text = db.getCommand(commandName, lang);
+            for (var entry : replacements.entrySet()) {
+                text = text.replace(entry.getKey(), entry.getValue());
+            }
+            sendSystemToOne(text, supervisor.getName());
+        }
+    }
+
     private ArrayList<String> getAllUserNamesInRoom(String room) {
         return getRoom(room).getUsers();
     }
@@ -851,7 +950,7 @@ public final class ChatManager {
         e.forEach((user) -> {
             if (db.isRegistered(user.getName())) {
                 if (ut.hasBirthday(db.getData(user.getName(), "bday_day"), db.getData(user.getName(), "bday_month"), db.getData(user.getName(), "bday_year"))) {
-                    var text = db.getCommand("has_birthday");
+                    var text = getCommand(nick, "has_birthday");
                     text = text.replace("%nick%", user.getName());
                     sendToAllUsersInRoomWithNoSmilies(text, user.getName());
                 }
@@ -887,7 +986,7 @@ public final class ChatManager {
                 topic = db.getRoomData(room, "topic");
             }
         }
-        var text = db.getCommand("script_add_room");
+        var text = getCommand(room, "script_add_room");
         text = text.replace("%room%", ut.preReplace(room));
         text = text.replace("%locked%", ut.preReplace(locked));
         text = text.replace("%standard%", ut.preReplace(standard));
@@ -904,7 +1003,7 @@ public final class ChatManager {
     protected String clearUserlist() {
         var conf = getMaster().getConfig();
         var db = conf.getDb();
-        return db.getCommand("script_clear_userlist");
+        return getCommand("", "script_clear_userlist");
     }
 
     /**
@@ -949,7 +1048,7 @@ public final class ChatManager {
         var nickAwayStatus = u.isAway() ? "1" : "0";
         var nickAwayReason = u.getAwayReason() == null ? "" : u.getAwayReason();
         var nickGagged = u.isGagged() ? "1" : "0";
-        var text = db.getCommand("script_add_user");
+        var text = getCommand(u.getRoom(), "script_add_user");
         text = text.replace("%nick%", nickName);
         text = text.replace("%gender%", nickGender);
         text = text.replace("%registered%", nickRegistered);
@@ -964,7 +1063,7 @@ public final class ChatManager {
     /**
      * Erzeugt eine Liste der Chatter mit aktiviertem Supervisormodus
      */
-    private ArrayList<Users> getSupervisor() {
+    protected ArrayList<Users> getSupervisor() {
         var u = new ArrayList<Users>();
         getUsers().values().forEach((u1) -> {
             if (u1.isSupervisor()) {
@@ -1272,7 +1371,7 @@ public final class ChatManager {
      * @param name Der Nickname
      */
     protected void sendSystemToUser(String text, String name, String target) {
-        sendTimedMsgToUser(loadCommand("system_msg", text), name, target);
+        sendTimedMsgToUser(loadCommand("system_msg", text, name), name, target);
     }
 
     /**
@@ -1285,10 +1384,22 @@ public final class ChatManager {
      */
     protected void sendTimedMsgToUser(String text, String name, String target) {
         if (isOnlinePrivchat(name, target)) {
-            sendTextDirectPrivchat(loadCommand("timed_msg", text), name, target);
+            var lang = getUserLang(name);
+            var db = getMaster().getConfig().getDb();
+            var ut = getMaster().getUtil();
+            var localized = db.getCommand("timed_msg", lang);
+            localized = localized.replace("%time%", ut.getCurrentTime());
+            localized = localized.replace("%content%", text);
+            sendTextDirectPrivchat(localized, name, target);
         }
         if (isOnlinePrivchat(target, name)) {
-            sendTextDirectPrivchat(loadCommand("timed_msg", text), target, name);
+            var lang = getUserLang(target);
+            var db = getMaster().getConfig().getDb();
+            var ut = getMaster().getUtil();
+            var localized = db.getCommand("timed_msg", lang);
+            localized = localized.replace("%time%", ut.getCurrentTime());
+            localized = localized.replace("%content%", text);
+            sendTextDirectPrivchat(localized, target, name);
         }
     }
 
@@ -1350,16 +1461,16 @@ public final class ChatManager {
             name = u == null ? name : u.getName();
             boolean flood;
             flood = u == null ? false : u.getFlood();
-            var text = db.getCommand("quit");
+            var text = getCommand(u.getName(), "quit");
             var reason = "";
             text = text.replace("%color%", ut.preReplace(u.getColor()));
             text = text.replace("%nick%", ut.preReplace(u.getNewName()));
             text = text.replace("%skin%", ut.preReplace(u.getSkin()));
             if (flood) {
-                u.setQuitReason(db.getCommand("quit_reason_flood"));
+                u.setQuitReason(getCommand(u.getName(), "quit_reason_flood"));
             }
-            reason = db.getCommand("quit_reason_default");
-            text = text.replace("%reason%", db.getCommand("quit_reason").replace("%content%", reason));
+            reason = getCommand(u.getName(), "quit_reason_default");
+            text = text.replace("%reason%", getCommand(u.getName(), "quit_reason").replace("%content%", reason));
             text = text.replace("%skin%", ut.preReplace(u.getSkin()));
             try {
                 sendTimedMsgToUser(text, name, target);
@@ -1433,7 +1544,6 @@ public final class ChatManager {
     protected void sendOnlineFriendsList(String nick) {
         var ut = getMaster().getUtil();
         var conf = getMaster().getConfig();
-        var db = conf.getDb();
         var u = getUser(nick);
         if (u == null) {
             return;
@@ -1444,7 +1554,7 @@ public final class ChatManager {
         }
         var friendCount = u.getFriends().size();
         if (friendCount == 0) {
-            sendToOne(db.getCommand("friends_not_in_list"), nick);
+            sendToOne(getCommand(nick, "friends_not_in_list"), nick);
             sendToOne("<br>", nick);
             return;
         }
@@ -1456,12 +1566,12 @@ public final class ChatManager {
             }
         }
         if (friendCount == 0) {
-            sendToOne(db.getCommand("friends_empty"), nick);
+            sendToOne(getCommand(nick, "friends_empty"), nick);
             sendToOne("<br>", nick);
             return;
         }
         friends = u.getFriends();
-        var text = db.getCommand("friends_title");
+        var text = getCommand(nick, "friends_title");
         text = text.replace("%count%", String.valueOf(friendCount));
         sendToOne(text, nick);
         for (var name : friends) {
@@ -1469,7 +1579,7 @@ public final class ChatManager {
                 continue;
             }
             var u1 = getUser(name);
-            text = db.getCommand("friends_text");
+            text = getCommand(nick, "friends_text");
             text = text.replace("%nick%", u.getName());
             text = text.replace("%color%", u1.getColor());
             text = text.replace("%user%", u1.getName());
@@ -1487,7 +1597,7 @@ public final class ChatManager {
      * @param skin Der Skin
      * @return
      */
-    protected String getUserList(String sid, String skin) {
+    protected String getUserList(String sid, String skin, String lang) {
         var ut = getMaster().getUtil();
         var conf = getMaster().getConfig();
         var db = conf.getDb();
@@ -1498,24 +1608,24 @@ public final class ChatManager {
         String status = null;
         var sb = new StringBuilder();
         var moderated = false;
-        text = db.getCommand("chat_list_title");
+        text = db.getCommand("chat_list_title", lang);
         text = text.replace("%count_chat%", getUserSizeInChat());
         text = text.replace("%count_room%", getRoomsSize());
         sb.append(text).append("\r\n");
         for (var room : getRooms().keySet()) {
             var names = getAllUserNamesInRoom(room);
-            text = db.getCommand("chat_list_room");
+            text = db.getCommand("chat_list_room", lang);
             if (getRoom(room).isOpen()) {
-                roomText = db.getCommand("chat_list_room_open");
+                roomText = db.getCommand("chat_list_room_open", lang);
                 roomText = roomText.replace("%room%", room);
             } else {
-                roomText = db.getCommand("chat_list_room_closed");
+                roomText = db.getCommand("chat_list_room_closed", lang);
                 roomText = roomText.replace("%room%", room);
             }
             text = text.replace("%room%", roomText);
             t = getRoom(room).getTopic();
             if (t != null) {
-                roomText = db.getCommand("chat_list_room_topic");
+                roomText = db.getCommand("chat_list_room_topic", lang);
                 roomText = roomText.replace("%topic%", t);
             } else {
                 roomText = "";
@@ -1523,7 +1633,7 @@ public final class ChatManager {
             text = text.replace("%topic%", roomText);
             moderated = getRoom(room).isModerated();
             if (moderated) {
-                roomText = db.getCommand("chat_list_room_moderated");
+                roomText = db.getCommand("chat_list_room_moderated", lang);
             } else {
                 roomText = "";
             }
@@ -1548,38 +1658,38 @@ public final class ChatManager {
                     continue;
                 }
                 if (u.getStatus() >= 3) {
-                    text = db.getCommand("chat_list_is_su_start");
+                    text = db.getCommand("chat_list_is_su_start", lang);
                     sb.append(text);
                 }
                 if (u.isAway()) {
-                    text = db.getCommand("chat_list_is_away_start");
+                    text = db.getCommand("chat_list_is_away_start", lang);
                     text = text.replace("%away_reason%", u.getAwayReason());
                     sb.append(text);
                 }
                 if (u.isGagged()) {
-                    text = db.getCommand("chat_list_is_gag_start");
+                    text = db.getCommand("chat_list_is_gag_start", lang);
                     sb.append(text);
                 }
-                text = db.getCommand("chat_list_names").replace("%color%", u.getColor());
+                text = db.getCommand("chat_list_names", lang).replace("%color%", u.getColor());
                 text = text.replace("%nick%", u.getName());
                 text = text.replace("%sid%", sid);
                 text = text.replace("%skin%", skin);
                 text = ut.replaceNoCookies(text);
                 sb.append(text);
                 if (u.isGagged()) {
-                    text = db.getCommand("chat_list_is_gag_end");
+                    text = db.getCommand("chat_list_is_gag_end", lang);
                     sb.append(text);
                 }
                 if (u.isAway()) {
-                    text = db.getCommand("chat_list_is_away_end");
+                    text = db.getCommand("chat_list_is_away_end", lang);
                     sb.append(text);
                 }
                 if (u.getStatus() >= 3) {
-                    text = db.getCommand("chat_list_is_su_end");
+                    text = db.getCommand("chat_list_is_su_end", lang);
                     sb.append(text);
                 }
                 if (names.size() - 1 != count) {
-                    sb.append(db.getCommand("chat_list_split"));
+                    sb.append(db.getCommand("chat_list_split", lang));
                 }
                 text = null;
                 status = null;
@@ -1673,7 +1783,7 @@ public final class ChatManager {
      * @param sid Die Sessionid
      * @return
      */
-    protected String getVipUserList(String sid) {
+    protected String getVipUserList(String sid, String lang) {
         var ut = getMaster().getUtil();
         var conf = getMaster().getConfig();
         var db = conf.getDb();
@@ -1683,24 +1793,24 @@ public final class ChatManager {
         String t = null;
         String status = null;
         var sb = new StringBuilder();
-        text = db.getCommand("chat_vip_list_title");
+        text = db.getCommand("chat_vip_list_title", lang);
         text = text.replace("%count_chat%", getUserSizeInChat());
         text = text.replace("%count_room%", getRoomsSize());
         sb.append(text).append("\r\n");
         for (var room : getRooms().keySet()) {
             var names = getAllUserNamesInRoom(room);
-            text = db.getCommand("chat_vip_list_room");
+            text = db.getCommand("chat_vip_list_room", lang);
             if (getRoom(room).isOpen()) {
-                roomText = db.getCommand("chat_vip_list_room_open");
+                roomText = db.getCommand("chat_vip_list_room_open", lang);
                 roomText = roomText.replace("%room%", room);
             } else {
-                roomText = db.getCommand("chat_vip_list_room_closed");
+                roomText = db.getCommand("chat_vip_list_room_closed", lang);
                 roomText = roomText.replace("%room%", room);
             }
             text = text.replace("%room%", roomText);
             t = getRoom(room).getTopic();
             if (t != null) {
-                roomText = db.getCommand("chat_vip_list_room_topic");
+                roomText = db.getCommand("chat_vip_list_room_topic", lang);
                 roomText = roomText.replace("%topic%", t);
             } else {
                 roomText = "";
@@ -1710,7 +1820,7 @@ public final class ChatManager {
             text = text.replace("%count_chat%", getUserSizeInChat());
             sb.append(text);
             sb.append("\r\n");
-            sb.append(db.getCommand("chat_vip_list_header"));
+            sb.append(db.getCommand("chat_vip_list_header", lang));
             var name = new StringBuilder();
             for (var nick : names) {
                 u = getUser(nick);
@@ -1718,7 +1828,7 @@ public final class ChatManager {
                     LOG.log(WARNING, "Vip-Userlist Error");
                     continue;
                 }
-                text = db.getCommand("chat_vip_list_names").replace("%color%", u.getColor());
+                text = db.getCommand("chat_vip_list_names", lang).replace("%color%", u.getColor());
                 text = text.replace("%nick%", u.getName());
                 text = text.replace("%sid%", sid);
                 text = text.replace("%ip%", u.getRealIp().equals("") ? u.getIp() : u.getRealIp() + "@" + u.getIp());
@@ -1732,7 +1842,7 @@ public final class ChatManager {
                 status = null;
                 u = null;
             }
-            sb.append(db.getCommand("chat_vip_list_footer"));
+            sb.append(db.getCommand("chat_vip_list_footer", lang));
             sb.append("\r\n");
         }
         return sb.toString();
@@ -1746,7 +1856,7 @@ public final class ChatManager {
      * @param skin Der Skin
      * @return
      */
-    protected String getUserList(String nick, String room, String sid, String skin) {
+    protected String getUserList(String nick, String room, String sid, String skin, String lang) {
         var ut = getMaster().getUtil();
         var conf = getMaster().getConfig();
         Users u = null;
@@ -1759,12 +1869,12 @@ public final class ChatManager {
         var sb = new StringBuilder();
         var names = getAllUserNamesInRoom(room);
         if (getRoom(room).isOpen()) {
-            text = db.getCommand("room_list_title_open").replace("%room%", room);
+            text = db.getCommand("room_list_title_open", lang).replace("%room%", room);
         } else {
-            text = db.getCommand("room_list_title_close").replace("%room%", room);
+            text = db.getCommand("room_list_title_close", lang).replace("%room%", room);
         }
         if (getRoom(room).isModerated()) {
-            text = text.replace("%moderated%", db.getCommand("room_list_title_moderated"));
+            text = text.replace("%moderated%", db.getCommand("room_list_title_moderated", lang));
         } else {
             text = text.replace("%moderated%", "");
         }
@@ -1786,50 +1896,50 @@ public final class ChatManager {
                 continue;
             }
             if (u.isAway()) {
-                reason = db.getCommand("room_list_away").replace("%reason%", u.getAwayReason());
+                reason = db.getCommand("room_list_away", lang).replace("%reason%", u.getAwayReason());
                 reason = ut.replaceLinks(reason);
             } else {
                 reason = "";
             }
             if (u.isGagged()) {
-                gag = db.getCommand("room_list_gag");
+                gag = db.getCommand("room_list_gag", lang);
             } else {
                 gag = "";
             }
             if (getUser(nick).getName().equals(u.getName())) {
                 privchat = "";
             } else {
-                privchat = db.getCommand("private_chat");
+                privchat = db.getCommand("private_chat", lang);
                 privchat = privchat.replace("%nick%", u.getName());
             }
             if (u.getStatus() >= 10) {
-                status = db.getCommand("room_list_status_10");
+                status = db.getCommand("room_list_status_10", lang);
             } else if (u.getStatus() == 9) {
-                status = db.getCommand("room_list_status_9");
+                status = db.getCommand("room_list_status_9", lang);
             } else if (u.getStatus() == 8) {
-                status = db.getCommand("room_list_status_8");
+                status = db.getCommand("room_list_status_8", lang);
             } else if (u.getStatus() == 7) {
-                status = db.getCommand("room_list_status_7");
+                status = db.getCommand("room_list_status_7", lang);
             } else if (u.getStatus() == 6) {
-                status = db.getCommand("room_list_status_6");
+                status = db.getCommand("room_list_status_6", lang);
             } else if (u.getStatus() == 5) {
-                status = db.getCommand("room_list_status_5");
+                status = db.getCommand("room_list_status_5", lang);
             } else if (u.getStatus() == 4) {
-                status = db.getCommand("room_list_status_4");
+                status = db.getCommand("room_list_status_4", lang);
             } else if (u.isSuperuser()) {
-                status = db.getCommand("room_list_status_3");
+                status = db.getCommand("room_list_status_3", lang);
             } else if (u.isVoice()) {
-                status = db.getCommand("room_list_status_2");
+                status = db.getCommand("room_list_status_2", lang);
             } else {
                 status = "";
             }
             if (db.isRegistered(u.getName()) && db.getData(u.getName(), "moderator").equals("1")) {
-                status = status + db.getCommand("room_list_status_moderator");
+                status = status + db.getCommand("room_list_status_moderator", lang);
             }
             if (u.isRegistered()) {
-                text = db.getCommand("room_list_names").replace("%color%", u.getColor());
+                text = db.getCommand("room_list_names", lang).replace("%color%", u.getColor());
             } else {
-                text = db.getCommand("room_list_names_unreg").replace("%color%", u.getColor());
+                text = db.getCommand("room_list_names_unreg", lang).replace("%color%", u.getColor());
             }
             text = text.replace("%nick%", u.getName());
             text = text.replace("%login_time%", ut.getSimpleTime(u.getLoginTime()));
@@ -1884,7 +1994,7 @@ public final class ChatManager {
                     }
                     if (timeoutTimer == conf.getLong("ping") || timeoutTimer == conf.getLong("ping") * 2) {
                         u.getSession().getBasicRemote().sendPing(ByteBuffer.wrap("Ping? Pong!".getBytes(conf.getString("charset"))));
-                        sendToOneWithNoScroll(db.getCommand("ping"), u.getName());
+                        sendToOneWithNoScroll(getCommand(u.getName(), "ping"), u.getName());
                     }
                     timeoutTimer = timeoutTimer + 1;
                     u.setTimeoutTimer(timeoutTimer);
@@ -1908,7 +2018,7 @@ public final class ChatManager {
                     }
                     if (timeoutTimer == conf.getLong("ping") || timeoutTimer == conf.getLong("ping") * 2) {
                         u.getSession().getBasicRemote().sendPing(ByteBuffer.wrap("Ping? Pong!".getBytes(conf.getString("charset"))));
-                        sendToOneWithNoScroll(db.getCommand("ping"), u.getName());
+                        sendToOneWithNoScroll(getCommand(u.getName(), "ping"), u.getName());
                     }
                     timeoutTimer = timeoutTimer + 1;
                     u.setTimeoutTimer(timeoutTimer);
@@ -1944,7 +2054,7 @@ public final class ChatManager {
     protected void timeoutPrivchat(UsersPrivchat u) {
         var conf = getMaster().getConfig();
         var db = conf.getDb();
-        u.setQuitReason(db.getCommand("quit_timeout"));
+        u.setQuitReason(getCommand(u.getName(), "quit_timeout"));
         u.setTimeout(true);
         quitPrivchat(u.getName(), u.getTarget());
         gc();
@@ -1958,7 +2068,7 @@ public final class ChatManager {
     protected void timeout(Users u) {
         var conf = getMaster().getConfig();
         var db = conf.getDb();
-        u.setQuitReason(db.getCommand("quit_timeout"));
+        u.setQuitReason(getCommand(u.getName(), "quit_timeout"));
         u.setTimeout(true);
         quit(u.getName());
         gc();

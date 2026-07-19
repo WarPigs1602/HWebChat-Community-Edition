@@ -302,33 +302,40 @@ public class Chat {
                     if (reg) {
                         cm.sendOnlineFriendsList(oldNick);
                     }
-                    text = db.getCommand("join");
-                    text = text.replace("%color%", ut.preReplace(color));
-                    text = text.replace("%nick%", ut.preReplace(nick));
-                    text = text.replace("%skin%", ut.preReplace(skin));
-                    cm.sendTimedMsgToAllUsersInRoom(text, room);
-                    text = db.getCommand("script_join");
-                    text = text.replace("%color%", ut.preReplace(color));
-                    text = text.replace("%nick%", ut.preReplace(nick));
-                    text = text.replace("%status%", ut.preReplace(Integer.toString(status)));
-                    text = text.replace("%skin%", ut.preReplace(skin));
-                    cm.sendToAllUsersInRoomWithNoSmilies(text, nick);
-                    text = db.getCommand("join_supervisor");
-                    text = text.replace("%color%", ut.preReplace(color));
-                    text = text.replace("%nick%", ut.preReplace(nick));
-                    text = text.replace("%skin%", ut.preReplace(skin));
-                    text = text.replace("%ip%", ut.preReplace(cm.getUser(oldNick).getRealIp().equals("") ? cm.getUser(oldNick).getIp() : cm.getUser(oldNick).getRealIp() + "@" + cm.getUser(oldNick).getIp()));
-                    text = text.replace("%host%", ut.preReplace(cm.getUser(oldNick).getRealIp().equals("") ? cm.getUser(oldNick).getHost() : cm.getUser(oldNick).getRealHost() + "@" + cm.getUser(oldNick).getHost()));
-                    cm.sendSystemToSupervisor(text);
-                    text = db.getCommand("join_friends");
-                    text = text.replace("%color%", ut.preReplace(color));
-                    text = text.replace("%nick%", ut.preReplace(nick));
-                    text = text.replace("%skin%", ut.preReplace(skin));
-                    cm.sendToAllFriendsInChat(text, oldNick);
+                    java.util.Map<String, String> joinReplacements = new java.util.HashMap<>();
+                    joinReplacements.put("%color%", ut.preReplace(color));
+                    joinReplacements.put("%nick%", ut.preReplace(nick));
+                    joinReplacements.put("%skin%", ut.preReplace(skin));
+                    cm.sendCommandToRoom("join", room, joinReplacements);
+                    java.util.Map<String, String> scriptJoinReplacements = new java.util.HashMap<>();
+                    scriptJoinReplacements.put("%color%", ut.preReplace(color));
+                    scriptJoinReplacements.put("%nick%", ut.preReplace(nick));
+                    scriptJoinReplacements.put("%status%", ut.preReplace(Integer.toString(status)));
+                    scriptJoinReplacements.put("%skin%", ut.preReplace(skin));
+                    var scriptJoinText = cm.getCommand("", "script_join");
+                    for (var entry : scriptJoinReplacements.entrySet()) {
+                        scriptJoinText = scriptJoinText.replace(entry.getKey(), entry.getValue());
+                    }
+                    cm.sendToAllUsersInRoomWithNoSmilies(scriptJoinText, nick);
+                    java.util.Map<String, String> supervisorReplacements = new java.util.HashMap<>();
+                    supervisorReplacements.put("%color%", ut.preReplace(color));
+                    supervisorReplacements.put("%nick%", ut.preReplace(nick));
+                    supervisorReplacements.put("%skin%", ut.preReplace(skin));
+                    supervisorReplacements.put("%ip%", ut.preReplace(cm.getUser(oldNick).getRealIp().equals("") ? cm.getUser(oldNick).getIp() : cm.getUser(oldNick).getRealIp() + "@" + cm.getUser(oldNick).getIp()));
+                    supervisorReplacements.put("%host%", ut.preReplace(cm.getUser(oldNick).getRealIp().equals("") ? cm.getUser(oldNick).getHost() : cm.getUser(oldNick).getRealHost() + "@" + cm.getUser(oldNick).getHost()));
+                     var supervisorList = cm.getSupervisor();
+                     if (!supervisorList.isEmpty()) {
+                         cm.sendCommandToSupervisor("join_supervisor", supervisorReplacements);
+                     }
+                    java.util.Map<String, String> friendsReplacements = new java.util.HashMap<>();
+                    friendsReplacements.put("%color%", ut.preReplace(color));
+                    friendsReplacements.put("%nick%", ut.preReplace(nick));
+                    friendsReplacements.put("%skin%", ut.preReplace(skin));
+                    cm.sendCommandToFriends("join_friends", oldNick, friendsReplacements);
                     var t = cm.getRoom(room).getTopic();
                     cm.getRoom(room).setOwner(owner);
                     if (t != null) {
-                        text = db.getCommand("topic_room");
+                        text = db.getCommand("topic_room", getLang(nick));
                         text = text.replace("%room%", ut.preReplace(room));
                         text = text.replace("%topic%", ut.preReplace(t));
                         text = text.replace("%skin%", ut.preReplace(skin));
@@ -369,7 +376,7 @@ public class Chat {
                     cm.addUserPrivchat(nick, sid, color, getSession(), skin, target);
                     UsersPrivchat u1 = cm.getUserPrivchat(nick, target);
                     u1.setNewName(newName);
-                    var text = db.getCommand("join");
+                    var text = db.getCommand("join", getLang(nick));
                     text = text.replace("%color%", ut.preReplace(color));
                     text = text.replace("%nick%", ut.preReplace(newName));
                     text = text.replace("%skin%", ut.preReplace(skin));
@@ -384,6 +391,21 @@ public class Chat {
             ut.sendText("Exception: " + e.getLocalizedMessage(), getSession(), "error", "");
             ErrorLog.LOG.log(SEVERE, "Exception: ", e);;
         }
+    }
+
+    private String getLang(String nick) {
+        var cm = boot.getChatManager();
+        var u = cm.getUser(nick);
+        if (u != null) {
+            var session = u.getHttpSession();
+            if (session != null) {
+                var lang = session.getAttribute("lang");
+                if (lang != null && !lang.toString().isBlank()) {
+                    return lang.toString();
+                }
+            }
+        }
+        return "de";
     }
 
     /**
@@ -421,14 +443,14 @@ public class Chat {
         if (!getMap().containsKey("target")) {
             var u = cm.getUser(name);
             if (u != null) {
-                cm.sendToOneWithNoScroll(db.getCommand("pong"), name);
+                cm.sendToOneWithNoScroll(db.getCommand("pong", getLang(name)), name);
                 u.setTimeoutTimer(0);
             }
         } else {
             var target = getMap().get("target").get(0);
             var u = cm.getUserPrivchat(name, target);
             if (u != null) {
-                cm.sendTextDirectPrivchat(db.getCommand("pong"), name, target);
+                cm.sendTextDirectPrivchat(db.getCommand("pong", getLang(name)), name, target);
                 u.setTimeoutTimer(0);
             }
         }
