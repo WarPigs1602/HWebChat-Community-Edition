@@ -120,6 +120,17 @@ input:focus, textarea:focus, select:focus, .form-control:focus {
   box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
 }
 
+/* Raumauswahl in der Navbar: die globale select-Regel oben ueberschreibt
+   Bootstraps kleinere Schrift/Innenabstaende, laesst aber die fixe Hoehe von
+   .form-control-sm stehen. Dadurch wurde der Raumname in Chrome unten
+   abgeschnitten. Hoehe wieder freigeben und line-height/padding angleichen. */
+.navbar select.form-control,
+.navbar select.form-control-sm {
+  height: auto;
+  line-height: 1.5;
+  padding: 0.35rem 0.85rem;
+}
+
 textarea {
   width: 100%;
   min-height: 10rem;

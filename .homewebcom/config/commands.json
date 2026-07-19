@@ -98,7 +98,7 @@
 {"name":"join_room","command":"<span style=\"color: #%color%\">%nick%</span> kommt aus dem Raum <span style=\"font-weight: bold\">%room%</span> herein."},
 {"name":"join_room_beam","command":"<span style=\"color: #%color%\">%nick%</span> wurde von <span style=\"color: #%beamer_color%\">%beamer_nick%</span> aus den Raum <span style=\"font-weight: bold\">%room%</span> hierher gebeamt!"},
 {"name":"join_supervisor","command":"<span style=\"color: #%color%\">%nick%</span> (%host%) hat den Chat betreten."},
-{"name":"kick_room","command":"span style=\"color: #%color%\">%nick%</span> kickt <span style=\"color: #%kick_color%\">%kick_nick%</span> in den Raum <span style=\"font-weight: bold\">%room%</span>."},
+{"name":"kick_room","command":"<span style=\"color: #%color%\">%nick%</span> kickt <span style=\"color: #%kick_color%\">%kick_nick%</span> in den Raum <span style=\"font-weight: bold\">%room%</span>."},
 {"name":"land_room","command":"<span style=\"color: #%kick_color%\">%kick_nick%</span> wurde von <span style=\"color: #%color%\">%nick%</span> hierher gekickt!"},
 {"name":"locked_room","command":"Der Raum <span style=\"font-weight: bold\">%room%</span> ist abgeschlossen!"},
 {"name":"locked_room_db","command":"Der Raum <span style=\"font-weight: bold\">%room%</span> kann nicht betreten werden... (Grund: <span style=\"font-weight: bold\">%reason%</span>)"},

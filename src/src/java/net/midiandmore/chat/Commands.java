@@ -2092,10 +2092,9 @@ public class Commands implements Software {
             var text = getCommand("kick_room");
             text = text.replace("%kick_color%", ut.preReplace(u1.getColor()));
             text = text.replace("%kick_nick%", ut.preReplace(u1.getNewName()));
-            text = text.replace("%kick_room%", ut.preReplace(room));
             text = text.replace("%color%", ut.preReplace(u.getColor()));
             text = text.replace("%nick%", ut.preReplace(u.getNewName()));
-            text = text.replace("%room%", ut.preReplace(oldroom));
+            text = text.replace("%room%", ut.preReplace(room));
             cm.sendTimedMsgToAllUsersInRoom(text, oldroom);
             /**
              * Dieses Script entfernt den Chatter aus den altem Raum.
