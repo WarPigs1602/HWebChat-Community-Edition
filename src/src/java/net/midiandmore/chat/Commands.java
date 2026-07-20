@@ -1757,7 +1757,7 @@ public class Commands implements Software {
                     cm.sendToAllUsersInRoomWithNoSmilies(cm.getUserScriptInfo(u), u.getName());
                     var t = cm.getRoom(room).getTopic();
                     if (t != null) {
-                        text = getCommand("topic_room");
+                        text = cm.getCommand(u.getName(), "topic_room");
                         text = text.replace("%room%", ut.preReplace(room));
                         text = text.replace("%topic%", ut.preReplace(t));
                         cm.sendSystemToOne(text, u.getName());
@@ -1865,12 +1865,15 @@ public class Commands implements Software {
                 }
                 var t = cm.getRoom(room).getTopic();
                 if (t != null) {
-                    text = getCommand("topic_room");
+                    text = cm.getCommand(u.getName(), "topic_room");
                     text = text.replace("%room%", ut.preReplace(room));
                     text = text.replace("%topic%", ut.preReplace(t));
                     cm.sendSystemToOne(text, u.getName());
                     if (!u.getName().equals(u1.getName())) {
-                        cm.sendSystemToOne(text, u1.getName());
+                        var text1 = cm.getCommand(u1.getName(), "topic_room");
+                        text1 = text1.replace("%room%", ut.preReplace(room));
+                        text1 = text1.replace("%topic%", ut.preReplace(t));
+                        cm.sendSystemToOne(text1, u1.getName());
                     }
                 }
                 /**
@@ -2135,7 +2138,7 @@ public class Commands implements Software {
             cm.sendToAllUsersInRoomWithNoSmilies(cm.getUserScriptInfo(u1), u1.getName());
             var t = cm.getRoom(room).getTopic();
             if (t != null) {
-                text = getCommand("topic_room");
+                text = cm.getCommand(u1.getName(), "topic_room");
                 text = text.replace("%room%", ut.preReplace(room));
                 text = text.replace("%topic%", ut.preReplace(t));
                 cm.sendSystemToOne(text, u1.getName());

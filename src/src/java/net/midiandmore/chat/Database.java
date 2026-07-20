@@ -864,11 +864,23 @@ public class Database {
      * @return Die Nachrichten
      */
     protected String getMessages(String nick, HttpServletRequest request, Map<String, String> map) {
-        return getMessages(nick);
+        var lang = "de";
+        if (map != null) {
+            var l = map.getOrDefault("lang", "");
+            if (l != null && !l.isBlank()) {
+                lang = l;
+            }
+        }
+        return getMessages(nick, lang);
     }
 
     protected String getMessages(String nick) {
+        return getMessages(nick, "de");
+    }
+
+    protected String getMessages(String nick, String lang) {
         var ut = getMaster().getUtil();
+        var db = getMaster().getConfig().getDb();
         var sb = new StringBuilder();
         try {
             if (!getCon().isValid(1000)) {
@@ -891,7 +903,7 @@ public class Database {
                         } else {
                             color = getMaster().getConfig().getString("default_color");
                         }
-                        var text = getTemplate("message_view", getMaster().getConfig().getString("default_skin"));
+                        var text = db.getCommand("message_view", lang);
                         text = text.replace("%msg_nick%", sender);
                         text = text.replace("%msg_color%", color);
                         text = text.replace("%msg_time%", ts);

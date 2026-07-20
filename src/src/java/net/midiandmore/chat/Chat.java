@@ -241,8 +241,8 @@ public class Chat {
                         ut.sendText("<!-- set_message_count: \"" + db.countMessage(oldNick) + "\" -->", getSession(), "chat", "");
                         var msgCount = db.countMessage(oldNick);
                         if (msgCount > 0) {
-                            var msgs = db.getMessages(oldNick);
-                            var block = getTemplate("chat_messages_box");
+                            var msgs = db.getMessages(oldNick, langParam != null && !langParam.isBlank() ? langParam : "de");
+                            var block = db.getCommand("messages_box_header", langParam != null && !langParam.isBlank() ? langParam : "de");
                             block = block.replace("%count%", String.valueOf(msgCount));
                             block = block.replace("%messages%", msgs);
                             ut.sendText(block, getSession(), "chat", "");

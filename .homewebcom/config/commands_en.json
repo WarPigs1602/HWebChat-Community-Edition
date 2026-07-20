@@ -324,5 +324,8 @@
  {"name":"design_help_emoticons","command":"Emoticons"},
  {"name":"welcome_reg","command":"<p>Welcome <span style=\"color: #%color%; font-weight: bold;\">%nick%</span> to the chat!<br>Your last login was on: <span style=\"font-weight: bold\">%last_login%</span> </p>"},
  {"name":"welcome_admin","command":"<p style=\"font-weight: bold; background-image:linear-gradient(90deg, #FF0000, #0000FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent;\">As administrator you have all rights - use them only for the good of the chat and do not abuse them!</p>"},
- {"name":"welcome_staff","command":"<p style=\"font-weight: bold; background-image:linear-gradient(90deg, #FF0000, #0000FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent;\">As VIP you have special rights - use them only for the good of the chat and do not abuse them!</p>"}
+ {"name":"welcome_staff","command":"<p style=\"font-weight: bold; background-image:linear-gradient(90deg, #FF0000, #0000FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent;\">As VIP you have special rights - use them only for the good of the chat and do not abuse them!</p>"},
+ {"name":"message_view","command":"<table style=\"width: 100%; border: 1px solid #AAAAAA;\"><tr style=\"padding: 0px; margin: 0px;\"><td style=\"background-color: #AAAAAA;\"><span style=\"color: #%msg_color%; font-weight: bold\">%msg_nick%</span> wrote at <span style=\"font-weight: bold\">%msg_time%</span>:</td></tr><tr style=\"padding: 0px; margin: 0px;\"><td>%msg%</td></tr></table><br>"},
+ {"name":"messages_box_header","command":"<div class=\"chat-messages-box\"><div class=\"chat-messages-box-header\">You have %count% new message(s):</div><div class=\"chat-messages-box-body\">%messages%</div></div>"},
+ {"name":"message_new_header","command":"You have %count% new messages!"}
 ]
