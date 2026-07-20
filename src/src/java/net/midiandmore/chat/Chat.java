@@ -64,15 +64,15 @@ public class Chat {
             setHttpSession(hs);
             // Sprache aus dem Cookie (oder ?lang=) &uuml;bernehmen, damit die
             // gew&auml;hlte Sprache auch im Chat/WebSocket erhalten bleibt.
-            if (getHttpSession() != null && getHttpSession().getAttribute("lang") == null) {
-                var langParam = getMap().containsKey("lang") ? getMap().get("lang").get(0) : "";
-                if (langParam == null || langParam.isBlank()) {
-                    var cookieHeader = (String) config.getUserProperties().get("cookie");
-                    langParam = ut.readCookieFromHeader(cookieHeader, "lang");
-                }
-                if (langParam != null && !langParam.isBlank()) {
-                    getHttpSession().setAttribute("lang", langParam);
-                }
+            // Das Cookie (bzw. der ?lang=-Parameter) hat dabei Vorrang vor
+            // einem evtl. veralteten Session-Wert.
+            var langParam = getMap().containsKey("lang") ? getMap().get("lang").get(0) : "";
+            if (langParam == null || langParam.isBlank()) {
+                var cookieHeader = (String) config.getUserProperties().get("cookie");
+                langParam = ut.readCookieFromHeader(cookieHeader, "lang");
+            }
+            if (langParam != null && !langParam.isBlank()) {
+                getHttpSession().setAttribute("lang", langParam);
             }
             var target = getMap().containsKey("target") ? getMap().get("target").get(0) : "";
             if (!getMap().containsKey("target")) {
@@ -228,7 +228,8 @@ public class Chat {
                         }
                         var ts = ut.getTime(db.getLongData(nick, "timestamp_login"));
                         db.updateLoginTime(oldNick);
-                        var wr = getTemplate("welcome_reg");
+                        var wrLang = langParam != null && !langParam.isBlank() ? langParam : "de";
+                        var wr = db.getCommand("welcome_reg", wrLang);
                         wr = wr.replace("%color%", color);
                         wr = wr.replace("%nick%", oldNick);
                         wr = wr.replace("%status%", Integer.toString(status));
@@ -253,10 +254,10 @@ public class Chat {
                         ut.sendText(getTemplate("proxy_warn"), getSession(), "chat", "");
                     }
                     if (status >= conf.getInt("status_admin")) {
-                        ut.sendText(getTemplate("welcome_admin"), getSession(), "chat", "");
+                        ut.sendText(db.getCommand("welcome_admin", langParam != null && !langParam.isBlank() ? langParam : "de"), getSession(), "chat", "");
                         sv = db.getData(oldNick, "sv").equals("1");
                     } else if (status >= conf.getInt("status_staff")) {
-                        ut.sendText(getTemplate("welcome_staff"), getSession(), "chat", "");
+                        ut.sendText(db.getCommand("welcome_staff", langParam != null && !langParam.isBlank() ? langParam : "de"), getSession(), "chat", "");
                     }
                     if (reg && ut.hasBirthday(db.getData(oldNick, "bday_day"), db.getData(oldNick, "bday_month"), db.getData(oldNick, "bday_year"))) {
                         var wr = getTemplate("bday_greeting");
@@ -292,6 +293,7 @@ public class Chat {
                     cm.getUser(oldNick).setJsid(getHttpSession().getId());
                     cm.getUser(oldNick).setFriends(db.getFriendList(nick));
                     cm.getUser(oldNick).setServerInfo((String) getHttpSession().getAttribute("server"));
+                    cm.getUser(oldNick).setLang(langParam);
                     cm.getUser(oldNick).setChatOnly((String) getHttpSession().getAttribute("chat_only") != null);
                     cm.getRoom(room).optimizeUserList();
                     if (reg) {
@@ -409,6 +411,10 @@ public class Chat {
         var cm = boot.getChatManager();
         var u = cm.getUser(nick);
         if (u != null) {
+            var userLang = u.getLang();
+            if (userLang != null && !userLang.isBlank()) {
+                return userLang;
+            }
             var session = u.getHttpSession();
             if (session != null) {
                 var lang = session.getAttribute("lang");

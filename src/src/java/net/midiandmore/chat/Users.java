@@ -114,6 +114,7 @@ public final class Users {
     private HttpSession httpSession = null;
     private String serverInfo = null;
     private String jsid = null;
+    private String lang = "de";
     /**
      *
      * @return
@@ -1129,6 +1130,22 @@ public final class Users {
      */
     protected void setHttpSession(HttpSession httpSession) {
         this.httpSession = httpSession;
+    }
+
+    /**
+     * @return the lang
+     */
+    protected String getLang() {
+        return lang;
+    }
+
+    /**
+     * @param lang the lang to set
+     */
+    protected void setLang(String lang) {
+        if (lang != null && !lang.isBlank()) {
+            this.lang = lang;
+        }
     }
 
     /**

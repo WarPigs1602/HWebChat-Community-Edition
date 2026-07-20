@@ -45,22 +45,33 @@
         </div>
       </div>
     </li>
+    <li class="nav-item dropdown" id="language">
+      <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-language"></i> %com[design_nav_language]%</a>
+      <div class="dropdown-menu" aria-labelledby="languageDropdown">
+        <a class="dropdown-item" href="#" onclick="setChatLang('de'); return false;">%com[design_lang_de]%</a>
+        <a class="dropdown-item" href="#" onclick="setChatLang('en'); return false;">%com[design_lang_en]%</a>
+      </div>
+    </li>
 </ul>
     </div>
   </div>
 </nav>
 <script>
-function submitMessage(text)
+function setChatLang(lang)
 {
-    text = escapeHtml(text);
-    var msg = {
-       category: "chat",
-       message: text,
-       target: ""
-    };
-    socket.send(JSON.stringify(msg));
+    document.cookie = "lang=" + lang + "; path=/; max-age=" + (60 * 60 * 24 * 365);
+    window.location.reload();
 }
-</script>
+ function submitMessage(text)
+ {
+     text = escapeHtml(text);
+     var msg = {
+        category: "chat",
+        message: text,
+        target: ""
+     };
+     socket.send(JSON.stringify(msg));
+ }
 
 <div class="chat-shell container-fluid p-0 d-flex flex-column" style="height: calc(100vh - 56px); min-height: 300px;">
   <div class="chat-main row no-gutters flex-grow-1" style="min-height: 0; flex-direction: row; flex-wrap: nowrap;">

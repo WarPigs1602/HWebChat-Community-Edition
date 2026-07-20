@@ -46,7 +46,11 @@ function add_window() {
 }
 var cw = document.createElement("cw");
 var chat_window = document.getElementById("chat_window");
-var socket = new WebSocket("%PATH_[frame_chat_new]%?skin=%skin%");
+function getChatLang() {
+    var m = document.cookie.match(/(?:^|;\s*)lang=([^;]+)/);
+    return m ? m[1] : "";
+}
+var socket = new WebSocket("%PATH_[frame_chat_new]%?skin=%skin%" + (getChatLang() ? "&lang=" + encodeURIComponent(getChatLang()) : ""));
 
 
 // callback-Funktion wird gerufen, wenn die Verbindung erfolgreich aufgebaut werden konnte

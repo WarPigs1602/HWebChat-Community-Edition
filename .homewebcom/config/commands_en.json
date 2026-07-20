@@ -320,6 +320,9 @@
 {"name":"design_cmd_info","command":"Chat info"},
 {"name":"design_cmd_clear","command":"Clear chat window"},
 {"name":"design_cmd_logout","command":"Log out"},
-{"name":"design_help_commands","command":"List of all commands"},
-{"name":"design_help_emoticons","command":"Emoticons"}
+ {"name":"design_help_commands","command":"List of all commands"},
+ {"name":"design_help_emoticons","command":"Emoticons"},
+ {"name":"welcome_reg","command":"<p>Welcome <span style=\"color: #%color%; font-weight: bold;\">%nick%</span> to the chat!<br>Your last login was on: <span style=\"font-weight: bold\">%last_login%</span> </p>"},
+ {"name":"welcome_admin","command":"<p style=\"font-weight: bold; background-image:linear-gradient(90deg, #FF0000, #0000FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent;\">As administrator you have all rights - use them only for the good of the chat and do not abuse them!</p>"},
+ {"name":"welcome_staff","command":"<p style=\"font-weight: bold; background-image:linear-gradient(90deg, #FF0000, #0000FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent;\">As VIP you have special rights - use them only for the good of the chat and do not abuse them!</p>"}
 ]

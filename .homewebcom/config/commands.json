@@ -320,6 +320,9 @@
 {"name":"design_cmd_info","command":"Chatinfo"},
 {"name":"design_cmd_clear","command":"Chatfenster leeren"},
 {"name":"design_cmd_logout","command":"Ausloggen"},
-{"name":"design_help_commands","command":"Liste aller Befehle"},
-{"name":"design_help_emoticons","command":"Emoticons"}
+ {"name":"design_help_commands","command":"Liste aller Befehle"},
+ {"name":"design_help_emoticons","command":"Emoticons"},
+ {"name":"welcome_reg","command":"<p>Herzlich Willkommen <span style=\"color: #%color%; font-weight: bold;\">%nick%</span> im Chat!<br>Dein letzter Login war am: <span style=\"font-weight: bold\">%last_login%</span> </p>"},
+ {"name":"welcome_admin","command":"<p style=\"font-weight: bold; background-image:linear-gradient(90deg, #FF0000, #0000FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent;\">Als Administrator verf&uuml;gst Du &uuml;ber alle Rechte, verwende Sie nur zum Wohlwollen des Chats und mi&szlig;brauche Sie nicht!</p>"},
+ {"name":"welcome_staff","command":"<p style=\"font-weight: bold; background-image:linear-gradient(90deg, #FF0000, #0000FF); -webkit-background-clip: text; -webkit-text-fill-color: transparent;\">Als VIP verf&uuml;gst Du &uuml;ber besondere Rechte, verwende Sie nur zum Wohlwollen des Chats und mi&szlig;brauche Sie nicht!</p>"}
 ]

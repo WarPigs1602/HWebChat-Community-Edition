@@ -837,6 +837,10 @@ public final class ChatManager {
     protected String getUserLang(String nick) {
         var u = getUser(nick);
         if (u != null) {
+            var userLang = u.getLang();
+            if (userLang != null && !userLang.isBlank()) {
+                return userLang;
+            }
             var session = u.getHttpSession();
             if (session != null) {
                 var lang = session.getAttribute("lang");
