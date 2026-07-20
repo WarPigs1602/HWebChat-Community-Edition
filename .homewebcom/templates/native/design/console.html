@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <title>%SERVER_SOFTWARE%-Adminkonsole</title>
+  <title>%com[design_admin_title]%</title>
   <meta content="%SERVER_VENDOR%" name="author">
   <meta content="&copy;%SERVER_YEAR% by %SERVER_VENDOR%" name="description">
   <meta content="CoolChat" name="software">
@@ -23,28 +23,28 @@
     <a class="navbar-brand" href="%PATH_[config_index]%">
       <img src="file/gfx/logo.svg" alt="HWebChat" style="height: 40px;">
     </a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Navigation umschalten">
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="%com[design_toggle_navigation]%">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav">
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="fa fa-cog"></i> Administration
+            <i class="fa fa-cog"></i> %com[design_admin_menu]%
           </a>
           <div class="dropdown-menu">
-            <a class="dropdown-item" href="%PATH_[config_chat]%">Chateinstellungen &auml;ndern</a>
-            <a class="dropdown-item" href="%PATH_[config_cmdrights]%">Berechtigungen &auml;ndern</a>
-            <a class="dropdown-item" href="%PATH_[config_cmd]%">Commands &auml;ndern</a>
-            <a class="dropdown-item" href="%PATH_[config_host]%">Host &auml;ndern</a>
-            <a class="dropdown-item" href="%PATH_[config_mail]%">E-Mailzugang verwalten</a>
-            <a class="dropdown-item" href="%PATH_[config_help]%">Hilfe konfigurieren</a>
-            <a class="dropdown-item" href="%PATH_[config_fun]%">Funbefehle konfigurieren</a>
-            <a class="dropdown-item" href="%PATH_[config_emot]%">Emoticons konfigurieren</a>
-            <a class="dropdown-item" href="%PATH_[config_path]%">Pfade konfigurieren</a>
-            <a class="dropdown-item" href="%PATH_[config_mime]%">Dateitypen verwalten</a>
-            <a class="dropdown-item" href="%PATH_[config_users]%">Benutzer verwalten</a>
-            <a class="dropdown-item" href="%PATH_[config_rooms]%">R&auml;ume verwalten</a>
+            <a class="dropdown-item" href="%PATH_[config_chat]%">%com[design_admin_chat_settings]%</a>
+            <a class="dropdown-item" href="%PATH_[config_cmdrights]%">%com[design_admin_cmd_rights]%</a>
+            <a class="dropdown-item" href="%PATH_[config_cmd]%">%com[design_admin_cmd_edit]%</a>
+            <a class="dropdown-item" href="%PATH_[config_host]%">%com[design_admin_host]%</a>
+            <a class="dropdown-item" href="%PATH_[config_mail]%">%com[design_admin_mail]%</a>
+            <a class="dropdown-item" href="%PATH_[config_help]%">%com[design_admin_help]%</a>
+            <a class="dropdown-item" href="%PATH_[config_fun]%">%com[design_admin_fun]%</a>
+            <a class="dropdown-item" href="%PATH_[config_emot]%">%com[design_admin_emoticons]%</a>
+            <a class="dropdown-item" href="%PATH_[config_path]%">%com[design_admin_paths]%</a>
+            <a class="dropdown-item" href="%PATH_[config_mime]%">%com[design_admin_mime]%</a>
+            <a class="dropdown-item" href="%PATH_[config_users]%">%com[design_admin_users]%</a>
+            <a class="dropdown-item" href="%PATH_[config_rooms]%">%com[design_admin_rooms]%</a>
           </div>
         </li>
       </ul>
@@ -59,7 +59,7 @@
     <p>
       &copy;%SERVER_YEAR% by <a href="mailto:%SERVER_MAIL%">%SERVER_VENDOR%</a>
       <br>
-      <a href="%PATH_[dataprotection]%" target="_blank">Datenschutz</a> | <a href="%PATH_[impressum]%" target="_blank">Impressum</a>
+        <a href="%PATH_[dataprotection]%" target="_blank">%com[design_link_dataprotection]%</a> | <a href="%PATH_[impressum]%" target="_blank">%com[design_link_impressum]%</a>
     </p>
   </small>
 </div>

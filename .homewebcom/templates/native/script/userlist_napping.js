@@ -18,9 +18,9 @@ var frameInitialized = false;
 
 /* ---------- i18n (skriptintern, Deutsch/Englisch) ---------- */
 /* Sprache wird ueber die Plattform-Sprachvariable gesteuert:
-   - window.userlistLang (vom Template gesetzt, z.B. "en")
+   - window.userlistLang (vom Template gesetzt, z.B. "de")
    - sonst das "lang"-Cookie (von ?lang= / Sprachmenue gesetzt)
-   - sonst "de" (Default). */
+   - sonst "en" (Default, englische "_napping"-Variante). */
 function detectUserlistLang() {
     if (typeof window.userlistLang !== "undefined" && window.userlistLang) {
         return window.userlistLang;
@@ -32,7 +32,7 @@ function detectUserlistLang() {
         const m = document.cookie.match(/(?:^|;\s*)lang=([^;]+)/);
         if (m && m[1]) return m[1];
     } catch (e) {}
-    return "de";
+    return "en";
 }
 
 var userlistLang = detectUserlistLang();

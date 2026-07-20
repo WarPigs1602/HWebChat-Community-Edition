@@ -602,7 +602,9 @@ public class Chat {
         }
         data = ut.replacePaths(data);
         data = ut.replaceFilePaths(data);
+        data = ut.replaceCommands(data, getLang(nick));
         data = ut.replaceDefaultReplacements(data, ut.preReplace(nick), sid, ut.preReplace(skin), ut.preReplace(room), "", "");
+        data = data.replace("%user%", ut.preReplace(nick));
         data = ut.replaceServerInfo(data);
         return data;
     }

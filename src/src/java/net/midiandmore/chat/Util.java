@@ -14,6 +14,7 @@ import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.GZIPOutputStream;
 import jakarta.servlet.http.HttpServletRequest;
@@ -1000,6 +1001,35 @@ public final class Util implements Software {
         text = text.replace("%user_count%", String.valueOf(cm.getUserSizeInChat()));
         text = text.replace("%user_count_community%", String.valueOf(cm.getUsersCommunity().size()));
         return text;
+    }
+
+    /**
+     * Ersetzt i18n-Platzhalter im Format %com[SCHLUESSEL]% durch den
+     * sprachabh&auml;ngigen Wert aus den Command-Bundles (commands.json /
+     * commands_en.json). Damit k&ouml;nnen Design-Templates &uuml;bersetzt
+     * werden, ohne den eigentlichen Seiteninhalt anzufassen.
+     *
+     * @param text Der zu verarbeitende Text
+     * @param lang Die Sprache ("de" oder "en")
+     * @return Der Text mit aufgel&ouml;sten i18n-Platzhaltern
+     */
+    protected String replaceCommands(String text, String lang) {
+        if (text == null || text.isBlank()) {
+            return text;
+        }
+        var conf = Bootstrap.boot.getConfig();
+        var db = conf.getDb();
+        var langFallback = lang != null && !lang.isBlank() ? lang : "de";
+        var pattern = compile("%com\\[([^\\]]+)\\]%", DOTALL);
+        var matcher = pattern.matcher(text);
+        var sb = new StringBuilder();
+        while (matcher.find()) {
+            var key = matcher.group(1);
+            var value = db.getCommand(key, langFallback);
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(value));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
     }
 
     /**

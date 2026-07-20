@@ -4701,10 +4701,12 @@ public class ChatServices {
         data = parseHeader(data, template, request, map);
         data = ut.replacePaths(data);
         data = ut.replaceFilePaths(data);
+        data = ut.replaceCommands(data, readLang(request, map));
         reason = reason != null ? reason : "";
         var host = request.getHeader("host");
         host = host != null ? host : "";
         data = ut.replaceDefaultReplacements(data, nick, sid, skin, room, reason, host);
+        data = data.replace("%user%", map.getOrDefault("user", ""));
         data = ut.replaceServerInfo(data);
         data = data.replace("%owner%", owner);
         data = data.replace("%target%", target);
@@ -4872,10 +4874,12 @@ public class ChatServices {
             data = parseHeader(data, template, request, map);
             data = ut.replacePaths(data);
             data = ut.replaceFilePaths(data);
+            data = ut.replaceCommands(data, readLang(request, map));
             reason = reason != null ? reason : "";
             var host = request.getHeader("host");
             host = host != null ? host : "";
             data = ut.replaceDefaultReplacements(data, nick, sid, skin, room, reason, host);
+            data = data.replace("%user%", map.getOrDefault("user", ""));
         }
         data = ut.replaceServerInfo(data);
         data = data.replace("%owner%", owner);
