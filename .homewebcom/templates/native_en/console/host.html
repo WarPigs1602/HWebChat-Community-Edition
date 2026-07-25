@@ -1,0 +1,15 @@
+<!-- design=console -->
+<h1>%SERVER_SOFTWARE% Host configuration</h1>
+<span style="font-weight: bold">%success%</span>
+<p>
+<span style="font-weight: bold">Note:</span> An empty field removes the entry!
+<table>
+<form action="%PATH_[config_host]%&update=true" method="POST">
+%config%
+<td><input type="text" class="form-control form-control-sm"  name="name" value=""> </td><td><input type="text" class="form-control form-control-sm"  name="value" value=""></td></tr>
+<td> </td><td>
+<input type="submit" class="btn btn-secondary btn-sm" name="" value="Submit">
+</form>
+</td></tr>
+</table>
+</p>

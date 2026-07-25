@@ -91,21 +91,9 @@
 <script>
 function setLang(l, el) {
   document.cookie = 'lang=' + l + ';path=/;max-age=' + 60*60*24*365;
-  var navs = Array.prototype.slice.call(document.querySelectorAll('nav.navbar'));
-  var nav = el ? el.closest('nav') : (navs[0] || null);
-  var idx = nav ? navs.indexOf(nav) : 0;
   var url = new URL(window.location.href);
   url.searchParams.set('lang', l);
-  fetch(url.toString(), {credentials: 'same-origin'})
-    .then(function(r) { return r.text(); })
-    .then(function(html) {
-      var doc = new DOMParser().parseFromString(html, 'text/html');
-      var newNavs = doc.querySelectorAll('nav.navbar');
-      var newNav = newNavs[idx] || newNavs[0];
-      if (newNav && nav) {
-        nav.outerHTML = newNav.outerHTML;
-      }
-    });
+  window.location.href = url.toString();
 }
 </script></body>
 </html>

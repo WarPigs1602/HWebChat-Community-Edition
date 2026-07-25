@@ -1,0 +1,33 @@
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  color: #212529;
+  background-color: #e9edf3;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+  font-size: 0.925rem;
+}
+
+iframe {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+#logo_frame {
+  height: 72px;
+  width: 100%;
+  text-align: center;
+  overflow: hidden;
+}
+
+#left_frame {
+  height: 100%;
+  width: 152px;
+  text-align: left;
+  overflow: hidden;
+}
+
+pre, code, kbd {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}

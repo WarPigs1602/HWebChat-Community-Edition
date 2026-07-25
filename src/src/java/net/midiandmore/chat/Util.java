@@ -1278,13 +1278,17 @@ public final class Util implements Software {
      * @param status Der Status
      * @return
      */
-    protected String parseHelp(String text, int status) {
+    protected String parseHelp(String text, int status, String lang) {
         var conf = Bootstrap.boot.getConfig();
         var db = conf.getDb();
+        var help = db.getHelp();
+        if (lang != null && lang.equalsIgnoreCase("en") && db.getHelpEn() != null) {
+            help = db.getHelpEn();
+        }
         for (var key : db.getCmd().keySet()) {
             var elem = db.getCmd().get(key);
             int st = Integer.valueOf(elem);
-            var value = db.getHelp().get(key);
+            var value = help.get(key);
             if (value != null) {
                 text = text.replaceFirst("%HELP_\\[(.*?)\\]%", st <= status ? value : "");
             }

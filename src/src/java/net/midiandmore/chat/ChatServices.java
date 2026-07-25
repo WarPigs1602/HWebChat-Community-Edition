@@ -813,6 +813,17 @@ public class ChatServices {
                             var twitter = db.getData(nick, "twitter");
                             var irc = db.getData(nick, "irc");
                             var youtube = db.getData(nick, "youtube");
+                            var instagram = db.getData(nick, "instagram");
+                            var linkedin = db.getData(nick, "linkedin");
+                            var tiktok = db.getData(nick, "tiktok");
+                            var discord = db.getData(nick, "discord");
+                            var twitch = db.getData(nick, "twitch");
+                            var github = db.getData(nick, "github");
+                            var reddit = db.getData(nick, "reddit");
+                            var snapchat = db.getData(nick, "snapchat");
+                            var pinterest = db.getData(nick, "pinterest");
+                            var whatsapp = db.getData(nick, "whatsapp");
+                            var telegram = db.getData(nick, "telegram");
                             var fam = db.getData(nick, "fam_status");
                             text = getConsole("users_reg", request, map);
                             text = text.replace("%nick%", db.getData(nick, "nick2"));
@@ -829,6 +840,17 @@ public class ChatServices {
                             text = text.replace("%twitter%", twitter);
                             text = text.replace("%irc%", irc);
                             text = text.replace("%youtube%", youtube);
+                            text = text.replace("%instagram%", instagram);
+                            text = text.replace("%linkedin%", linkedin);
+                            text = text.replace("%tiktok%", tiktok);
+                            text = text.replace("%discord%", discord);
+                            text = text.replace("%twitch%", twitch);
+                            text = text.replace("%github%", github);
+                            text = text.replace("%reddit%", reddit);
+                            text = text.replace("%snapchat%", snapchat);
+                            text = text.replace("%pinterest%", pinterest);
+                            text = text.replace("%whatsapp%", whatsapp);
+                            text = text.replace("%telegram%", telegram);
                             text = text.replace("%fam_status%", fam);
                             text = text.replace("%success%", "");
                         } else if (change.equals("profile_change")) {
@@ -847,6 +869,17 @@ public class ChatServices {
                             var twitter = map.getOrDefault("twitter", "");
                             var irc = map.getOrDefault("irc", "");
                             var youtube = map.getOrDefault("youtube", "");
+                            var instagram = map.getOrDefault("instagram", "");
+                            var linkedin = map.getOrDefault("linkedin", "");
+                            var tiktok = map.getOrDefault("tiktok", "");
+                            var discord = map.getOrDefault("discord", "");
+                            var twitch = map.getOrDefault("twitch", "");
+                            var github = map.getOrDefault("github", "");
+                            var reddit = map.getOrDefault("reddit", "");
+                            var snapchat = map.getOrDefault("snapchat", "");
+                            var pinterest = map.getOrDefault("pinterest", "");
+                            var whatsapp = map.getOrDefault("whatsapp", "");
+                            var telegram = map.getOrDefault("telegram", "");
                             var fam = map.getOrDefault("fam_status", "");
                             text = text.replace("%nick%", db.getData(nick, "nick2"));
                             text = text.replace("%homepage%", homepage);
@@ -862,6 +895,17 @@ public class ChatServices {
                             text = text.replace("%twitter%", twitter);
                             text = text.replace("%irc%", irc);
                             text = text.replace("%youtube%", youtube);
+                            text = text.replace("%instagram%", instagram);
+                            text = text.replace("%linkedin%", linkedin);
+                            text = text.replace("%tiktok%", tiktok);
+                            text = text.replace("%discord%", discord);
+                            text = text.replace("%twitch%", twitch);
+                            text = text.replace("%github%", github);
+                            text = text.replace("%reddit%", reddit);
+                            text = text.replace("%snapchat%", snapchat);
+                            text = text.replace("%pinterest%", pinterest);
+                            text = text.replace("%whatsapp%", whatsapp);
+                            text = text.replace("%telegram%", telegram);
                             text = text.replace("%fam_status%", fam);
                             db.updateNick(nick, "homepage", homepage);
                             db.updateNick(nick, "city", city);
@@ -876,6 +920,17 @@ public class ChatServices {
                             db.updateNick(nick, "twitter", twitter);
                             db.updateNick(nick, "irc", irc);
                             db.updateNick(nick, "youtube", youtube);
+                            db.updateNick(nick, "instagram", instagram);
+                            db.updateNick(nick, "linkedin", linkedin);
+                            db.updateNick(nick, "tiktok", tiktok);
+                            db.updateNick(nick, "discord", discord);
+                            db.updateNick(nick, "twitch", twitch);
+                            db.updateNick(nick, "github", github);
+                            db.updateNick(nick, "reddit", reddit);
+                            db.updateNick(nick, "snapchat", snapchat);
+                            db.updateNick(nick, "pinterest", pinterest);
+                            db.updateNick(nick, "whatsapp", whatsapp);
+                            db.updateNick(nick, "telegram", telegram);
                             db.updateNick(nick, "fam_status", fam);
                         }
                     } else if (change.equals("reg")) {
@@ -1011,6 +1066,7 @@ public class ChatServices {
         var year = map.getOrDefault("reg_year", "");
         var owner = map.getOrDefault("owner", "");
         var skin = map.getOrDefault("skin", "");
+        var lang = readLang(request, map);
         String roomName = "";
         var conf = Bootstrap.boot.getConfig();
         var ut = Bootstrap.boot.getUtil();
@@ -1042,7 +1098,7 @@ public class ChatServices {
                 var text = getMail("password", request, map);
                 text = text.replace("%pwd%", pwd);
                 text = text.replace("%nick%", nick);
-                mailer.sendEmail(text, conf.getString("password_subject_" + skin), mail);
+                mailer.sendEmail(text, db.getCommand("password_subject", lang), mail);
             } catch (MessagingException me) {
                 errorMessage = me.getLocalizedMessage();
                 regSuccess = false;
@@ -1230,18 +1286,19 @@ public class ChatServices {
         if (status < 3) {
             status = 3;
         }
+        var lang = readLang(request, map);
         var owner = map.getOrDefault("owner", "");
-        String roomName = "";
+        String roomName = null;
         if (!owner.isBlank()) {
             roomName = db.getRoomNameByOwner(owner.toLowerCase());
         }
         String text = null;
-        if (roomName.isBlank()) {
+        if (roomName == null) {
             text = getTemplate("help", request, map);
         } else {
             text = getTemplate("help_napping", request, map);
         }
-        text = ut.parseHelp(text, status);
+        text = ut.parseHelp(text, status, lang);
         ut.submitContent(text, response);
     }
 
@@ -1349,13 +1406,17 @@ public class ChatServices {
             text = text.replace("%user%", user);
         } else {
             try {
+                var lang = readLang(request, map);
+                var profile = lang != null && lang.equalsIgnoreCase("en") && db.getProfileEn() != null
+                        ? db.getProfileEn()
+                        : db.getProfile();
                 if (roomName.isBlank()) {
                     text = getTemplate("profile_user", request, map);
                 } else {
                     text = getTemplate("profile_user_napping", request, map);
                 }
                 var buf = db.getData(user, "homepage");
-                var prof = db.getProfile().getOrDefault("homepage", "");
+                var prof = profile.getOrDefault("homepage", "");
                 var replacement = "%PROFILE_[homepage]%";
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, prof);
@@ -1368,10 +1429,10 @@ public class ChatServices {
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, buf);
                 } else {
-                    text = text.replace(replacement, db.getProfile().getOrDefault("unknown", ""));
+                    text = text.replace(replacement, profile.getOrDefault("unknown", ""));
                 }
                 buf = db.getData(user, "hobby");
-                prof = db.getProfile().getOrDefault("hobby", "");
+                prof = profile.getOrDefault("hobby", "");
                 replacement = "%PROFILE_[hobby]%";
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, prof);
@@ -1380,7 +1441,7 @@ public class ChatServices {
                     text = text.replace(replacement, "");
                 }
                 buf = db.getData(user, "status");
-                prof = db.getProfile().getOrDefault("status", "");
+                prof = profile.getOrDefault("status", "");
                 replacement = "%PROFILE_[status]%";
                 var stat = db.getLongData(user, "status").intValue();
                 if (stat >= 10) {
@@ -1411,7 +1472,7 @@ public class ChatServices {
                     text = text.replace(replacement, "");
                 }
                 buf = db.getData(user, "description");
-                prof = db.getProfile().getOrDefault("description", "");
+                prof = profile.getOrDefault("description", "");
                 replacement = "%PROFILE_[description]%";
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, prof);
@@ -1420,7 +1481,7 @@ public class ChatServices {
                     text = text.replace(replacement, "");
                 }
                 buf = db.getData(user, "slogan");
-                prof = db.getProfile().getOrDefault("slogan", "");
+                prof = profile.getOrDefault("slogan", "");
                 replacement = "%PROFILE_[slogan]%";
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, prof);
@@ -1429,7 +1490,7 @@ public class ChatServices {
                     text = text.replace(replacement, "");
                 }
                 buf = db.getData(user, "signature");
-                prof = db.getProfile().getOrDefault("signature", "");
+                prof = profile.getOrDefault("signature", "");
                 replacement = "%PROFILE_[signature]%";
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, prof);
@@ -1438,7 +1499,7 @@ public class ChatServices {
                     text = text.replace(replacement, "");
                 }
                 buf = db.getLongData(user, "icq") != 0 ? db.getData(user, "icq") : null;
-                prof = db.getProfile().getOrDefault("icq", "");
+                prof = profile.getOrDefault("icq", "");
                 replacement = "%PROFILE_[icq]%";
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, prof);
@@ -1447,7 +1508,7 @@ public class ChatServices {
                     text = text.replace(replacement, "");
                 }
                 buf = db.getData(user, "live");
-                prof = db.getProfile().getOrDefault("skype", "");
+                prof = profile.getOrDefault("skype", "");
                 replacement = "%PROFILE_[skype]%";
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, prof);
@@ -1456,7 +1517,7 @@ public class ChatServices {
                     text = text.replace(replacement, "");
                 }
                 buf = db.getData(user, "yahoo");
-                prof = db.getProfile().getOrDefault("yahoo", "");
+                prof = profile.getOrDefault("yahoo", "");
                 replacement = "%PROFILE_[yahoo]%";
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, prof);
@@ -1465,7 +1526,7 @@ public class ChatServices {
                     text = text.replace(replacement, "");
                 }
                 buf = db.getData(user, "facebook");
-                prof = db.getProfile().getOrDefault("facebook", "");
+                prof = profile.getOrDefault("facebook", "");
                 replacement = "%PROFILE_[facebook]%";
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, prof);
@@ -1474,7 +1535,7 @@ public class ChatServices {
                     text = text.replace(replacement, "");
                 }
                 buf = db.getData(user, "twitter");
-                prof = db.getProfile().getOrDefault("twitter", "");
+                prof = profile.getOrDefault("twitter", "");
                 replacement = "%PROFILE_[twitter]%";
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, prof);
@@ -1483,7 +1544,7 @@ public class ChatServices {
                     text = text.replace(replacement, "");
                 }
                 buf = db.getData(user, "irc");
-                prof = db.getProfile().getOrDefault("irc", "");
+                prof = profile.getOrDefault("irc", "");
                 replacement = "%PROFILE_[irc]%";
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, prof);
@@ -1492,7 +1553,7 @@ public class ChatServices {
                     text = text.replace(replacement, "");
                 }
                 buf = db.getData(user, "youtube");
-                prof = db.getProfile().getOrDefault("youtube", "");
+                prof = profile.getOrDefault("youtube", "");
                 replacement = "%PROFILE_[youtube]%";
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, prof);
@@ -1500,8 +1561,107 @@ public class ChatServices {
                 } else {
                     text = text.replace(replacement, "");
                 }
+                buf = db.getData(user, "instagram");
+                prof = profile.getOrDefault("instagram", "");
+                replacement = "%PROFILE_[instagram]%";
+                if (buf != null && !buf.equals("")) {
+                    text = text.replace(replacement, prof);
+                    text = text.replace("%instagram%", buf);
+                } else {
+                    text = text.replace(replacement, "");
+                }
+                buf = db.getData(user, "linkedin");
+                prof = profile.getOrDefault("linkedin", "");
+                replacement = "%PROFILE_[linkedin]%";
+                if (buf != null && !buf.equals("")) {
+                    text = text.replace(replacement, prof);
+                    text = text.replace("%linkedin%", buf);
+                } else {
+                    text = text.replace(replacement, "");
+                }
+                buf = db.getData(user, "tiktok");
+                prof = profile.getOrDefault("tiktok", "");
+                replacement = "%PROFILE_[tiktok]%";
+                if (buf != null && !buf.equals("")) {
+                    text = text.replace(replacement, prof);
+                    text = text.replace("%tiktok%", buf);
+                } else {
+                    text = text.replace(replacement, "");
+                }
+                buf = db.getData(user, "discord");
+                prof = profile.getOrDefault("discord", "");
+                replacement = "%PROFILE_[discord]%";
+                if (buf != null && !buf.equals("")) {
+                    text = text.replace(replacement, prof);
+                    text = text.replace("%discord%", buf);
+                } else {
+                    text = text.replace(replacement, "");
+                }
+                buf = db.getData(user, "twitch");
+                prof = profile.getOrDefault("twitch", "");
+                replacement = "%PROFILE_[twitch]%";
+                if (buf != null && !buf.equals("")) {
+                    text = text.replace(replacement, prof);
+                    text = text.replace("%twitch%", buf);
+                } else {
+                    text = text.replace(replacement, "");
+                }
+                buf = db.getData(user, "github");
+                prof = profile.getOrDefault("github", "");
+                replacement = "%PROFILE_[github]%";
+                if (buf != null && !buf.equals("")) {
+                    text = text.replace(replacement, prof);
+                    text = text.replace("%github%", buf);
+                } else {
+                    text = text.replace(replacement, "");
+                }
+                buf = db.getData(user, "reddit");
+                prof = profile.getOrDefault("reddit", "");
+                replacement = "%PROFILE_[reddit]%";
+                if (buf != null && !buf.equals("")) {
+                    text = text.replace(replacement, prof);
+                    text = text.replace("%reddit%", buf);
+                } else {
+                    text = text.replace(replacement, "");
+                }
+                buf = db.getData(user, "snapchat");
+                prof = profile.getOrDefault("snapchat", "");
+                replacement = "%PROFILE_[snapchat]%";
+                if (buf != null && !buf.equals("")) {
+                    text = text.replace(replacement, prof);
+                    text = text.replace("%snapchat%", buf);
+                } else {
+                    text = text.replace(replacement, "");
+                }
+                buf = db.getData(user, "pinterest");
+                prof = profile.getOrDefault("pinterest", "");
+                replacement = "%PROFILE_[pinterest]%";
+                if (buf != null && !buf.equals("")) {
+                    text = text.replace(replacement, prof);
+                    text = text.replace("%pinterest%", buf);
+                } else {
+                    text = text.replace(replacement, "");
+                }
+                buf = db.getData(user, "whatsapp");
+                prof = profile.getOrDefault("whatsapp", "");
+                replacement = "%PROFILE_[whatsapp]%";
+                if (buf != null && !buf.equals("")) {
+                    text = text.replace(replacement, prof);
+                    text = text.replace("%whatsapp%", buf);
+                } else {
+                    text = text.replace(replacement, "");
+                }
+                buf = db.getData(user, "telegram");
+                prof = profile.getOrDefault("telegram", "");
+                replacement = "%PROFILE_[telegram]%";
+                if (buf != null && !buf.equals("")) {
+                    text = text.replace(replacement, prof);
+                    text = text.replace("%telegram%", buf);
+                } else {
+                    text = text.replace(replacement, "");
+                }
                 buf = db.getData(user, "visitors");
-                prof = db.getProfile().getOrDefault("last_visitor", "");
+                prof = profile.getOrDefault("last_visitor", "");
                 replacement = "%PROFILE_[last_visitor]%";
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, prof);
@@ -1510,7 +1670,7 @@ public class ChatServices {
                     text = text.replace(replacement, "");
                 }
                 buf = db.getData(user, "fam_status");
-                prof = db.getProfile().getOrDefault("fam_status", "");
+                prof = profile.getOrDefault("fam_status", "");
                 replacement = "%PROFILE_[fam_status]%";
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, prof);
@@ -1519,7 +1679,7 @@ public class ChatServices {
                     text = text.replace(replacement, "");
                 }
                 buf = db.getData(user, "image_url");
-                prof = db.getProfile().getOrDefault("image", "");
+                prof = profile.getOrDefault("image", "");
                 replacement = "%PROFILE_[image]%";
                 if (buf != null && !buf.equals("")) {
                     text = text.replace(replacement, prof);
@@ -1530,11 +1690,11 @@ public class ChatServices {
                 buf = db.getData(user, "sex");
                 buf = switch (buf) {
                     case "m" ->
-                        db.getProfile().getOrDefault("gender_m", "");
+                        profile.getOrDefault("gender_m", "");
                     case "f" ->
-                        db.getProfile().getOrDefault("gender_f", "");
+                        profile.getOrDefault("gender_f", "");
                     default ->
-                        db.getProfile().getOrDefault("gender_n", "");
+                        profile.getOrDefault("gender_n", "");
                 };
                 text = text.replace("%sex%", buf);
                 text = text.replace("%user%", db.getData(user, "nick2"));
@@ -1622,6 +1782,17 @@ public class ChatServices {
             String twitter = null;
             String irc = null;
             String youtube = null;
+            String instagram = null;
+            String linkedin = null;
+            String tiktok = null;
+            String discord = null;
+            String twitch = null;
+            String github = null;
+            String reddit = null;
+            String snapchat = null;
+            String pinterest = null;
+            String whatsapp = null;
+            String telegram = null;
             String fam = null;
             switch (data) {
                 case "" -> {
@@ -1638,6 +1809,17 @@ public class ChatServices {
                     twitter = db.getData(nick, "twitter");
                     irc = db.getData(nick, "irc");
                     youtube = db.getData(nick, "youtube");
+                    instagram = db.getData(nick, "instagram");
+                    linkedin = db.getData(nick, "linkedin");
+                    tiktok = db.getData(nick, "tiktok");
+                    discord = db.getData(nick, "discord");
+                    twitch = db.getData(nick, "twitch");
+                    github = db.getData(nick, "github");
+                    reddit = db.getData(nick, "reddit");
+                    snapchat = db.getData(nick, "snapchat");
+                    pinterest = db.getData(nick, "pinterest");
+                    whatsapp = db.getData(nick, "whatsapp");
+                    telegram = db.getData(nick, "telegram");
                     fam = db.getData(nick, "fam_status");
                     if (!roomName.isBlank()) {
                         text = getTemplate("account_form_profile", request, map);
@@ -1657,6 +1839,17 @@ public class ChatServices {
                     text = text.replace("%twitter%", twitter);
                     text = text.replace("%irc%", irc);
                     text = text.replace("%youtube%", youtube);
+                    text = text.replace("%instagram%", instagram);
+                    text = text.replace("%linkedin%", linkedin);
+                    text = text.replace("%tiktok%", tiktok);
+                    text = text.replace("%discord%", discord);
+                    text = text.replace("%twitch%", twitch);
+                    text = text.replace("%github%", github);
+                    text = text.replace("%reddit%", reddit);
+                    text = text.replace("%snapchat%", snapchat);
+                    text = text.replace("%pinterest%", pinterest);
+                    text = text.replace("%whatsapp%", whatsapp);
+                    text = text.replace("%telegram%", telegram);
                     text = text.replace("%fam_status%", fam);
                 }
                 case "change" -> {
@@ -1673,6 +1866,17 @@ public class ChatServices {
                     twitter = map.getOrDefault("twitter", "");
                     irc = map.getOrDefault("irc", "");
                     youtube = map.getOrDefault("youtube", "");
+                    instagram = map.getOrDefault("instagram", "");
+                    linkedin = map.getOrDefault("linkedin", "");
+                    tiktok = map.getOrDefault("tiktok", "");
+                    discord = map.getOrDefault("discord", "");
+                    twitch = map.getOrDefault("twitch", "");
+                    github = map.getOrDefault("github", "");
+                    reddit = map.getOrDefault("reddit", "");
+                    snapchat = map.getOrDefault("snapchat", "");
+                    pinterest = map.getOrDefault("pinterest", "");
+                    whatsapp = map.getOrDefault("whatsapp", "");
+                    telegram = map.getOrDefault("telegram", "");
                     fam = map.getOrDefault("fam_status", "");
                     if (!roomName.isBlank()) {
                         text = getTemplate("account_form_profile_success", request, map);
@@ -1692,6 +1896,17 @@ public class ChatServices {
                     text = text.replace("%twitter%", twitter);
                     text = text.replace("%irc%", irc);
                     text = text.replace("%youtube%", youtube);
+                    text = text.replace("%instagram%", instagram);
+                    text = text.replace("%linkedin%", linkedin);
+                    text = text.replace("%tiktok%", tiktok);
+                    text = text.replace("%discord%", discord);
+                    text = text.replace("%twitch%", twitch);
+                    text = text.replace("%github%", github);
+                    text = text.replace("%reddit%", reddit);
+                    text = text.replace("%snapchat%", snapchat);
+                    text = text.replace("%pinterest%", pinterest);
+                    text = text.replace("%whatsapp%", whatsapp);
+                    text = text.replace("%telegram%", telegram);
                     text = text.replace("%fam_status%", fam);
                     db.updateNick(nick, "homepage", homepage);
                     db.updateNick(nick, "city", city);
@@ -1706,6 +1921,17 @@ public class ChatServices {
                     db.updateNick(nick, "twitter", twitter);
                     db.updateNick(nick, "irc", irc);
                     db.updateNick(nick, "youtube", youtube);
+                    db.updateNick(nick, "instagram", instagram);
+                    db.updateNick(nick, "linkedin", linkedin);
+                    db.updateNick(nick, "tiktok", tiktok);
+                    db.updateNick(nick, "discord", discord);
+                    db.updateNick(nick, "twitch", twitch);
+                    db.updateNick(nick, "github", github);
+                    db.updateNick(nick, "reddit", reddit);
+                    db.updateNick(nick, "snapchat", snapchat);
+                    db.updateNick(nick, "pinterest", pinterest);
+                    db.updateNick(nick, "whatsapp", whatsapp);
+                    db.updateNick(nick, "telegram", telegram);
                     db.updateNick(nick, "fam_status", fam);
                 }
                 default -> {
@@ -3050,6 +3276,17 @@ public class ChatServices {
             String twitter = null;
             String irc = null;
             String youtube = null;
+            String instagram = null;
+            String linkedin = null;
+            String tiktok = null;
+            String discord = null;
+            String twitch = null;
+            String github = null;
+            String reddit = null;
+            String snapchat = null;
+            String pinterest = null;
+            String whatsapp = null;
+            String telegram = null;
             String fam = null;
             switch (data) {
                 case "" -> {
@@ -3066,6 +3303,17 @@ public class ChatServices {
                     twitter = db.getData(nick, "twitter");
                     irc = db.getData(nick, "irc");
                     youtube = db.getData(nick, "youtube");
+                    instagram = db.getData(nick, "instagram");
+                    linkedin = db.getData(nick, "linkedin");
+                    tiktok = db.getData(nick, "tiktok");
+                    discord = db.getData(nick, "discord");
+                    twitch = db.getData(nick, "twitch");
+                    github = db.getData(nick, "github");
+                    reddit = db.getData(nick, "reddit");
+                    snapchat = db.getData(nick, "snapchat");
+                    pinterest = db.getData(nick, "pinterest");
+                    whatsapp = db.getData(nick, "whatsapp");
+                    telegram = db.getData(nick, "telegram");
                     fam = db.getData(nick, "fam_status");
                     text = getTemplate("account_form_profile_com", request, map);
                     text = text.replace("%homepage%", homepage);
@@ -3081,6 +3329,17 @@ public class ChatServices {
                     text = text.replace("%twitter%", twitter);
                     text = text.replace("%irc%", irc);
                     text = text.replace("%youtube%", youtube);
+                    text = text.replace("%instagram%", instagram);
+                    text = text.replace("%linkedin%", linkedin);
+                    text = text.replace("%tiktok%", tiktok);
+                    text = text.replace("%discord%", discord);
+                    text = text.replace("%twitch%", twitch);
+                    text = text.replace("%github%", github);
+                    text = text.replace("%reddit%", reddit);
+                    text = text.replace("%snapchat%", snapchat);
+                    text = text.replace("%pinterest%", pinterest);
+                    text = text.replace("%whatsapp%", whatsapp);
+                    text = text.replace("%telegram%", telegram);
                     text = text.replace("%fam_status%", fam);
                 }
                 case "change" -> {
@@ -3097,6 +3356,17 @@ public class ChatServices {
                     twitter = map.getOrDefault("twitter", "");
                     irc = map.getOrDefault("irc", "");
                     youtube = map.getOrDefault("youtube", "");
+                    instagram = map.getOrDefault("instagram", "");
+                    linkedin = map.getOrDefault("linkedin", "");
+                    tiktok = map.getOrDefault("tiktok", "");
+                    discord = map.getOrDefault("discord", "");
+                    twitch = map.getOrDefault("twitch", "");
+                    github = map.getOrDefault("github", "");
+                    reddit = map.getOrDefault("reddit", "");
+                    snapchat = map.getOrDefault("snapchat", "");
+                    pinterest = map.getOrDefault("pinterest", "");
+                    whatsapp = map.getOrDefault("whatsapp", "");
+                    telegram = map.getOrDefault("telegram", "");
                     fam = map.getOrDefault("fam_status", "");
                     text = getTemplate("account_form_profile_success_com", request, map);
                     text = text.replace("%homepage%", homepage);
@@ -3112,6 +3382,17 @@ public class ChatServices {
                     text = text.replace("%twitter%", twitter);
                     text = text.replace("%irc%", irc);
                     text = text.replace("%youtube%", youtube);
+                    text = text.replace("%instagram%", instagram);
+                    text = text.replace("%linkedin%", linkedin);
+                    text = text.replace("%tiktok%", tiktok);
+                    text = text.replace("%discord%", discord);
+                    text = text.replace("%twitch%", twitch);
+                    text = text.replace("%github%", github);
+                    text = text.replace("%reddit%", reddit);
+                    text = text.replace("%snapchat%", snapchat);
+                    text = text.replace("%pinterest%", pinterest);
+                    text = text.replace("%whatsapp%", whatsapp);
+                    text = text.replace("%telegram%", telegram);
                     text = text.replace("%fam_status%", fam);
                     db.updateNick(nick, "homepage", homepage);
                     db.updateNick(nick, "city", city);
@@ -3126,6 +3407,17 @@ public class ChatServices {
                     db.updateNick(nick, "twitter", twitter);
                     db.updateNick(nick, "irc", irc);
                     db.updateNick(nick, "youtube", youtube);
+                    db.updateNick(nick, "instagram", instagram);
+                    db.updateNick(nick, "linkedin", linkedin);
+                    db.updateNick(nick, "tiktok", tiktok);
+                    db.updateNick(nick, "discord", discord);
+                    db.updateNick(nick, "twitch", twitch);
+                    db.updateNick(nick, "github", github);
+                    db.updateNick(nick, "reddit", reddit);
+                    db.updateNick(nick, "snapchat", snapchat);
+                    db.updateNick(nick, "pinterest", pinterest);
+                    db.updateNick(nick, "whatsapp", whatsapp);
+                    db.updateNick(nick, "telegram", telegram);
                     db.updateNick(nick, "fam_status", fam);
                 }
                 default -> {
@@ -3460,6 +3752,7 @@ public class ChatServices {
         var regSuccess = false;
         var skin = map.getOrDefault("skin", "");
         skin = ut.parseHost(skin, request)[1];
+        var lang = readLang(request, map);
         var db = conf.getDb();
         var ip = request.getLocalAddr();
         String proxyIp = null;
@@ -3516,7 +3809,7 @@ public class ChatServices {
             text = text.replace("%pwd%", pwd);
             text = text.replace("%nick%", nick);
             try {
-                mailer.sendEmail(text, conf.getString("register_subject_" + skin), mail);
+                mailer.sendEmail(text, db.getCommand("register_subject", lang), mail);
 
             } catch (MessagingException ex) {
                 Logger.getLogger(ChatServices.class
@@ -3880,6 +4173,18 @@ public class ChatServices {
             var sid = map.getOrDefault("sid", "");
             sid = !sid.isBlank() ? sid : generateSid();
             var room = map.getOrDefault("room", "");
+            var roomCookie = ut.readCookieValue(request, "room");
+            if (room.isBlank() && roomCookie != null && !roomCookie.isBlank()) {
+                room = roomCookie;
+                map.replace("room", room);
+            }
+            if (!room.isBlank()) {
+                var cookie = new jakarta.servlet.http.Cookie("room", room);
+                cookie.setPath("/");
+                cookie.setMaxAge(60 * 60 * 24 * 365);
+                cookie.setHttpOnly(false);
+                response.addCookie(cookie);
+            }
             var owner = map.getOrDefault("owner", "");
             skin = ut.parseHost(skin, request)[1];
             var reg = false;
@@ -4194,6 +4499,18 @@ public class ChatServices {
             var sid = (String) session.getAttribute("sid");
             sid = sid != null ? sid : generateSid();
             var room = map.getOrDefault("room", "");
+            var roomCookie = ut.readCookieValue(request, "room");
+            if (room.isBlank() && roomCookie != null && !roomCookie.isBlank()) {
+                room = roomCookie;
+                map.replace("room", room);
+            }
+            if (!room.isBlank()) {
+                var cookie = new jakarta.servlet.http.Cookie("room", room);
+                cookie.setPath("/");
+                cookie.setMaxAge(60 * 60 * 24 * 365);
+                cookie.setHttpOnly(false);
+                response.addCookie(cookie);
+            }
             var owner = map.getOrDefault("owner", "");
             session.setAttribute("sid", sid);
             session.setAttribute("room", room);
@@ -4568,13 +4885,14 @@ public class ChatServices {
      * @param request
      * @return
      */
-    protected String getMail(String template, HttpServletRequest request, Map<String, String> map) {
-        var skin = map.getOrDefault("skin", "");
-        var conf = Bootstrap.boot.getConfig();
-        var ut = Bootstrap.boot.getUtil();
-        var db = conf.getDb();
-        skin = ut.parseHost(skin, request)[1];
-        var data = db.getMail(template, skin);
+protected String getMail(String template, HttpServletRequest request, Map<String, String> map) {
+         var skin = map.getOrDefault("skin", "");
+         var conf = Bootstrap.boot.getConfig();
+         var ut = Bootstrap.boot.getUtil();
+         var db = conf.getDb();
+         var lang = readLang(request, map);
+         skin = ut.parseHost(skin, request)[1];
+         var data = db.getMail(template, skin, lang);
         if (data.toLowerCase().startsWith("error")) {
             var temp = data;
             data = "Mail template not Found\r\n%missing_template%";
@@ -4595,18 +4913,19 @@ public class ChatServices {
      * @param request
      * @return
      */
-    protected String getConsole(String template, HttpServletRequest request, Map<String, String> map) {
-        var sid = map.getOrDefault("sid", "");
-        var conf = Bootstrap.boot.getConfig();
-        var ut = Bootstrap.boot.getUtil();
-        var db = conf.getDb();
-        var skin = map.getOrDefault("skin", "");
-        if (sid.isBlank()) {
-            sid = (String) request.getAttribute("sid");
-        }
-        sid = sid != null ? sid : map.getOrDefault("sid", "");
-        skin = ut.parseHost(skin, request)[1];
-        var data = db.getConsole(template, skin);
+protected String getConsole(String template, HttpServletRequest request, Map<String, String> map) {
+         var sid = map.getOrDefault("sid", "");
+         var conf = Bootstrap.boot.getConfig();
+         var ut = Bootstrap.boot.getUtil();
+         var db = conf.getDb();
+         var skin = map.getOrDefault("skin", "");
+         var lang = readLang(request, map);
+         if (sid.isBlank()) {
+             sid = (String) request.getAttribute("sid");
+         }
+         sid = sid != null ? sid : map.getOrDefault("sid", "");
+         skin = ut.parseHost(skin, request)[1];
+         var data = db.getConsole(template, skin, lang);
         if (data.toLowerCase().startsWith("error")) {
             var temp = data;
             data = "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>%missing_template%</b></p><hr><address>%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS%</address></body><html>";
@@ -4651,48 +4970,49 @@ public class ChatServices {
      * @param request
      * @return
      */
-    protected String getTemplate(String template, HttpServletRequest request, Map<String, String> map) {
-        var sid = map.getOrDefault("sid", "");
-        var conf = Bootstrap.boot.getConfig();
-        var cm = Bootstrap.boot.getChatManager();
-        var ut = Bootstrap.boot.getUtil();
-        String nick = null;
-        String pwd = null;
-        String skin = null;
-        String room = null;
-        String owner = null;
-        String roomName = "";
-        String target = null;
-        var reason = (String) request.getAttribute("reason");
-        if (sid.isBlank()) {
-            sid = (String) request.getAttribute("sid");
-        }
-        var session = request.getSession(false);
-        if (session != null && !session.isNew()) {
-            nick = map.getOrDefault("nick", "").isBlank() ? (String) session.getAttribute("nick") : map.getOrDefault("nick", "");
-            skin = map.getOrDefault("skin", "").isBlank() ? (String) session.getAttribute("skin") : map.getOrDefault("skin", "");
-            room = map.getOrDefault("room", "").isBlank() ? (String) session.getAttribute("room") : map.getOrDefault("room", "");
-            pwd = map.getOrDefault("pwd", "").isBlank() ? (String) session.getAttribute("pwd") : map.getOrDefault("pwd", "");
-            owner = map.getOrDefault("owner", "").isBlank() ? (String) session.getAttribute("owner") : map.getOrDefault("owner", "");
-        }
-        nick = nick != null ? nick : (cm.getNameFromId(sid != null ? sid : "") == null || map.getOrDefault("nick", "").length() > 0 ? map.getOrDefault("nick", "") : cm.getUser(cm.getNameFromId(sid)).getName());
-        skin = skin != null ? skin : map.getOrDefault("skin", "");
-        room = room != null ? room : map.getOrDefault("room", "");
-        pwd = pwd != null ? pwd : map.getOrDefault("pwd", "");
-        owner = owner != null ? owner : map.getOrDefault("owner", "");
-        sid = sid != null ? sid : map.getOrDefault("sid", "");
-        target = map.getOrDefault("target", "");
-        if (session != null && session.isNew()) {
-            nick = (String) session.getAttribute("nick");
-            nick = nick != null ? nick : map.getOrDefault("nick", "");
-        }
-        var db = conf.getDb();
-        if (!owner.isBlank()) {
-            roomName = db.getRoomNameByOwner(owner.toLowerCase());
-        }
-        skin = ut.parseHost(skin, request)[1];
-        skin = skin != null ? skin : map.getOrDefault("skin", "");
-        var data = db.getTemplate(template, skin);
+protected String getTemplate(String template, HttpServletRequest request, Map<String, String> map) {
+         var sid = map.getOrDefault("sid", "");
+         var conf = Bootstrap.boot.getConfig();
+         var cm = Bootstrap.boot.getChatManager();
+         var ut = Bootstrap.boot.getUtil();
+         String nick = null;
+         String pwd = null;
+         String skin = null;
+         String room = null;
+         String owner = null;
+         String roomName = "";
+         String target = null;
+         var reason = (String) request.getAttribute("reason");
+         if (sid.isBlank()) {
+             sid = (String) request.getAttribute("sid");
+         }
+         var session = request.getSession(false);
+         if (session != null && !session.isNew()) {
+             nick = map.getOrDefault("nick", "").isBlank() ? (String) session.getAttribute("nick") : map.getOrDefault("nick", "");
+             skin = map.getOrDefault("skin", "").isBlank() ? (String) session.getAttribute("skin") : map.getOrDefault("skin", "");
+             room = map.getOrDefault("room", "").isBlank() ? (String) session.getAttribute("room") : map.getOrDefault("room", "");
+             pwd = map.getOrDefault("pwd", "").isBlank() ? (String) session.getAttribute("pwd") : map.getOrDefault("pwd", "");
+             owner = map.getOrDefault("owner", "").isBlank() ? (String) session.getAttribute("owner") : map.getOrDefault("owner", "");
+         }
+         nick = nick != null ? nick : (cm.getNameFromId(sid != null ? sid : "") == null || map.getOrDefault("nick", "").length() > 0 ? map.getOrDefault("nick", "") : cm.getUser(cm.getNameFromId(sid)).getName());
+         skin = skin != null ? skin : map.getOrDefault("skin", "");
+         room = room != null ? room : map.getOrDefault("room", "");
+         pwd = pwd != null ? pwd : map.getOrDefault("pwd", "");
+         owner = owner != null ? owner : map.getOrDefault("owner", "");
+         sid = sid != null ? sid : map.getOrDefault("sid", "");
+         target = map.getOrDefault("target", "");
+         if (session != null && session.isNew()) {
+             nick = (String) session.getAttribute("nick");
+             nick = nick != null ? nick : map.getOrDefault("nick", "");
+         }
+         var db = conf.getDb();
+         if (!owner.isBlank()) {
+             roomName = db.getRoomNameByOwner(owner.toLowerCase());
+         }
+         var lang = readLang(request, map);
+         skin = ut.parseHost(skin, request)[1];
+         skin = skin != null ? skin : map.getOrDefault("skin", "");
+         var data = db.getTemplate(template, skin, lang);
         if (data.toLowerCase().startsWith("error")) {
             var temp = data;
             data = "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>%missing_template%</b></p><hr><address>%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS%</address></body><html>";
@@ -4733,14 +5053,15 @@ public class ChatServices {
      * @param template Der Templatename
      * @param out Die Output-Klasse
      */
-    private String getStyleSheet(String template, HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
-        var skin = map.getOrDefault("skin", "");
-        var conf = Bootstrap.boot.getConfig();
-        var ut = Bootstrap.boot.getUtil();
-        var db = conf.getDb();
-        var owner = map.getOrDefault("owner", "");
-        skin = ut.parseHost(skin, request)[1];
-        var data = db.getStyle(template, skin);
+private String getStyleSheet(String template, HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
+         var skin = map.getOrDefault("skin", "");
+         var conf = Bootstrap.boot.getConfig();
+         var ut = Bootstrap.boot.getUtil();
+         var db = conf.getDb();
+         var owner = map.getOrDefault("owner", "");
+         var lang = readLang(request, map);
+         skin = ut.parseHost(skin, request)[1];
+         var data = db.getStyle(template, skin, lang);
         data = ut.replacePaths(data);
         data = ut.replaceFilePaths(data);
         data = data.replace("%skin%", skin);
@@ -4778,15 +5099,16 @@ public class ChatServices {
     private String getScript(String template, HttpServletRequest request, Map<String, String> map) {
         var skin = map.getOrDefault("skin", "");
         var conf = Bootstrap.boot.getConfig();
-        var ut = Bootstrap.boot.getUtil();
-        var db = conf.getDb();
-        var nick = map.getOrDefault("nick", "");
-        var room = map.getOrDefault("room2", "");
-        var owner = map.getOrDefault("owner", "");
-        var target = map.getOrDefault("target", "");
-        var sid = map.getOrDefault("sid", "");
-        skin = ut.parseHost(skin, request)[1];
-        var data = db.getScript(template, skin);
+var ut = Bootstrap.boot.getUtil();
+         var db = conf.getDb();
+         var nick = map.getOrDefault("nick", "");
+         var room = map.getOrDefault("room2", "");
+         var owner = map.getOrDefault("owner", "");
+         var target = map.getOrDefault("target", "");
+         var sid = map.getOrDefault("sid", "");
+         var lang = readLang(request, map);
+         skin = ut.parseHost(skin, request)[1];
+         var data = db.getScript(template, skin, lang);
         data = ut.replacePaths(data);
         data = ut.replaceFilePaths(data);
         data = data.replace("%skin%", skin);
@@ -4817,12 +5139,13 @@ public class ChatServices {
      * @param out Die Output-Klasse
      */
     private String getPageDesign(String template, HttpServletRequest request, Map<String, String> map) {
-        var skin = map.getOrDefault("skin", "");
-        var conf = Bootstrap.boot.getConfig();
-        var db = conf.getDb();
-        var ut = Bootstrap.boot.getUtil();
-        skin = ut.parseHost(skin, request)[1];
-        var data = db.getPageDesign(template, skin);
+var skin = map.getOrDefault("skin", "");
+         var conf = Bootstrap.boot.getConfig();
+         var db = conf.getDb();
+         var ut = Bootstrap.boot.getUtil();
+         var lang = readLang(request, map);
+         skin = ut.parseHost(skin, request)[1];
+         var data = db.getPageDesign(template, skin, lang);
         if (data.toLowerCase().startsWith("error")) {
             var temp = data;
             data = "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>%missing_template%</b></p><hr><address>%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS%</address></body><html>";
@@ -4860,11 +5183,12 @@ public class ChatServices {
         if (nick == null) {
             nick = "";
         }
-        pwd = map.getOrDefault("pwd", "");
-        skin = map.getOrDefault("skin", "");
-        room = map.getOrDefault("room", "");
-        skin = ut.parseHost(skin, request)[1];
-        var data = db.getPage(template, skin);
+pwd = map.getOrDefault("pwd", "");
+         skin = map.getOrDefault("skin", "");
+         room = map.getOrDefault("room", "");
+         var lang = readLang(request, map);
+         skin = ut.parseHost(skin, request)[1];
+         var data = db.getPage(template, skin, lang);
 
         if (data.toLowerCase().startsWith("error")) {
             var temp = data;

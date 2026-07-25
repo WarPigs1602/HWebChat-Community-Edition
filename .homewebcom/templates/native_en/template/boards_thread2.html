@@ -1,0 +1,22 @@
+<article class="card forum-thread-card mb-3">
+  <div class="card-header bg-light">
+    <div class="d-flex justify-content-between align-items-start flex-wrap">
+      <div>
+        <h5 class="mb-1">
+          <a href="%PATH_[board]%&pid=%id%&id=%cat%" class="text-decoration-none">%topic%</a>
+        </h5>
+        <small class="text-muted">
+          <i class="fa fa-clock-o"></i> %posted% ·
+          <i class="fa fa-user"></i> <strong style="color: #%color%">%user%</strong>
+          %banned%
+        </small>
+      </div>
+      <div class="forum-thread-actions btn-group btn-group-sm" role="group">
+        %edit%  %ban% %close%  %delete% 
+      </div>
+    </div>
+  </div>
+  <div class="card-body forum-thread-content">
+    %content%
+  </div>
+</article>

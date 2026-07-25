@@ -1,0 +1,57 @@
+<!-- design=frameset_community_reg -->
+<h1>
+%SERVER_SOFTWARE% &ndash; Chatnapping
+</h1>
+<p class="alert alert-warning">
+  Colours must be hexadecimal and six characters long!
+</p>
+<form action="%PATH_[account_com]%" method="POST" accept-charset="utf-8">
+  <input type="hidden" name="service" value="napping">
+  <input type="hidden" name="data" value="change">
+
+  <p class="form-section-title">Required information</p>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Room name</label>
+      <input type="text" class="form-control form-control-sm" name="room2" value="%room2%" placeholder="Room name">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Your chat title</label>
+      <input type="text" class="form-control form-control-sm" name="title" value="%title%" placeholder="Your chat title">
+    </div>
+  </div>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Background colour 1</label>
+      <input type="text" class="form-control form-control-sm" name="bg_color_1" value="%bg_color_1%" placeholder="RRGGBB">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Background colour 2</label>
+      <input type="text" class="form-control form-control-sm" name="bg_color_2" value="%bg_color_2%" placeholder="RRGGBB Menu">
+    </div>
+  </div>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Text colour</label>
+      <input type="text" class="form-control form-control-sm" name="color" value="%color%" placeholder="RRGGBB">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Link colour</label>
+      <input type="text" class="form-control form-control-sm" name="link_color" value="%link_color%" placeholder="RRGGBB">
+    </div>
+  </div>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Border colour</label>
+      <input type="text" class="form-control form-control-sm" name="border_color" value="%border_color%" placeholder="RRGGBB">
+    </div>
+  </div>
+
+  <p class="form-section-title">Save</p>
+
+  <input type="submit" class="btn btn-primary btn-sm" name="OK" value="Submit change">
+</form>

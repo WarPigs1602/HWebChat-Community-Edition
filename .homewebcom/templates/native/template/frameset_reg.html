@@ -65,7 +65,9 @@
 function setChatLang(lang)
 {
     document.cookie = "lang=" + lang + "; path=/; max-age=" + (60 * 60 * 24 * 365);
-    window.location.reload();
+    var url = new URL(window.location.href);
+      url.searchParams.set('lang', lang);
+      window.location.href = url.toString();
 }
 function submitMessage(text)
 {

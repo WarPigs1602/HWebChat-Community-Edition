@@ -11,7 +11,7 @@
   <link rel="preload" href="file/fonts/NotoColorEmoji.ttf" as="font">
   <link rel="stylesheet" href="%path_file%bootstrap/css/bootstrap.min.css" type="text/css">
   <link rel="stylesheet" media="screen" href="%PATH_[style]%" type="text/css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="https://prismjs.com/themes/prism.css">
   <link rel="stylesheet" href="https://prismjs.com/plugins/line-numbers/prism-line-numbers.css">
   <link rel="stylesheet" media="screen" href="%path_file%prism-live.css" type="text/css">
@@ -104,21 +104,9 @@
 <script>
 function setLang(l, el) {
   document.cookie = 'lang=' + l + ';path=/;max-age=' + 60*60*24*365;
-  var navs = Array.prototype.slice.call(document.querySelectorAll('nav.navbar'));
-  var nav = el ? el.closest('nav') : (navs[0] || null);
-  var idx = nav ? navs.indexOf(nav) : 0;
   var url = new URL(window.location.href);
   url.searchParams.set('lang', l);
-  fetch(url.toString(), {credentials: 'same-origin'})
-    .then(function(r) { return r.text(); })
-    .then(function(html) {
-      var doc = new DOMParser().parseFromString(html, 'text/html');
-      var newNavs = doc.querySelectorAll('nav.navbar');
-      var newNav = newNavs[idx] || newNavs[0];
-      if (newNav && nav) {
-        nav.outerHTML = newNav.outerHTML;
-      }
-    });
+  window.location.href = url.toString();
 }
 </script></body>
 </html>

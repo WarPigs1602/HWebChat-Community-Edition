@@ -76,6 +76,8 @@ public final class Config {
             getDb().loadConfig(getP());
             out.printf("Done.\r\n* Loading permanent bans: ");
             getDb().loadBans(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+            out.printf("Done.\r\n* Checking profile columns: ");
+            getDb().checkAndCreateMissingProfileColumns();
             out.printf("Done.\r\n* Loading temporary bans: ");
             getDb().setTimedBans(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
             out.printf("Done.\r\n* Loading commands ");
@@ -96,8 +98,12 @@ public final class Config {
             getDb().setMimeTypes(loadDataFromJSON("mime-types.json", "suffix", "type"));
             out.printf("Done.\r\n* Loading profile configuration ");
             getDb().setProfile(loadDataFromJSON("profile.json", "title", "text"));
+            out.printf("Done.\r\n* Loading profile configuration (en) ");
+            getDb().setProfileEn(loadDataFromJSON("profile_en.json", "title", "text"));
             out.printf("Done.\r\n* Loading help configuration ");
             getDb().setHelp(loadDataFromJSON("help.json", "name", "html"));
+            out.printf("Done.\r\n* Loading help configuration (en) ");
+            getDb().setHelpEn(loadDataFromJSON("help_en.json", "name", "html"));
             out.printf("Done.\r\n* Loading mail configuration ");
             getDb().setMail(loadDataFromJSONasProperties("mail.json", "name", "value"));
             out.printf("Done.\r\n");

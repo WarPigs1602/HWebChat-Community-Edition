@@ -1,0 +1,55 @@
+<!-- design=console -->
+<h1>%SERVER_SOFTWARE% User Configuration</h1>
+<form action="%PATH_[config_users]%&update=true&user=%nick%&change=data" method="POST" accept-charset="utf-8">%account_error_if_one%
+  <p class="form-section-title">
+    Necessary information
+  </p>
+  <p>
+    <table>
+	  <tr>
+        <td>
+	      <span style="font-weight: bold">The sex: </span>
+		</td>
+		<td>
+            <select class="form-control form-control-sm col-md-3 mb-2" name="gender" size="1">
+            <option value="-"%selected_no%>Not specified</option>
+            <option value="m"%selected_male%>Man</option>
+            <option value="f"%selected_female%>Woman</option>
+          </select>
+        </td>
+      </tr>
+	  <tr>
+        <td>
+	      <span style="font-weight: bold">The email address: </span>
+		</td>
+		<td>
+	      <input type="email" size="50" maxlength="255" class="form-control form-control-sm"  name="mail" value="%mail%">
+        </td>
+      </tr>
+	  <tr>
+        <td>
+	      <span style="font-weight: bold">Date of birth: </span>
+		</td>
+		<td>
+		  <div class="input-group">
+	      <input type="text" size="2" maxlength="2" class="form-control form-control-sm col-md-2 mb-1" name="day" value="%day%"><input type="text" size="2" maxlength="2" class="form-control form-control-sm col-md-2 mb-1" name="month" value="%month%"><input type="text" size="4" maxlength="4" class="form-control form-control-sm col-md-2 mb-1" name="year" value="%year%">
+          </div>
+		</td>
+      </tr>
+	  <tr>
+        <td>
+	      <span style="font-weight: bold">Status: </span>
+		</td>
+		<td>
+	      <input type="text" size="3" maxlength="3" class="form-control form-control-sm"  name="status" value="%status%">
+        </td>
+      </tr>
+    </table>
+  </p>
+  <p class="form-section-title">
+    And already done...
+  </p>
+  <p>
+  <input type="submit" class="btn btn-secondary btn-sm" name="OK" value="Send a change!!">
+  </p>
+</form>
