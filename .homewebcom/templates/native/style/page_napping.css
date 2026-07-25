@@ -1,5 +1,6 @@
 :root {
   --hwc-primary: #%link_color%;
+  --hwc-primary-text: #%color%;
   --hwc-dark: #%color%;
   --hwc-border: #%border_color%;
   --hwc-bg: #%bg_color_1%;

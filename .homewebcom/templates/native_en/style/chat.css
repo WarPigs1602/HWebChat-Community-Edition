@@ -343,7 +343,7 @@ cw {
 .chat-tab.active {
   background: var(--hwc-primary);
   border-color: var(--hwc-primary);
-  color: #ffffff;
+  color: var(--hwc-primary-text, #ffffff);
   box-shadow: 0 1px 3px rgba(13, 110, 253, 0.25);
 }
 

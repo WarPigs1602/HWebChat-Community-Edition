@@ -5013,6 +5013,9 @@ protected String getConsole(String template, HttpServletRequest request, Map<Str
         host = host != null ? host : "";
         data = ut.replaceServerInfo(data);
         data = data.replace("%skin%", skin);
+        String scheme = detectScheme(request);
+        data = data.replace("%host_ws%", (scheme.equals("https") ? "wss" : "ws") + "://" + request.getHeader("host"));
+        data = data.replace("%host_http%", scheme + "://" + request.getHeader("host"));
         return data;
     }
 
@@ -5106,6 +5109,9 @@ protected String getTemplate(String template, HttpServletRequest request, Map<St
         data = data.replace("%owner%", owner);
         data = data.replace("%target%", target);
         data = data.replace("%title%", db.getRoomData(roomName, "page_title"));
+        String scheme = detectScheme(request);
+        data = data.replace("%host_ws%", (scheme.equals("https") ? "wss" : "ws") + "://" + request.getHeader("host"));
+        data = data.replace("%host_http%", scheme + "://" + request.getHeader("host"));
         return data;
     }
 
@@ -5149,14 +5155,17 @@ protected String getTemplate(String template, HttpServletRequest request, Map<St
          } else if (!room.isBlank()) {
              roomName = room;
          }
-         if (roomName != null && db.roomExists(roomName) && db.getRoomData(roomName, "chat_napping").equals("1")) {
-             data = data.replace("%bg_color_1%", db.getRoomData(roomName, "first_bgcolor"));
-             data = data.replace("%bg_color_2%", db.getRoomData(roomName, "second_bgcolor"));
-             data = data.replace("%color%", db.getRoomData(roomName, "textcolor"));
-             data = data.replace("%link_color%", db.getRoomData(roomName, "linkcolor"));
-             data = data.replace("%border_color%", db.getRoomData(roomName, "bordercolor"));
-         }
-         return data;
+          if (roomName != null && db.roomExists(roomName) && db.getRoomData(roomName, "chat_napping").equals("1")) {
+              data = data.replace("%bg_color_1%", db.getRoomData(roomName, "first_bgcolor"));
+              data = data.replace("%bg_color_2%", db.getRoomData(roomName, "second_bgcolor"));
+              data = data.replace("%color%", db.getRoomData(roomName, "textcolor"));
+              data = data.replace("%link_color%", db.getRoomData(roomName, "linkcolor"));
+              data = data.replace("%border_color%", db.getRoomData(roomName, "bordercolor"));
+          }
+          String scheme = detectScheme(request);
+          data = data.replace("%host_ws%", (scheme.equals("https") ? "wss" : "ws") + "://" + request.getHeader("host"));
+          data = data.replace("%host_http%", scheme + "://" + request.getHeader("host"));
+          return data;
      }
 
     /**
@@ -5196,13 +5205,12 @@ var ut = Bootstrap.boot.getUtil();
          data = data.replace("%room2%", room);
          data = data.replace("%owner%", owner);
          data = data.replace("%target%", target);
-         data = ut.replaceServerInfo(data);
-         data = ut.replaceDefaultReplacements(data, nick, sid, skin, room, "", request.getHeader("host"));
-         String scheme = detectScheme(request);
-         if (scheme.equals("https")) {
-             data = data.replace("ws://", "wss://");
-         }
-         return data;
+          data = ut.replaceServerInfo(data);
+          data = ut.replaceDefaultReplacements(data, nick, sid, skin, room, "", request.getHeader("host"));
+          String scheme = detectScheme(request);
+          data = data.replace("%host_ws%", (scheme.equals("https") ? "wss" : "ws") + "://" + request.getHeader("host"));
+          data = data.replace("%host_http%", scheme + "://" + request.getHeader("host"));
+          return data;
      }
 
     /**
@@ -5293,7 +5301,9 @@ pwd = map.getOrDefault("pwd", "");
         data = ut.replaceServerInfo(data);
         data = data.replace("%owner%", owner);
         data = data.replace("%title%", db.getRoomData(roomName, "page_title"));
-
+        String scheme = detectScheme(request);
+        data = data.replace("%host_ws%", (scheme.equals("https") ? "wss" : "ws") + "://" + request.getHeader("host"));
+        data = data.replace("%host_http%", scheme + "://" + request.getHeader("host"));
         return data;
     }
 

@@ -5,7 +5,7 @@
 <p>
   Du hast den Raum <strong>%room2%</strong> hinzugef&uuml;gt und kannst den Raum mit folgendem Code zu Deiner Homepage hinzuf&uuml;gen:
 </p>
-<textarea readonly class="prism-live line-numbers language-html fill"><form method="POST" name="login" action="https://%host%%PATH_[login_chat]%" target="_blank" accept-charset="utf-8">
+<textarea readonly class="prism-live line-numbers language-html fill"><form method="POST" name="login" action="%host_http%%PATH_[login_chat]%" target="_blank" accept-charset="utf-8">
   <input maxlength="20" name="nick" placeholder="Nickname"><br>
   <input maxlength="20" name="pwd" type="password" placeholder="Passwort"><br>
   <input name="room" value="%room2%" type="hidden">
@@ -14,11 +14,11 @@
   <input value="Login" type="submit">
 </form>
 <p>
-  <a href="https://%host%%PATH_[login_chat]%&skin=%skin%&room=%room2%&owner=%nick%">Guest access</a><br>
-  <a href="https://%host%%PATH_[register]%&owner=%nick%">Register</a><br>
-  <a href="https://%host%%PATH_[password]%&owner=%nick%">Forgot password?</a>
+  <a href="%host_http%%PATH_[login_chat]%&skin=%skin%&room=%room2%&owner=%nick%">Guest access</a><br>
+  <a href="%host_http%%PATH_[register]%&owner=%nick%">Register</a><br>
+  <a href="%host_http%%PATH_[password]%&owner=%nick%">Forgot password?</a>
 </p>
 <p class="users">
-<script type="text/javascript" src="https://%host%%PATH_[script_room_napping]%"></script>
+<script type="text/javascript" src="%host_http%%PATH_[script_room_napping]%"></script>
 </p>
 </textarea>
