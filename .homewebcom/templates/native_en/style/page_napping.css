@@ -281,7 +281,7 @@ textarea { width: 100%; min-height: 10rem; resize: vertical; }
   #profilecontent form table tr:last-child { border-bottom: none; }
 }
 
-.navbar {
+body > .navbar {
   background: #%bg_color_2% !important;
   border-radius: 0;
   box-shadow: var(--hwc-shadow);
