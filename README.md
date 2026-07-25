@@ -15,7 +15,7 @@ Web-based community chat (Jakarta EE / WebSocket) for Apache Tomcat.
 - Emoji support, file uploads
 - Moderation (kick, ban, gag, …)
 - Admin console, communities / napping rooms
-- Skins and templates under `~/.homewebcom`
+- Skins and templates under `~/.homewebcom` (`native` German, `native_en` English)
 - MySQL / MariaDB storage
 
 ---
@@ -144,7 +144,8 @@ Templates/config under `~/.homewebcom` are **not** inside the WAR — edit them 
 | `~/.homewebcom/config/hosts.json` | Virtual host → skin |
 | `~/.homewebcom/config/commands.json` | Chat command texts |
 | `~/.homewebcom/config/paths.json` | URL path names |
-| `~/.homewebcom/templates/native/` | Default skin (HTML, JS, CSS) |
+| `~/.homewebcom/templates/native/` | German skin (HTML, JS, CSS) |
+| `~/.homewebcom/templates/native_en/` | English skin (HTML, JS, CSS) |
 
 Repo copy `.homewebcom/` is a template; **production uses `~/.homewebcom`**.
 
@@ -176,7 +177,7 @@ Web resources: `src/web/`
 ## FAQ
 
 **Language?**  
-UI/templates ship largely in German; adjust templates and `config.json` as needed.
+Default UI/templates are German. An English skin is available as `.homewebcom/templates/native_en/`, plus matching config files like `help_en.json` and `profile_en.json`. Set the skin in `hosts.json` to switch languages.
 
 **HTTPS?**  
 Terminate TLS on Tomcat or a reverse proxy (nginx/Caddy). Align `secure` cookie flags in `web.xml` with your setup.

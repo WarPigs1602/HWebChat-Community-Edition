@@ -15,7 +15,7 @@ Webbasierter Community-Chat (Jakarta EE / WebSocket) für Apache Tomcat.
 - Emojis, Datei-Uploads
 - Moderation (Kick, Ban, Gag, …)
 - Adminkonsole, Communities / Napping-Räume
-- Skins und Templates unter `~/.homewebcom`
+- Skins und Templates unter `~/.homewebcom` (`native` Deutsch, `native_en` Englisch)
 - Speicherung in MySQL / MariaDB
 
 ---
@@ -143,7 +143,8 @@ Templates/Config unter `~/.homewebcom` liegen **nicht** im WAR — dort live edi
 | `~/.homewebcom/config/hosts.json` | Virtual Host → Skin |
 | `~/.homewebcom/config/commands.json` | Texte der Chat-Befehle |
 | `~/.homewebcom/config/paths.json` | URL-Pfadnamen |
-| `~/.homewebcom/templates/native/` | Standard-Skin (HTML, JS, CSS) |
+| `~/.homewebcom/templates/native/` | Deutsch-Skin (HTML, JS, CSS) |
+| `~/.homewebcom/templates/native_en/` | Englisch-Skin (HTML, JS, CSS) |
 
 Die Repo-Kopie `.homewebcom/` ist eine Vorlage; **Produktion nutzt `~/.homewebcom`**.
 
@@ -175,7 +176,7 @@ Web-Ressourcen: `src/web/`
 ## FAQ
 
 **Sprache?**  
-UI/Templates sind größtenteils deutsch; Templates und `config.json` anpassen.
+Standard sind deutsche UI/Templates. Ein englischer Skin liegt unter `.homewebcom/templates/native_en/` bereit, ergänzt um passende Configs wie `help_en.json` und `profile_en.json`. Die Einstellung des Skins erfolgt in der `hosts.json`.
 
 **HTTPS?**  
 TLS an Tomcat oder Reverse-Proxy (nginx/Caddy). Cookie-Flags `secure` in `web.xml` an das Setup anpassen.
