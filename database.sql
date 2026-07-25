@@ -217,6 +217,27 @@ CREATE TABLE `hwc_session` (
 -- --------------------------------------------------------
 
 --
+-- Tabellenstruktur für Tabelle `hwc_guestbook`
+--
+
+CREATE TABLE `hwc_guestbook` (
+  `id` bigint(20) NOT NULL,
+  `owner` varchar(255) NOT NULL,
+  `sender` varchar(255) NOT NULL,
+  `text` text NOT NULL,
+  `time` bigint(20) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- AUTO_INCREMENT für Tabelle `hwc_guestbook`
+--
+
+ALTER TABLE `hwc_guestbook`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+
+-- --------------------------------------------------------
+
+--
 -- Tabellenstruktur für Tabelle `hwc_stats`
 --
 

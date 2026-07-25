@@ -110,5 +110,6 @@
 {"name":"timeout","value":"75","description":"Der Timeout bei Verbindungsproblemen"},
 {"name":"timeout_community","value":"300","description":"Der Timeout bei Verbindungsproblemen"},
 {"name":"toplist_limit","value":"100","description":"Die maximale Anzahl der Chatter in der Topliste!"},
-{"name":"use_proxy","value":"1","description":"Einen Reserve Proxy nutzen"}
+{"name":"use_proxy","value":"1","description":"Einen Reserve Proxy nutzen"},
+{"name":"guestbook_welcome","value":"Willkommen im Gästebuch! Hier kannst du dich für den Chatter eintragen und Nachrichten hinterlassen.","description":"Die Willkommensnachricht im Gästebuch"}
 ]

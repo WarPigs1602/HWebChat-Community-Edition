@@ -78,6 +78,8 @@ public final class Config {
             getDb().loadBans(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
             out.printf("Done.\r\n* Checking profile columns: ");
             getDb().checkAndCreateMissingProfileColumns();
+            out.printf("Done.\r\n* Creating guestbook table: ");
+            getDb().createGuestbookTable();
             out.printf("Done.\r\n* Loading temporary bans: ");
             getDb().setTimedBans(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
             out.printf("Done.\r\n* Loading commands ");

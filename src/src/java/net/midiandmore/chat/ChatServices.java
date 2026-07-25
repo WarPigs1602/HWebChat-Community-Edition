@@ -1396,6 +1396,19 @@ public class ChatServices {
         if (!owner.isBlank()) {
             roomName = db.getRoomNameByOwner(owner.toLowerCase());
         }
+        if (!map.getOrDefault("guestbook", "").isBlank() && sid != null && cm.isValidConnectionId(sid)) {
+            var gbNick = cm.getNameFromId(sid);
+            var gbText = map.getOrDefault("guestbook_text", "").trim();
+            if (!gbText.isEmpty() && gbText.length() <= 1024) {
+                db.addGuestbookEntry(user, gbNick, gbText);
+            }
+        }
+        if (!map.getOrDefault("guestbook_delete", "").isBlank() && sid != null && cm.isValidConnectionId(sid) && nick.equalsIgnoreCase(user)) {
+            try {
+                db.deleteGuestbookEntry(Integer.parseInt(map.get("guestbook_delete")), user);
+            } catch (NumberFormatException ignored) {
+            }
+        }
         if (!cm.isValidConnectionId(sid)) {
             if (!roomName.isBlank()) {
                 text = getTemplate("profile_invalid_session_id", request, map);
@@ -1715,6 +1728,43 @@ public class ChatServices {
                 text = text.replace("%bday_year%", db.getData(user, "bday_year") == null ? "" : db.getData(user, "bday_year"));
                 text = text.replace("%login_room%", db.getData(user, "login_room") == null ? "" : db.getData(user, "login_room"));
                 text = text.replace("%color%", db.getData(user, "color") == null ? "" : db.getData(user, "color"));
+                var gbSb = new StringBuilder();
+                var gbEntries = db.getGuestbook(user);
+                var isOwner = nick.equalsIgnoreCase(user);
+                String pathProfile = "";
+                String pathProfileFile = "";
+                if (isOwner) {
+                    pathProfile = ut.replacePaths("%PATH_[profile]%");
+                    pathProfileFile = ut.replaceFilePaths("%path_profile%");
+                }
+                for (var entry : gbEntries) {
+                    var eText = getTemplate("guestbook_entry", request, map);
+                    eText = eText.replace("%gbk_id%", entry[0]);
+                    eText = eText.replace("%gbk_nick%", entry[1]);
+                    eText = eText.replace("%gbk_color%", entry[2]);
+                    eText = eText.replace("%gbk_text%", entry[3]);
+                    eText = eText.replace("%gbk_time%", entry[4]);
+                    if (isOwner) {
+                        var deleteForm = "<form action=\"" + pathProfile + "\" method=\"get\" accept-charset=\"utf-8\" style=\"display:inline;margin-left:8px;\">" +
+                                "<input type=\"hidden\" name=\"page\" value=\"" + pathProfileFile + "\">" +
+                                "<input type=\"hidden\" name=\"user\" value=\"" + map.getOrDefault("user", "") + "\">" +
+                                "<input type=\"hidden\" name=\"owner\" value=\"" + owner + "\">" +
+                                "<input type=\"hidden\" name=\"skin\" value=\"" + skin + "\">" +
+                                "<input type=\"hidden\" name=\"guestbook_delete\" value=\"" + entry[0] + "\">" +
+                                "<button class=\"btn btn-sm btn-outline-danger\" type=\"submit\">Löschen</button></form>";
+                        eText = eText.replace("%gbk_delete_form%", deleteForm);
+                    } else {
+                        eText = eText.replace("%gbk_delete_form%", "");
+                    }
+                    gbSb.append(eText);
+                }
+                if (db.isRegistered(nick) && sid != null && cm.isValidConnectionId(sid)) {
+                    var form = getTemplate("guestbook_form", request, map);
+                    form = form.replace("%user%", user);
+                    form = form.replace("%nick%", nick);
+                    gbSb.append(form);
+                }
+                text = text.replace("%GUESTBOOK%", gbSb.toString());
             } catch (NullPointerException npe) {
                 text = ut.getStackTrace(npe);
             }

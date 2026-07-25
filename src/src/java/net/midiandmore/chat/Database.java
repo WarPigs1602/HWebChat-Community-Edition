@@ -3180,6 +3180,106 @@ public class Database {
         }
     }
 
+    protected void createGuestbookTable() {
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            try (var statement = getCon().prepareStatement("CREATE TABLE IF NOT EXISTS `" + getPrefix() + "guestbook` (`id` bigint(20) NOT NULL, `owner` varchar(255) NOT NULL, `sender` varchar(255) NOT NULL, `text` text NOT NULL, `time` bigint(20) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci")) {
+                statement.executeUpdate();
+            }
+            try (var alter = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "guestbook` ADD COLUMN IF NOT EXISTS `id` bigint(20) NOT NULL, ADD COLUMN IF NOT EXISTS `sender` varchar(255) NOT NULL DEFAULT ''")) {
+                alter.executeUpdate();
+            } catch (SQLException se) {
+                if (!se.getMessage().contains("Duplicate column name")) {
+                    logError(se);
+                }
+            }
+            try (var alter = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "guestbook` ADD PRIMARY KEY (`id`)")) {
+                alter.executeUpdate();
+            } catch (SQLException se) {
+                if (!se.getMessage().contains("Duplicate")) {
+                    logError(se);
+                }
+            }
+            try (var alter = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "guestbook` MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT")) {
+                alter.executeUpdate();
+            } catch (SQLException se) {
+                if (!se.getMessage().contains("Duplicate")) {
+                    logError(se);
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+    }
+
+    protected void addGuestbookEntry(String owner, String sender, String text) {
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "guestbook` (`owner`, `sender`, `text`, `time`) VALUES (?, ?, ?, ?)")) {
+                statement.setString(1, owner.toLowerCase());
+                statement.setString(2, sender);
+                statement.setString(3, text);
+                statement.setLong(4, currentTimeMillis());
+                statement.executeUpdate();
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+    }
+
+    protected ArrayList<String[]> getGuestbook(String owner) {
+        var ut = getMaster().getUtil();
+        var list = new ArrayList<String[]>();
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            try (var statement = getCon().prepareStatement("SELECT id, sender, text, time FROM `" + getPrefix() + "guestbook` WHERE LOWER(owner) = ? ORDER BY time DESC")) {
+                statement.setString(1, owner.toLowerCase());
+                try (var resultset = statement.executeQuery()) {
+                    while (resultset.next()) {
+                        var sender = resultset.getString("sender");
+                        var displaySender = sender;
+                        var color = getMaster().getConfig().getString("default_color");
+                        if (isRegistered(sender)) {
+                            color = getData(sender, "color");
+                            displaySender = getData(sender, "nick2");
+                        }
+                        list.add(new String[]{
+                            String.valueOf(resultset.getInt("id")),
+                            ut.preReplace(displaySender),
+                            ut.preReplace(color),
+                            ut.preReplace(resultset.getString("text")),
+                            ut.getTime(resultset.getLong("time"))
+                        });
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return list;
+    }
+
+    protected void deleteGuestbookEntry(int id, String owner) {
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            try (var statement = getCon().prepareStatement("DELETE FROM `" + getPrefix() + "guestbook` WHERE id = ? AND LOWER(owner) = ?")) {
+                statement.setInt(1, id);
+                statement.setString(2, owner.toLowerCase());
+                statement.executeUpdate();
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+    }
+
     /**
      * Die Smilies-Properties abfragen
      *
