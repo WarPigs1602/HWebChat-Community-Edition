@@ -2,11 +2,12 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Das Profil von %user%!</title>
+  <title>%com[design_title_profile]%</title>
   <meta content="%SERVER_VENDOR%" name="author">
   <meta content="&copy;%SERVER_YEAR% by %SERVER_VENDOR%" name="description">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="%path_file%bootstrap/css/bootstrap.min.css" type="text/css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" type="text/css">
   <link rel="stylesheet" href="%PATH_[style]%" type="text/css">
   <script type="text/javascript" src="%PATH_[script_post]%"></script>
 <style>
@@ -22,8 +23,10 @@ body.embedded { padding-top: 0 !important; }
     </a>
   </div>
 </nav>
-<div id="profilecontent" class="container-fluid bg-white shadow rounded p-3">
-%content%
+<div id="profilecontent" class="container-fluid">
+  <div class="profile-page-wrapper">
+    %content%
+  </div>
 </div>
 <script>
 if (window.self !== window.top) {

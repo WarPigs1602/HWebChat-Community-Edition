@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <title>%com[design_admin_title]%</title>
+  <meta content="%SERVER_VENDOR%" name="author">
+  <meta content="©%SERVER_YEAR% by %SERVER_VENDOR%" name="description">
+  <meta content="CoolChat" name="software">
+  <meta content="text/html; charset=UTF-8" http-equiv="content-type">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preload" href="file/fonts/TwitterColorEmoji-SVGinOT.ttf" as="font">
+  <link rel="preload" href="file/fonts/NotoColorEmoji.ttf" as="font">
+  <link rel="stylesheet" href="%path_file%bootstrap/css/bootstrap.min.css" type="text/css">
+  <link rel="stylesheet" media="screen" href="%PATH_[style]%" type="text/css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <script src="%PATH_[script_jquery]%"></script>
+  <script src="%path_file%popper/js/popper.min.js"></script>
+  <script src="%path_file%bootstrap/js/bootstrap.min.js"></script>
+  <script src="%PATH_[script_framekiller]%"></script>
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="%PATH_[config_index]%">
+      <img src="file/gfx/logo.svg" alt="HWebChat" style="height: 40px;">
+    </a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="%com[design_toggle_navigation]%">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <i class="fa fa-cog"></i> %com[design_admin_menu]%
+          </a>
+          <div class="dropdown-menu">
+            <a class="dropdown-item" href="%PATH_[config_chat]%">%com[design_admin_chat_settings]%</a>
+            <a class="dropdown-item" href="%PATH_[config_cmdrights]%">%com[design_admin_cmd_rights]%</a>
+            <a class="dropdown-item" href="%PATH_[config_cmd]%">%com[design_admin_cmd_edit]%</a>
+            <a class="dropdown-item" href="%PATH_[config_host]%">%com[design_admin_host]%</a>
+            <a class="dropdown-item" href="%PATH_[config_mail]%">%com[design_admin_mail]%</a>
+            <a class="dropdown-item" href="%PATH_[config_help]%">%com[design_admin_help]%</a>
+            <a class="dropdown-item" href="%PATH_[config_fun]%">%com[design_admin_fun]%</a>
+            <a class="dropdown-item" href="%PATH_[config_emot]%">%com[design_admin_emoticons]%</a>
+            <a class="dropdown-item" href="%PATH_[config_path]%">%com[design_admin_paths]%</a>
+            <a class="dropdown-item" href="%PATH_[config_mime]%">%com[design_admin_mime]%</a>
+            <a class="dropdown-item" href="%PATH_[config_users]%">%com[design_admin_users]%</a>
+            <a class="dropdown-item" href="%PATH_[config_rooms]%">%com[design_admin_rooms]%</a>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+<div id="pagecontent" class="container-fluid pt-4">
+%content%
+</div>
+<div class="container-fluid text-center page-footer">
+  <small>
+    <p>
+      ©%SERVER_YEAR% by <a href="mailto:%SERVER_MAIL%">%SERVER_VENDOR%</a>
+      <br>
+        <a href="%PATH_[dataprotection]%" target="_blank">%com[design_link_dataprotection]%</a> | <a href="%PATH_[impressum]%" target="_blank">%com[design_link_impressum]%</a>
+    </p>
+  </small>
+</div>
+</body>
+</html>

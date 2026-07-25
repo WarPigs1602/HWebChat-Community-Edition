@@ -109,7 +109,7 @@ public class Database {
      */
     protected void loadBans(ArrayList<String> name, ArrayList<String> reason, ArrayList<String> banner, ArrayList<Long> time) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT name,reason,banner,time FROM `" + getPrefix() + "banlist` ORDER BY `time` ASC"); var resultset = statement.executeQuery()) {
@@ -135,7 +135,11 @@ public class Database {
      * @return Der Inhalt
      */
     protected String getTemplate(String template, String skin) {
-        return readFile(skin, "template", template, "html");
+        return readFile(skin, "template", template, "html", null);
+    }
+
+    protected String getTemplate(String template, String skin, String lang) {
+        return readFile(skin, "template", template, "html", lang);
     }
 
     /**
@@ -147,7 +151,11 @@ public class Database {
      * @return Der Inhalt
      */
     protected String getConsole(String template, String skin) {
-        return readFile(skin, "console", template, "html");
+        return readFile(skin, "console", template, "html", null);
+    }
+
+    protected String getConsole(String template, String skin, String lang) {
+        return readFile(skin, "console", template, "html", lang);
     }
 
     /**
@@ -159,7 +167,11 @@ public class Database {
      * @return Der Inhalt
      */
     protected String getPage(String template, String skin) {
-        return readFile(skin, "pages", template, "html");
+        return readFile(skin, "pages", template, "html", null);
+    }
+
+    protected String getPage(String template, String skin, String lang) {
+        return readFile(skin, "pages", template, "html", lang);
     }
 
     /*
@@ -205,7 +217,10 @@ public class Database {
      * @param file Der Dateiname
      * @return Den Inhalt
      */
-    private String readFile(String style, String type, String file, String extension) {
+    private String readFile(String style, String type, String file, String extension, String lang) {
+        if (lang != null && lang.equalsIgnoreCase("en") && style != null && !style.endsWith("_en")) {
+            style = style + "_en";
+        }
         String text = null;
         var sb = new StringBuilder();
         if (file.contains("/") || file.contains("\\") || file.contains(".") || file.contains(":") || file.contains("\"") || file.contains("'") || file.contains("%") || file.contains("$")) {
@@ -270,7 +285,11 @@ public class Database {
      * @return Das Template
      */
     protected String getPageDesign(String template, String skin) {
-        return readFile(skin, "design", template, "html");
+        return readFile(skin, "design", template, "html", null);
+    }
+
+    protected String getPageDesign(String template, String skin, String lang) {
+        return readFile(skin, "design", template, "html", lang);
     }
 
     /**
@@ -281,7 +300,11 @@ public class Database {
      * @return Das Script
      */
     protected String getMail(String template, String skin) {
-        return readFile(skin, "mail", template, "txt");
+        return readFile(skin, "mail", template, "txt", null);
+    }
+
+    protected String getMail(String template, String skin, String lang) {
+        return readFile(skin, "mail", template, "txt", lang);
     }
 
     /**
@@ -293,7 +316,11 @@ public class Database {
      * @return Das Script
      */
     protected String getScript(String template, String skin) {
-        return readFile(skin, "script", template, "js");
+        return readFile(skin, "script", template, "js", null);
+    }
+
+    protected String getScript(String template, String skin, String lang) {
+        return readFile(skin, "script", template, "js", lang);
     }
 
     /**
@@ -305,7 +332,11 @@ public class Database {
      * @return Der Style-Sheet
      */
     protected String getStyle(String template, String skin) {
-        return readFile(skin, "style", template, "css");
+        return readFile(skin, "style", template, "css", null);
+    }
+
+    protected String getStyle(String template, String skin, String lang) {
+        return readFile(skin, "style", template, "css", lang);
     }
 
     /**
@@ -316,10 +347,19 @@ public class Database {
      * @return Der Command
      */
     protected String getCommand(String field) {
+        return getCommand(field, "de");
+    }
+
+    protected String getCommand(String field, String lang) {
         var ut = getMaster().getUtil();
         var value = getCom().get(field);
         if (value == null) {
             value = "<span style=\"font-weigt: bold\">(ERROR: The field " + field + " was not defined)</span><br>";
+        } else if (lang != null && lang.equalsIgnoreCase("en") && getComEn() != null) {
+            var enValue = getComEn().get(field);
+            if (enValue != null) {
+                value = enValue;
+            }
         }
         return ut.replaceFilePaths(ut.replacePaths(value));
     }
@@ -489,7 +529,7 @@ public class Database {
      */
     protected synchronized void delBan(String id) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("DELETE FROM `" + getPrefix() + "banlist` WHERE `name` = ?")) {
@@ -527,7 +567,7 @@ public class Database {
      */
     protected synchronized void addBan(String nick, String reason, String banner) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             var bt = currentTimeMillis();
@@ -632,7 +672,7 @@ public class Database {
     protected boolean isRegistered(String nick) {
         var flag = false;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             if (!flag) {
@@ -667,7 +707,7 @@ public class Database {
     protected boolean checkPassword(String nick, String password) {
         var flag = false;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             String regTime = null;
@@ -718,7 +758,7 @@ public class Database {
     protected boolean checkPassword2(String nick, String password) {
         var flag = false;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             String regTime = null;
@@ -766,7 +806,7 @@ public class Database {
      */
     protected void addFriend(String nick1, String nick2) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "friends` (`nick`, `nick2`) VALUES (?, ?)")) {
@@ -787,7 +827,7 @@ public class Database {
      */
     protected void delFriend(String nick1, String nick2) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("DELETE FROM `" + getPrefix() + "friends` WHERE nick=? AND nick2=?")) {
@@ -808,7 +848,7 @@ public class Database {
      */
     protected void delFriendsFromList(String nick1) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("DELETE FROM `" + getPrefix() + "friends` WHERE nick=? OR nick2=?")) {
@@ -830,7 +870,7 @@ public class Database {
     protected ArrayList<String> getFriendList(String nick) {
         var list = new ArrayList<String>();
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT nick,nick2 FROM `" + getPrefix() + "friends` WHERE nick=?")) {
@@ -855,14 +895,26 @@ public class Database {
      * @return Die Nachrichten
      */
     protected String getMessages(String nick, HttpServletRequest request, Map<String, String> map) {
-        return getMessages(nick);
+        var lang = "de";
+        if (map != null) {
+            var l = map.getOrDefault("lang", "");
+            if (l != null && !l.isBlank()) {
+                lang = l;
+            }
+        }
+        return getMessages(nick, lang);
     }
 
     protected String getMessages(String nick) {
+        return getMessages(nick, "de");
+    }
+
+    protected String getMessages(String nick, String lang) {
         var ut = getMaster().getUtil();
+        var db = getMaster().getConfig().getDb();
         var sb = new StringBuilder();
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT sender,target,text,time FROM `" + getPrefix() + "messages` WHERE LOWER(target) = ? ORDER BY time DESC")) {
@@ -882,7 +934,7 @@ public class Database {
                         } else {
                             color = getMaster().getConfig().getString("default_color");
                         }
-                        var text = getTemplate("message_view", getMaster().getConfig().getString("default_skin"));
+                        var text = db.getCommand("message_view", lang);
                         text = text.replace("%msg_nick%", sender);
                         text = text.replace("%msg_color%", color);
                         text = text.replace("%msg_time%", ts);
@@ -909,7 +961,7 @@ public class Database {
         var ut = getMaster().getUtil();
         var sb = new StringBuilder();
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT nick2,color,timestamp_reg,timestamp_login,points FROM `" + getPrefix() + "users` ORDER BY points DESC LIMIT " + getMaster().getConfig().getString("toplist_limit")); var resultset = statement.executeQuery()) {
@@ -957,7 +1009,7 @@ public class Database {
     protected int countChatter() {
         var count = -1;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT count(*) FROM `" + getPrefix() + "users`"); var resultset = statement.executeQuery()) {
@@ -980,7 +1032,7 @@ public class Database {
     protected int countMessage(String nick) {
         var count = 0;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT count(*) FROM `" + getPrefix() + "messages` WHERE LOWER(target) = ?")) {
@@ -1004,7 +1056,7 @@ public class Database {
      */
     protected void delMessages(String target) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("DELETE FROM `" + getPrefix() + "messages` WHERE LOWER(target) = ?")) {
@@ -1025,7 +1077,7 @@ public class Database {
      */
     protected void addRoom(String room, String topic, int locked, String lockReason, int standard, int allowSmilies) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "roomcfg` (`room`, `topic`, "
@@ -1054,7 +1106,7 @@ public class Database {
     protected void addRoomData(String nick, String room, String page_title, String bg_color_1,
             String bg_color_2, String color, String border_color, String link_color) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "roomcfg` (`owner`, `room`, "
@@ -1085,7 +1137,7 @@ public class Database {
     protected void addNapping(String nick, String room, String title, String bg_color_1,
             String bg_color_2, String color_1, String color_2, String link_color_1, String link_color_2) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "napping` (`nick`, `room`, `title`, `bg_color_1`, `bg_color_2`, `color_1`, `color_2`, `link_color_1`, `link_color_2`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
@@ -1114,7 +1166,7 @@ public class Database {
      */
     protected void addMessage(String nick1, String nick2, String content) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "messages` (`sender`, `target`, `text`, `time`) VALUES (?, ?, ?, ?)")) {
@@ -1140,7 +1192,7 @@ public class Database {
      */
     protected void addSession(String nick, String sid, String room, String color, int status) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "session` (`nick`, `session`, `room`, `color`, `away_status`, `away_reason`, `gag`, `status` ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
@@ -1164,7 +1216,7 @@ public class Database {
      */
     protected void delAllSessions() {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("DELETE FROM `" + getPrefix() + "session` WHERE ?")) {
@@ -1185,7 +1237,7 @@ public class Database {
      */
     protected void updateSession(String nick, String field, String value) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("UPDATE `" + getPrefix() + "session` SET " + field + "=? WHERE nick=?")) {
@@ -1214,7 +1266,7 @@ public class Database {
      */
     protected void addNick(String gender, String nick, String mail, String color, String pwd, String question, String answer, String day, String month, String year) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "users` (`sex`, `nick`, `nick2`, `mail`, `color`, `pwd`, `reminder`, `answer`, `timestamp_reg`, `timestamp_login`, `bday_day`, `bday_month`, `bday_year` ) VALUES (?, ?, ?, ?, ?, " + getMaster().getConfig().getString("encrypt_pwd") + ", ?, ?, ?, ?, ?, ?,?)")) {
@@ -1251,7 +1303,7 @@ public class Database {
      */
     protected void addThread(String topic, String content, long ref, long user, long board, String ip, long cat) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "board` (`topic`, `content`, `ref`, `user`, `board`, `posted`, `ip`, `cat`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
@@ -1277,7 +1329,7 @@ public class Database {
      */
     protected void addBoards(String topic, String description, Long cat) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "board_boards` (`topic`, `description`, `cat`) VALUES (?, ?, ?)")) {
@@ -1298,7 +1350,7 @@ public class Database {
      */
     protected void addBoardCat(String topic, String description) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "board_cat` (`topic`, `description`) VALUES (?, ?)")) {
@@ -1321,7 +1373,7 @@ public class Database {
      */
     protected void updateNapping(String nick, String field, String value) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("UPDATE `" + getPrefix() + "napping` SET " + field + "=? WHERE nick=?")) {
@@ -1343,7 +1395,7 @@ public class Database {
      */
     protected void updateFriends(String nick, String nick2) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("UPDATE `" + getPrefix() + "friends` SET nick=? WHERE nick=?")) {
@@ -1370,7 +1422,7 @@ public class Database {
      */
     protected void updateNick(String nick, String field, String value) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("UPDATE `" + getPrefix() + "users` SET " + field + "=? WHERE nick2=? OR nick=?")) {
@@ -1393,7 +1445,7 @@ public class Database {
      */
     protected void updateBoards(long cat, String field, String value) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("UPDATE `" + getPrefix() + "board_boards` SET " + field + "=? WHERE id=?")) {
@@ -1415,7 +1467,7 @@ public class Database {
      */
     protected void updateBoardCats(long cat, String field, String value) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("UPDATE `" + getPrefix() + "board_cat` SET " + field + "=? WHERE id=?")) {
@@ -1437,7 +1489,7 @@ public class Database {
      */
     protected void updateThread(long cat, String field, String value) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("UPDATE `" + getPrefix() + "board` SET " + field + "=? WHERE id=?")) {
@@ -1459,7 +1511,7 @@ public class Database {
      */
     protected void updatePicture(String nick, InputStream is, String contentType) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("UPDATE `" + getPrefix() + "users` SET `image_upload`=?,`image_url`=? WHERE nick=? OR nick2=?")) {
@@ -1482,7 +1534,7 @@ public class Database {
      */
     protected void updatePassword(String nick, String pwd) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             String regTime = null;
@@ -1520,7 +1572,7 @@ public class Database {
      */
     protected void updatePassword2(String nick, String pwd) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             String regTime = null;
@@ -1557,7 +1609,7 @@ public class Database {
      */
     protected void updateLoginTime(String nick) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("UPDATE `" + getPrefix() + "users` SET timestamp_login=?  WHERE nick=? or nick2=?")) {
@@ -1580,7 +1632,7 @@ public class Database {
      */
     protected void updateRoomData(String room, String field, String value) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("UPDATE `" + getPrefix() + "roomcfg` SET " + field + "=? WHERE room=?")) {
@@ -1600,7 +1652,7 @@ public class Database {
      */
     protected void delRoom(String room) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("DELETE FROM `" + getPrefix() + "roomcfg` WHERE room=?")) {
@@ -1619,7 +1671,7 @@ public class Database {
      */
     protected void delNick(String nick) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("DELETE FROM `" + getPrefix() + "users` WHERE nick=?")) {
@@ -1638,7 +1690,7 @@ public class Database {
      */
     protected void delSession(String nick) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("DELETE FROM `" + getPrefix() + "session` WHERE nick=?")) {
@@ -1660,7 +1712,7 @@ public class Database {
     protected String getData(long id, String field) {
         String dat = null;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT nick," + field + " FROM `" + getPrefix() + "users` WHERE id=?")) {
@@ -1688,7 +1740,7 @@ public class Database {
     protected String getData(String nick, String field) {
         String dat = null;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT nick," + field + " FROM `" + getPrefix() + "users` WHERE nick2=? OR nick=?")) {
@@ -1717,7 +1769,7 @@ public class Database {
     protected String getBan(String nick, String field) {
         String dat = null;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT name," + field + " FROM `" + getPrefix() + "banlist` WHERE name=?")) {
@@ -1744,7 +1796,7 @@ public class Database {
     protected ArrayList<String> getBanList() {
         ArrayList<String> dat = new ArrayList<>();
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT name FROM `" + getPrefix() + "banlist`")) {
@@ -1770,7 +1822,7 @@ public class Database {
     protected long countBoardTreads2(long id) {
         long dat = 0;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT COUNT(*) AS board FROM `" + getPrefix() + "board` WHERE id=ref AND cat=?")) {
@@ -1798,7 +1850,7 @@ public class Database {
     protected long countBoardTreads3(long id) {
         long dat = 0;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT COUNT(*) AS board FROM `" + getPrefix() + "board` WHERE ref=?")) {
@@ -1826,7 +1878,7 @@ public class Database {
     protected long countBoardTreads3(String search) {
         long dat = 0;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT COUNT(*) AS board FROM `" + getPrefix() + "board` WHERE content LIKE ? OR topic LIKE ? ")) {
@@ -1855,7 +1907,7 @@ public class Database {
     protected long countBoardTreads(long id) {
         long dat = 0;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT COUNT(*) AS board FROM `" + getPrefix() + "board` WHERE cat=?")) {
@@ -1883,7 +1935,7 @@ public class Database {
     protected String getBoardRef(long cat, String field) {
         String dat = null;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT id," + field + " FROM `" + getPrefix() + "board` WHERE ref=? ORDER BY id ASC")) {
@@ -1911,7 +1963,7 @@ public class Database {
     protected String getBoard(long cat, String field) {
         String dat = null;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT id," + field + " FROM `" + getPrefix() + "board` WHERE id=? ORDER BY id ASC")) {
@@ -1939,7 +1991,7 @@ public class Database {
     protected long getBoardId() {
         long dat = 0;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT LAST_INSERT_ID();")) {
@@ -1966,7 +2018,7 @@ public class Database {
     protected String getBoards(long id, String field) {
         String dat = null;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT id," + field + " FROM `" + getPrefix() + "board_boards` WHERE id=?")) {
@@ -1992,7 +2044,7 @@ public class Database {
     protected TreeMap<Long, Object[]> getBoardCat() {
         TreeMap<Long, Object[]> map = new TreeMap<>();
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT id,topic,description,deleted FROM `" + getPrefix() + "board_cat`")) {
@@ -2023,7 +2075,7 @@ public class Database {
     protected ArrayList<Object[]> getBoard(long cat) {
         ArrayList<Object[]> map = new ArrayList<>();
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT id,topic,content,ref,user,board,posted,ip,cat FROM `" + getPrefix() + "board` WHERE cat=? OR ref=? ORDER BY id DESC")) {
@@ -2067,7 +2119,7 @@ public class Database {
         end = getMaster().getConfig().getLong("board_pages");
         ArrayList<Object[]> map = new ArrayList<>();
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT id,topic,content,ref,user,board,posted,ip,cat,deleted,closed FROM `" + getPrefix() + "board` WHERE ref=? ORDER BY id ASC LIMIT ?, ?")) {
@@ -2114,7 +2166,7 @@ public class Database {
         end = getMaster().getConfig().getLong("board_pages");
         ArrayList<Object[]> map = new ArrayList<>();
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT id,topic,content,ref,user,board,posted,ip,cat,deleted,closed FROM `" + getPrefix() + "board` WHERE ref=id AND cat=? ORDER BY id DESC LIMIT ?, ?")) {
@@ -2155,7 +2207,7 @@ public class Database {
      */
     protected Object[] getBoardThreadById(long id) {
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT id,topic,content,ref,user,board,posted,ip,cat,deleted,closed FROM `" + getPrefix() + "board` WHERE id=?")) {
@@ -2198,7 +2250,7 @@ public class Database {
         end = getMaster().getConfig().getLong("board_pages");
         ArrayList<Object[]> map = new ArrayList<>();
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT id,topic,content,ref,user,board,posted,ip,cat,deleted,closed FROM `" + getPrefix() + "board` WHERE topic LIKE ? OR content LIKE ? ORDER BY id DESC LIMIT ?, ?")) {
@@ -2240,7 +2292,7 @@ public class Database {
     protected ArrayList<Object[]> getBoardFromId2(long cat) {
         ArrayList<Object[]> map = new ArrayList<>();
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT id,topic,content,ref,user,board,posted,ip,cat,closed,deleted FROM `" + getPrefix() + "board` WHERE id=ref AND cat=? ORDER BY id DESC")) {
@@ -2279,7 +2331,7 @@ public class Database {
     protected ArrayList<Object[]> getBoardFromId(long cat, long ref) {
         ArrayList<Object[]> map = new ArrayList<>();
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT id,topic,content,ref,user,board,posted,ip,cat,closed,deleted FROM `" + getPrefix() + "board` WHERE ref=? OR id=? ORDER BY id DESC")) {
@@ -2319,7 +2371,7 @@ public class Database {
     protected TreeMap<Long, Object[]> getBoards(long cat) {
         TreeMap<Long, Object[]> map = new TreeMap<>();
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT id,cat,topic,readonly,description,guests,deleted FROM `" + getPrefix() + "board_boards` WHERE cat=?")) {
@@ -2356,7 +2408,7 @@ public class Database {
     protected String getBoardCat(long id, String field) {
         String dat = null;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT id," + field + " FROM `" + getPrefix() + "board_cat` WHERE id=?")) {
@@ -2385,7 +2437,7 @@ public class Database {
         String dat = null;
         TreeMap<String, String> map = new TreeMap<>();
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT nick," + field + " FROM `" + getPrefix() + "users`")) {
@@ -2434,7 +2486,7 @@ public class Database {
     protected String getNapping(String nick, String field) {
         String dat = null;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT nick," + field + " FROM `" + getPrefix() + "napping` WHERE nick=?")) {
@@ -2462,7 +2514,7 @@ public class Database {
     protected String getNappingJSON(String nick, String field) {
         String dat = null;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT nick," + field + " FROM `" + getPrefix() + "napping` WHERE nick=?")) {
@@ -2490,7 +2542,7 @@ public class Database {
         Blob image = null;
         byte[] dat = null;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT image_upload FROM `" + getPrefix() + "users` WHERE nick2=?")) {
@@ -2521,7 +2573,7 @@ public class Database {
     protected Long getLongData(String nick, String field) {
         long dat = -1;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT nick," + field + " FROM `" + getPrefix() + "users` WHERE nick=?")) {
@@ -2551,7 +2603,7 @@ public class Database {
         var dat = "";
         if (isRegistered(nick)) {
             try {
-                if (!getCon().isValid(1000)) {
+                if (getCon() == null || !getCon().isValid(1000)) {
                     connectDatabase();
                 }
                 try (var statement = getCon().prepareStatement("SELECT * FROM `" + getPrefix() + "users` WHERE nick=?")) {
@@ -2593,7 +2645,7 @@ public class Database {
 
         var flag = false;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT owner FROM `" + getPrefix() + "roomcfg` WHERE owner=?")) {
@@ -2624,7 +2676,7 @@ public class Database {
 
         var flag = false;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT room FROM `" + getPrefix() + "roomcfg` WHERE room=?")) {
@@ -2653,7 +2705,7 @@ public class Database {
     protected String getRoomData(String room, String field) {
         String dat = null;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT room," + field + " FROM `" + getPrefix() + "roomcfg` WHERE room=?")) {
@@ -2680,7 +2732,7 @@ public class Database {
     protected String getRoomNameByOwner(String nick) {
         String dat = null;
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT room, owner FROM `" + getPrefix() + "roomcfg` WHERE owner=?")) {
@@ -2705,7 +2757,7 @@ public class Database {
     protected TreeMap<String, Integer> getStaffList() {
         var ht = new TreeMap<String, Integer>();
         try {
-            if (!getCon().isValid(1000)) {
+            if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("SELECT nick2,status FROM `" + getPrefix() + "users` WHERE status >= 4 ORDER BY status DESC"); var resultset = statement.executeQuery()) {
@@ -2774,6 +2826,7 @@ public class Database {
     }
 
     private TreeMap<String, String> com;
+    private TreeMap<String, String> com_en;
 
     /**
      * Speichert die Bans in ArrayListen
@@ -2880,6 +2933,7 @@ public class Database {
     private TreeMap<String, String> mimeTypes;
     private TreeMap<String, String> profile;
     private TreeMap<String, String> help;
+    private TreeMap<String, String> help_en;
     private Properties mail;
     private TreeMap<String, String[]> fun;
 
@@ -2975,6 +3029,14 @@ public class Database {
         this.help = help;
     }
 
+    protected TreeMap<String, String> getHelpEn() {
+        return help_en;
+    }
+
+    protected void setHelpEn(TreeMap<String, String> help_en) {
+        this.help_en = help_en;
+    }
+
     /**
      * Die Command-Parameter abfragen
      *
@@ -3011,6 +3073,14 @@ public class Database {
         this.com = com;
     }
 
+    protected TreeMap<String, String> getComEn() {
+        return com_en;
+    }
+
+    protected void setComEn(TreeMap<String, String> com_en) {
+        this.com_en = com_en;
+    }
+
     /**
      * Die Profil-Parameter abfragen
      *
@@ -3027,6 +3097,87 @@ public class Database {
      */
     protected void setProfile(TreeMap<String, String> profile) {
         this.profile = profile;
+    }
+
+    private TreeMap<String, String> profile_en;
+
+    /**
+     * Die Profil-Parameter (en) abfragen
+     *
+     * @return Die Profil-Parameter (en)
+     */
+    protected TreeMap<String, String> getProfileEn() {
+        return profile_en;
+    }
+
+    /**
+     * Setzt die Profil-Parameter (en)
+     *
+     * @param profile_en Die Profil-Parameter (en)
+     */
+    protected void setProfileEn(TreeMap<String, String> profile_en) {
+        this.profile_en = profile_en;
+    }
+
+    /**
+     * Pruft ob alle benotigten Profil-Spalten in der Users-Tabelle vorhanden
+     * sind und erzeugt fehlende Spalten automatisch per ALTER TABLE.
+     */
+    protected void checkAndCreateMissingProfileColumns() {
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            String table = getPrefix() + "users";
+            String[] textCols = {
+                "homepage", "city", "hobby", "description", "slogan", "signature",
+                "icq", "live", "yahoo", "facebook", "twitter", "irc", "youtube",
+                "instagram", "linkedin", "tiktok", "discord", "twitch", "github",
+                "reddit", "snapchat", "pinterest", "whatsapp", "telegram",
+                "fam_status", "visitors", "image_url", "login_room", "pwd2"
+            };
+            String[] intCols = {"points", "status"};
+            String[] blobCols = {"image_upload"};
+
+            for (var col : textCols) {
+                try {
+                    try (var alter = getCon().prepareStatement(
+                            "ALTER TABLE `" + table + "` ADD COLUMN IF NOT EXISTS `" + col + "` VARCHAR(255) DEFAULT ''")) {
+                        alter.executeUpdate();
+                    }
+                } catch (SQLException se) {
+                    if (!se.getMessage().contains("Duplicate column name")) {
+                        logError(se);
+                    }
+                }
+            }
+            for (var col : intCols) {
+                try {
+                    try (var alter = getCon().prepareStatement(
+                            "ALTER TABLE `" + table + "` ADD COLUMN IF NOT EXISTS `" + col + "` INT DEFAULT 0")) {
+                        alter.executeUpdate();
+                    }
+                } catch (SQLException se) {
+                    if (!se.getMessage().contains("Duplicate column name")) {
+                        logError(se);
+                    }
+                }
+            }
+            for (var col : blobCols) {
+                try {
+                    try (var alter = getCon().prepareStatement(
+                            "ALTER TABLE `" + table + "` ADD COLUMN IF NOT EXISTS `" + col + "` LONGBLOB")) {
+                        alter.executeUpdate();
+                    }
+                } catch (SQLException se) {
+                    if (!se.getMessage().contains("Duplicate column name")) {
+                        logError(se);
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
     }
 
     /**

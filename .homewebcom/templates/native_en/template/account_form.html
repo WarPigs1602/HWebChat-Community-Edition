@@ -1,0 +1,24 @@
+<!-- design=account -->
+<h1>%SERVER_SOFTWARE% &ndash; Account</h1>
+
+<form action="%PATH_[account]%" method="POST" accept-charset="utf-8">
+  <p class="form-section-title">Account</p>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">What do you want to do?</label>
+      <select class="form-select form-select-sm" name="service" size="6">
+        <option value="account" selected>Processing profile</option>
+        <option value="napping">Chatnapping</option>
+        <option value="picture">Upload profile picture</option>
+        <option value="password">Processing the password</option>
+        <option value="data">Processing account data</option>
+        <option value="delete">Delete account</option>
+      </select>
+    </div>
+  </div>
+
+  <p class="form-section-title">Continue</p>
+
+  <input type="submit" class="btn btn-primary btn-sm" name="OK" value="Continue to the next page">
+</form>

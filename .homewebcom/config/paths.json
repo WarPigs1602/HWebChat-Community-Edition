@@ -99,6 +99,7 @@
 {"name":"script_room","path":"%path_hwebchat%?page=%path_output%&service=js&skin=%skin%&doc=rooms"},
 {"name":"script_room_napping","path":"%path_hwebchat%?page=%path_output%&service=js&skin=%skin%&doc=rooms_napping&room2=%room2%"},
 {"name":"script_userlist","path":"%path_hwebchat%?page=%path_output%&service=js&skin=%skin%&doc=userlist"},
+{"name":"script_userlist_napping","path":"%path_hwebchat%?page=%path_output%&service=js&skin=%skin%&doc=userlist_napping"},
 {"name":"script_window","path":"%path_hwebchat%?page=%path_output%&service=js&skin=%skin%&doc=window"},
 {"name":"style","path":"%path_hwebchat%?page=%path_output%&service=style&skin=%skin%&doc=page"},
 {"name":"style_bootstrap","path":"%path_hwebchat%?page=%path_output%&service=style&skin=%skin%&doc=bootstrap"},

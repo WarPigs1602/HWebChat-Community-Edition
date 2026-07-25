@@ -44,12 +44,25 @@
           </div>
         </div>
       </div>
+    </li><li class="nav-item dropdown" id="language">
+      <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-language"></i> %com[design_nav_language]%</a>
+      <div class="dropdown-menu" aria-labelledby="languageDropdown">
+        <a class="dropdown-item" href="#" onclick="setChatLang('de'); return false;">%com[design_lang_de]%</a>
+        <a class="dropdown-item" href="#" onclick="setChatLang('en'); return false;">%com[design_lang_en]%</a>
+      </div>
     </li>
-  </ul>
+</ul>
     </div>
   </div>
 </nav>
 <script>
+function setChatLang(lang)
+{
+    document.cookie = "lang=" + lang + "; path=/; max-age=" + (60 * 60 * 24 * 365);
+    var url = new URL(window.location.href);
+      url.searchParams.set('lang', lang);
+      window.location.href = url.toString();
+}
 function submitMessage(text)
 {
     text = escapeHtml(text);
@@ -71,7 +84,7 @@ function submitMessage(text)
       </div>
     </div>
     <div class="right_frame" id="right">
-      <script type="text/javascript" src="%PATH_[script_userlist]%&owner=%owner%"></script>
+      <script type="text/javascript" src="%PATH_[script_userlist_napping]%&owner=%owner%"></script>
     </div>
   </div>
   <div class="post_frame post_field input-group">

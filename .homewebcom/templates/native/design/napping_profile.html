@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Das Profil von %user%!</title>
+  <title>%com[design_title_profile]%</title>
   <meta content="%SERVER_VENDOR%" name="author">
   <meta content="&copy;%SERVER_YEAR% by %SERVER_VENDOR%" name="description">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -14,7 +14,7 @@ body.embedded nav.navbar { display: none !important; }
 body.embedded { padding-top: 0 !important; }
 </style>
 </head>
-<body style="background-color: #%bg_color_1%;">
+<body>
 <nav class="navbar navbar-expand-lg navbar-dark mb-3" style="background-color: #%bg_color_2%;">
   <div class="container-fluid">
     <a class="navbar-brand" href="#">
@@ -22,8 +22,8 @@ body.embedded { padding-top: 0 !important; }
     </a>
   </div>
 </nav>
-<div id="profilecontent" style="background-color: #ffffff; margin: 0.5rem; padding: 1rem; border-radius: 0.5rem;">
-%content%
+<div id="profilecontent" class="container-fluid profile-napping-wrapper">
+    %content%
 </div>
 <script>
 if (window.self !== window.top) {

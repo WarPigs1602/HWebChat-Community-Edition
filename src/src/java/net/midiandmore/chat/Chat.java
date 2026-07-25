@@ -37,7 +37,7 @@ import static java.util.logging.Level.SEVERE;
  */
 @ServerEndpoint(value = "/Chat", configurator = Chat.ChatHandshake.class)
 public class Chat {
-    
+
     private HttpSession httpSession;
     private Session session;
     private String cat;
@@ -62,14 +62,32 @@ public class Chat {
             var hs = (HttpSession) config.getUserProperties()
                     .get(HttpSession.class.getName());
             setHttpSession(hs);
+            // Sprache aus dem Cookie (oder ?lang=) &uuml;bernehmen, damit die
+            // gew&auml;hlte Sprache auch im Chat/WebSocket erhalten bleibt.
+            // Das Cookie (bzw. der ?lang=-Parameter) hat dabei Vorrang vor
+            // einem evtl. veralteten Session-Wert.
+            var cookieHeader = (String) config.getUserProperties().get("cookie");
+            var langParam = ut.readCookieFromHeader(cookieHeader, "lang");
+            if (langParam == null || langParam.isBlank()) {
+                langParam = getMap().containsKey("lang") ? getMap().get("lang").get(0) : "";
+            }
+            if (langParam != null && !langParam.isBlank()) {
+                getHttpSession().setAttribute("lang", langParam);
+            }
             var target = getMap().containsKey("target") ? getMap().get("target").get(0) : "";
             if (!getMap().containsKey("target")) {
-                var pwd = getMap().containsKey("pwd") ? getMap().get("pwd").get(0) : (String) getHttpSession().getAttribute("pwd");
-                var room = getMap().containsKey("room") ? getMap().get("room").get(0) : (String) getHttpSession().getAttribute("room");
-                var owner = getMap().containsKey("owner") ? getMap().get("owner").get(0) : (String) getHttpSession().getAttribute("owner");
-                var nick = getMap().containsKey("nick") ? getMap().get("nick").get(0) : (String) getHttpSession().getAttribute("nick");
-                var sid = getMap().containsKey("sid") ? getMap().get("sid").get(0) : (String) getHttpSession().getAttribute("sid");
-                var skin = getMap().containsKey("skin") ? getMap().get("skin").get(0) : (String) getHttpSession().getAttribute("skin");
+                var pwd = getMap().containsKey("pwd") ? getMap().get("pwd").get(0)
+                        : (String) getHttpSession().getAttribute("pwd");
+                var room = getMap().containsKey("room") ? getMap().get("room").get(0)
+                        : (String) getHttpSession().getAttribute("room");
+                var owner = getMap().containsKey("owner") ? getMap().get("owner").get(0)
+                        : (String) getHttpSession().getAttribute("owner");
+                var nick = getMap().containsKey("nick") ? getMap().get("nick").get(0)
+                        : (String) getHttpSession().getAttribute("nick");
+                var sid = getMap().containsKey("sid") ? getMap().get("sid").get(0)
+                        : (String) getHttpSession().getAttribute("sid");
+                var skin = getMap().containsKey("skin") ? getMap().get("skin").get(0)
+                        : (String) getHttpSession().getAttribute("skin");
                 boolean chatOnly = getMap().containsKey("chat_only");
                 if (getHttpSession() != null && !getHttpSession().isNew()) {
                     getSession().getUserProperties().put("nick", nick);
@@ -115,7 +133,8 @@ public class Chat {
                     ipResolved = ip;
                 }
                 try {
-                    ipResolved2 = conf.getString("resolve_ip").equals("1") ? getByName(realIp).getCanonicalHostName() : realIp;
+                    ipResolved2 = conf.getString("resolve_ip").equals("1") ? getByName(realIp).getCanonicalHostName()
+                            : realIp;
                 } catch (UnknownHostException uhe) {
                     ipResolved2 = realIp;
                 }
@@ -136,61 +155,77 @@ public class Chat {
                 } else if ((reg = db.isRegistered(nick)) && !db.checkPassword(nick, pwd)) {
                     ut.sendText(getTemplate("pwd_chat"), getSession(), "error", "");
                     disconnect();
-                } else if (db.isBanned(nick) && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
+                } else if (db.isBanned(nick)
+                        && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                     getSession().getUserProperties().put("reason", db.getBanReason(nick));
                     ut.sendText(getTemplate("banned_chat"), getSession(), "error", "");
                     disconnect();
-                } else if (db.isBanned(ip) && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
+                } else if (db.isBanned(ip)
+                        && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                     getSession().getUserProperties().put("reason", db.getBanReason(ip));
                     ut.sendText(getTemplate("banned_chat"), getSession(), "error", "");
                     disconnect();
-                } else if (db.isBanned(realIp) && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
+                } else if (db.isBanned(realIp)
+                        && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                     getSession().getUserProperties().put("reason", db.getBanReason(realIp));
                     ut.sendText(getTemplate("banned_chat"), getSession(), "error", "");
                     disconnect();
-                } else if (db.isBanned(ipResolved) && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
+                } else if (db.isBanned(ipResolved)
+                        && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                     getSession().getUserProperties().put("reason", db.getBanReason(ipResolved));
                     ut.sendText(getTemplate("banned_chat"), getSession(), "error", "");
                     disconnect();
-                } else if (db.isBanned(ipResolved2) && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
+                } else if (db.isBanned(ipResolved2)
+                        && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                     getSession().getUserProperties().put("reason", db.getBanReason(ipResolved2));
                     ut.sendText(getTemplate("banned_chat"), getSession(), "error", "");
                     disconnect();
-                } else if (db.isBanned(realIp) && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
+                } else if (db.isBanned(realIp)
+                        && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                     getSession().getUserProperties().put("reason", db.getBanReason(realIp));
                     ut.sendText(getTemplate("banned_chat"), getSession(), "error", "");
                     disconnect();
-                } else if (db.isTimedBanned(nick) && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
+                } else if (db.isTimedBanned(nick)
+                        && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                     getSession().getUserProperties().put("reason", db.getBanReason(nick));
                     ut.sendText(getTemplate("banned_temp_chat"), getSession(), "error", "");
                     disconnect();
-                } else if (db.isTimedBanned(ip) && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
+                } else if (db.isTimedBanned(ip)
+                        && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                     getSession().getUserProperties().put("reason", db.getBanReason(nick));
                     ut.sendText(getTemplate("banned_temp_chat"), getSession(), "error", "");
                     disconnect();
-                } else if (db.isTimedBanned(realIp) && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
+                } else if (db.isTimedBanned(realIp)
+                        && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                     getSession().getUserProperties().put("reason", db.getBanReason(realIp));
                     ut.sendText(getTemplate("banned_temp_chat"), getSession(), "error", "");
                     disconnect();
-                } else if (db.isTimedBanned(ipResolved) && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
+                } else if (db.isTimedBanned(ipResolved)
+                        && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                     getSession().getUserProperties().put("reason", db.getBanReason(ipResolved));
                     ut.sendText(getTemplate("banned_temp_chat"), getSession(), "error", "");
                     disconnect();
-                } else if (db.isTimedBanned(ipResolved2) && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
+                } else if (db.isTimedBanned(ipResolved2)
+                        && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                     getSession().getUserProperties().put("reason", db.getBanReason(ipResolved2));
                     ut.sendText(getTemplate("banned_temp_chat"), getSession(), "error", "");
                     disconnect();
-                } else if (db.isTimedBanned(realIp) && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
+                } else if (db.isTimedBanned(realIp)
+                        && (!reg || (reg && parseInt(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                     getSession().getUserProperties().put("reason", db.getBanReason(realIp));
                     ut.sendText(getTemplate("banned_temp_chat"), getSession(), "error", "");
                     disconnect();
-                } else if (!reg && (conf.getInt("guest") == 1 && !nick.toLowerCase().startsWith(conf.getString("guest_prefix").toLowerCase())) && conf.getInt("only_registered_users") == 1) {
+                } else if (!reg
+                        && (conf.getInt("guest") == 1
+                                && !nick.toLowerCase().startsWith(conf.getString("guest_prefix").toLowerCase()))
+                        && conf.getInt("only_registered_users") == 1) {
                     ut.sendText(getTemplate("reg_chat"), getSession(), "error", "");
                     disconnect();
                 } else if (!reg && db.roomExists(room) && db.getRoomData(room, "locked").equals("1")) {
                     ut.sendText(getTemplate("locked_room_chat"), getSession(), "error", "");
                     disconnect();
-                } else if (reg && db.roomExists(room) && db.getRoomData(room, "locked").equals("1") && parseInt(db.getData(nick, "status")) < conf.getInt("lock_status")) {
+                } else if (reg && db.roomExists(room) && db.getRoomData(room, "locked").equals("1")
+                        && parseInt(db.getData(nick, "status")) < conf.getInt("lock_status")) {
                     ut.sendText(getTemplate("locked_room_chat"), getSession(), "error", "");
                     disconnect();
                 } else if (cm.isOnline(nick)) {
@@ -216,7 +251,8 @@ public class Chat {
                         }
                         var ts = ut.getTime(db.getLongData(nick, "timestamp_login"));
                         db.updateLoginTime(oldNick);
-                        var wr = getTemplate("welcome_reg");
+                        var wrLang = langParam != null && !langParam.isBlank() ? langParam : "de";
+                        var wr = db.getCommand("welcome_reg", wrLang);
                         wr = wr.replace("%color%", color);
                         wr = wr.replace("%nick%", oldNick);
                         wr = wr.replace("%status%", Integer.toString(status));
@@ -225,11 +261,14 @@ public class Chat {
                         wr = wr.replace("%skin%", skin);
                         wr = wr.replace("%owner%", owner);
                         ut.sendText(wr, getSession(), "chat", "");
-                        ut.sendText("<!-- set_message_count: \"" + db.countMessage(oldNick) + "\" -->", getSession(), "chat", "");
+                        ut.sendText("<!-- set_message_count: \"" + db.countMessage(oldNick) + "\" -->", getSession(),
+                                "chat", "");
                         var msgCount = db.countMessage(oldNick);
                         if (msgCount > 0) {
-                            var msgs = db.getMessages(oldNick);
-                            var block = getTemplate("chat_messages_box");
+                            var msgs = db.getMessages(oldNick,
+                                    langParam != null && !langParam.isBlank() ? langParam : "de");
+                            var block = db.getCommand("messages_box_header",
+                                    langParam != null && !langParam.isBlank() ? langParam : "de");
                             block = block.replace("%count%", String.valueOf(msgCount));
                             block = block.replace("%messages%", msgs);
                             ut.sendText(block, getSession(), "chat", "");
@@ -241,14 +280,22 @@ public class Chat {
                         ut.sendText(getTemplate("proxy_warn"), getSession(), "chat", "");
                     }
                     if (status >= conf.getInt("status_admin")) {
-                        ut.sendText(getTemplate("welcome_admin"), getSession(), "chat", "");
+                        ut.sendText(
+                                db.getCommand("welcome_admin",
+                                        langParam != null && !langParam.isBlank() ? langParam : "de"),
+                                getSession(), "chat", "");
                         sv = db.getData(oldNick, "sv").equals("1");
                     } else if (status >= conf.getInt("status_staff")) {
-                        ut.sendText(getTemplate("welcome_staff"), getSession(), "chat", "");
+                        ut.sendText(
+                                db.getCommand("welcome_staff",
+                                        langParam != null && !langParam.isBlank() ? langParam : "de"),
+                                getSession(), "chat", "");
                     }
-                    if (reg && ut.hasBirthday(db.getData(oldNick, "bday_day"), db.getData(oldNick, "bday_month"), db.getData(oldNick, "bday_year"))) {
+                    if (reg && ut.hasBirthday(db.getData(oldNick, "bday_day"), db.getData(oldNick, "bday_month"),
+                            db.getData(oldNick, "bday_year"))) {
                         var wr = getTemplate("bday_greeting");
-                        wr = wr.replace("%age%", Integer.toString(ut.getAge(db.getData(oldNick, "bday_day"), db.getData(oldNick, "bday_month"), db.getData(oldNick, "bday_year"))));
+                        wr = wr.replace("%age%", Integer.toString(ut.getAge(db.getData(oldNick, "bday_day"),
+                                db.getData(oldNick, "bday_month"), db.getData(oldNick, "bday_year"))));
                         ut.sendText(wr, getSession(), "chat", "");
                     }
                     getHttpSession().setMaxInactiveInterval(-1);
@@ -271,7 +318,8 @@ public class Chat {
                     ipResolved2 = ipResolved2 != null ? ipResolved2 : "";
                     var text = cm.addUsersInUserlist(room);
                     cm.addUser(oldNick, sid, room, referer,
-                            userAgent, ipResolved, ip, color, status, getSession(), getHttpSession(), sv, host, skin, realIp, ipResolved2, uaName, uaVersion, browser);
+                            userAgent, ipResolved, ip, color, status, getSession(), getHttpSession(), sv, host, skin,
+                            realIp, ipResolved2, uaName, uaVersion, browser);
                     if (!oldNick.equalsIgnoreCase(nick)) {
                         cm.getUser(oldNick).setNewName(nick);
                     } else {
@@ -280,6 +328,7 @@ public class Chat {
                     cm.getUser(oldNick).setJsid(getHttpSession().getId());
                     cm.getUser(oldNick).setFriends(db.getFriendList(nick));
                     cm.getUser(oldNick).setServerInfo((String) getHttpSession().getAttribute("server"));
+                    cm.getUser(oldNick).setLang(langParam);
                     cm.getUser(oldNick).setChatOnly((String) getHttpSession().getAttribute("chat_only") != null);
                     cm.getRoom(room).optimizeUserList();
                     if (reg) {
@@ -287,48 +336,61 @@ public class Chat {
                         db.updateLoginTime(oldNick);
                     }
                     /*
-            try {
-            Map<String, Object> globalPropertiesMap = config.getUserProperties();         
-            for(Map.Entry<String, Object> entry : globalPropertiesMap.entrySet()) {
-                String key = entry.getKey();
-               cm.sendToOneWithNoSmilies("key: " + key + ", value: " + globalPropertiesMap.get(key)+"<br>", nick); 
-            }
-            } catch (Exception e) {
-                cm.postStackTrace(e, nick);
-            } */
+                     * try {
+                     * Map<String, Object> globalPropertiesMap = config.getUserProperties();
+                     * for(Map.Entry<String, Object> entry : globalPropertiesMap.entrySet()) {
+                     * String key = entry.getKey();
+                     * cm.sendToOneWithNoSmilies("key: " + key + ", value: " +
+                     * globalPropertiesMap.get(key)+"<br>", nick);
+                     * }
+                     * } catch (Exception e) {
+                     * cm.postStackTrace(e, nick);
+                     * }
+                     */
                     cm.sendToOneWithNoSmilies(text, nick);
                     text = cm.getUserScriptInfo(cm.getUser(oldNick));
                     cm.sendToAllUsersInRoomWithNoSmilies(text, oldNick);
                     if (reg) {
                         cm.sendOnlineFriendsList(oldNick);
                     }
-                    text = db.getCommand("join");
-                    text = text.replace("%color%", ut.preReplace(color));
-                    text = text.replace("%nick%", ut.preReplace(nick));
-                    text = text.replace("%skin%", ut.preReplace(skin));
-                    cm.sendTimedMsgToAllUsersInRoom(text, room);
-                    text = db.getCommand("script_join");
-                    text = text.replace("%color%", ut.preReplace(color));
-                    text = text.replace("%nick%", ut.preReplace(nick));
-                    text = text.replace("%status%", ut.preReplace(Integer.toString(status)));
-                    text = text.replace("%skin%", ut.preReplace(skin));
-                    cm.sendToAllUsersInRoomWithNoSmilies(text, nick);
-                    text = db.getCommand("join_supervisor");
-                    text = text.replace("%color%", ut.preReplace(color));
-                    text = text.replace("%nick%", ut.preReplace(nick));
-                    text = text.replace("%skin%", ut.preReplace(skin));
-                    text = text.replace("%ip%", ut.preReplace(cm.getUser(oldNick).getRealIp().equals("") ? cm.getUser(oldNick).getIp() : cm.getUser(oldNick).getRealIp() + "@" + cm.getUser(oldNick).getIp()));
-                    text = text.replace("%host%", ut.preReplace(cm.getUser(oldNick).getRealIp().equals("") ? cm.getUser(oldNick).getHost() : cm.getUser(oldNick).getRealHost() + "@" + cm.getUser(oldNick).getHost()));
-                    cm.sendSystemToSupervisor(text);
-                    text = db.getCommand("join_friends");
-                    text = text.replace("%color%", ut.preReplace(color));
-                    text = text.replace("%nick%", ut.preReplace(nick));
-                    text = text.replace("%skin%", ut.preReplace(skin));
-                    cm.sendToAllFriendsInChat(text, oldNick);
+                    java.util.Map<String, String> joinReplacements = new java.util.HashMap<>();
+                    joinReplacements.put("%color%", ut.preReplace(color));
+                    joinReplacements.put("%nick%", ut.preReplace(nick));
+                    joinReplacements.put("%skin%", ut.preReplace(skin));
+                    cm.sendCommandToRoom("join", room, joinReplacements);
+                    java.util.Map<String, String> scriptJoinReplacements = new java.util.HashMap<>();
+                    scriptJoinReplacements.put("%color%", ut.preReplace(color));
+                    scriptJoinReplacements.put("%nick%", ut.preReplace(nick));
+                    scriptJoinReplacements.put("%status%", ut.preReplace(Integer.toString(status)));
+                    scriptJoinReplacements.put("%skin%", ut.preReplace(skin));
+                    var scriptJoinText = cm.getCommand("", "script_join");
+                    for (var entry : scriptJoinReplacements.entrySet()) {
+                        scriptJoinText = scriptJoinText.replace(entry.getKey(), entry.getValue());
+                    }
+                    cm.sendToAllUsersInRoomWithNoSmilies(scriptJoinText, nick);
+                    java.util.Map<String, String> supervisorReplacements = new java.util.HashMap<>();
+                    supervisorReplacements.put("%color%", ut.preReplace(color));
+                    supervisorReplacements.put("%nick%", ut.preReplace(nick));
+                    supervisorReplacements.put("%skin%", ut.preReplace(skin));
+                    supervisorReplacements.put("%ip%",
+                            ut.preReplace(cm.getUser(oldNick).getRealIp().equals("") ? cm.getUser(oldNick).getIp()
+                                    : cm.getUser(oldNick).getRealIp() + "@" + cm.getUser(oldNick).getIp()));
+                    supervisorReplacements.put("%host%",
+                            ut.preReplace(cm.getUser(oldNick).getRealIp().equals("") ? cm.getUser(oldNick).getHost()
+                                    : cm.getUser(oldNick).getRealHost() + "@" + cm.getUser(oldNick).getHost()));
+                    var supervisorList = cm.getSupervisor();
+                    if (!supervisorList.isEmpty()) {
+                        cm.sendCommandToSupervisor("join_supervisor", supervisorReplacements);
+                    }
+                    java.util.Map<String, String> friendsReplacements = new java.util.HashMap<>();
+                    friendsReplacements.put("%color%", ut.preReplace(color));
+                    friendsReplacements.put("%nick%", ut.preReplace(nick));
+                    friendsReplacements.put("%skin%", ut.preReplace(skin));
+                    cm.sendCommandToFriends("join_friends", oldNick, friendsReplacements);
                     var t = cm.getRoom(room).getTopic();
                     cm.getRoom(room).setOwner(owner);
                     if (t != null) {
-                        text = db.getCommand("topic_room");
+                        text = db.getCommand("topic_room", getLang(nick));
                         text = text.replace("%room%", ut.preReplace(room));
                         text = text.replace("%topic%", ut.preReplace(t));
                         text = text.replace("%skin%", ut.preReplace(skin));
@@ -336,7 +398,7 @@ public class Chat {
                     }
                     cm.sendBirtdayScript(cm.getUser(oldNick).getName(), cm.getUser(oldNick).getRoom());
                 }
-                
+
             } else {
                 var nick = getMap().containsKey("nick") ? getMap().get("nick").get(0) : "";
                 var sid = getMap().containsKey("sid") ? getMap().get("sid").get(0) : "";
@@ -346,18 +408,23 @@ public class Chat {
                     nick = Bootstrap.boot.getConfig().getDb().getData(nick, "nick");
                 }
                 ut.sendText(getTemplate("chat_header_new"), getSession(), "privchat_user_" + nick + "|" + target, "");
-                ut.sendText(getTemplate("chat_header_privchat"), getSession(), "privchat_user_" + nick + "|" + target, "");
+                ut.sendText(getTemplate("chat_header_privchat"), getSession(), "privchat_user_" + nick + "|" + target,
+                        "");
                 if (!cm.isOnline(target)) {
-                    ut.sendText(getTemplate("privchat_not_online"), getSession(), "privchat_user_" + nick + "|" + target, "");
+                    ut.sendText(getTemplate("privchat_not_online"), getSession(),
+                            "privchat_user_" + nick + "|" + target, "");
                     disconnect();
                 } else if (!cm.isOnline(nick)) {
-                    ut.sendText(getTemplate("privchat_not_online"), getSession(), "privchat_user_" + nick + "|" + target, "");
+                    ut.sendText(getTemplate("privchat_not_online"), getSession(),
+                            "privchat_user_" + nick + "|" + target, "");
                     disconnect();
                 } else if (nick.equalsIgnoreCase(target)) {
-                    ut.sendText(getTemplate("privchat_same_nick"), getSession(), "privchat_user_" + nick + "|" + target, "");
+                    ut.sendText(getTemplate("privchat_same_nick"), getSession(), "privchat_user_" + nick + "|" + target,
+                            "");
                     disconnect();
                 } else if (!cm.getUser(nick).getJsid().equals(jsid)) {
-                    ut.sendText(getTemplate("privchat_session"), getSession(), "privchat_user_" + nick + "|" + target, "");
+                    ut.sendText(getTemplate("privchat_session"), getSession(), "privchat_user_" + nick + "|" + target,
+                            "");
                     disconnect();
                 } else {
                     Users u = cm.getUser(nick);
@@ -369,21 +436,41 @@ public class Chat {
                     cm.addUserPrivchat(nick, sid, color, getSession(), skin, target);
                     UsersPrivchat u1 = cm.getUserPrivchat(nick, target);
                     u1.setNewName(newName);
-                    var text = db.getCommand("join");
+                    var text = db.getCommand("join", getLang(nick));
                     text = text.replace("%color%", ut.preReplace(color));
                     text = text.replace("%nick%", ut.preReplace(newName));
                     text = text.replace("%skin%", ut.preReplace(skin));
                     cm.sendTimedMsgToUser(text, nick, target);
                 }
-                
+
             }
         } catch (NullPointerException e) {
             ut.sendText("Exception: " + e.getLocalizedMessage(), getSession(), "error", "");
             ErrorLog.LOG.log(SEVERE, "Exception: ", e);
         } catch (Exception e) {
             ut.sendText("Exception: " + e.getLocalizedMessage(), getSession(), "error", "");
-            ErrorLog.LOG.log(SEVERE, "Exception: ", e);;
+            ErrorLog.LOG.log(SEVERE, "Exception: ", e);
+            ;
         }
+    }
+
+    private String getLang(String nick) {
+        var cm = boot.getChatManager();
+        var u = cm.getUser(nick);
+        if (u != null) {
+            var userLang = u.getLang();
+            if (userLang != null && !userLang.isBlank()) {
+                return userLang;
+            }
+            var session = u.getHttpSession();
+            if (session != null) {
+                var lang = session.getAttribute("lang");
+                if (lang != null && !lang.toString().isBlank()) {
+                    return lang.toString();
+                }
+            }
+        }
+        return "de";
     }
 
     /**
@@ -397,14 +484,16 @@ public class Chat {
         var category = json.getString("category");
         var target = json.getString("target");
         var text = json.getString("message");
-        var sid = getMap().containsKey("sid") ? getMap().get("sid").get(0) : (String) getHttpSession().getAttribute("sid");
+        var sid = getMap().containsKey("sid") ? getMap().get("sid").get(0)
+                : (String) getHttpSession().getAttribute("sid");
         if (category.equals("chat")) {
             com.parseCommand(text, sid);
         } else if (category.startsWith("privchat_user_")) {
-            var target2 = getMap().containsKey("target") ? getMap().get("target").get(0) : (String) getSession().getUserProperties().get("target");
-            
+            var target2 = getMap().containsKey("target") ? getMap().get("target").get(0)
+                    : (String) getSession().getUserProperties().get("target");
+
             com.parseCommandPrivchat(text, sid, target2);
-            
+
         }
     }
 
@@ -417,18 +506,19 @@ public class Chat {
         var conf = boot.getConfig();
         var db = conf.getDb();
         var cm = boot.getChatManager();
-        var name = getMap().containsKey("nick") ? getMap().get("nick").get(0) : (String) getSession().getUserProperties().getOrDefault("nick", "");
+        var name = getMap().containsKey("nick") ? getMap().get("nick").get(0)
+                : (String) getSession().getUserProperties().getOrDefault("nick", "");
         if (!getMap().containsKey("target")) {
             var u = cm.getUser(name);
             if (u != null) {
-                cm.sendToOneWithNoScroll(db.getCommand("pong"), name);
+                cm.sendToOneWithNoScroll(db.getCommand("pong", getLang(name)), name);
                 u.setTimeoutTimer(0);
             }
         } else {
             var target = getMap().get("target").get(0);
             var u = cm.getUserPrivchat(name, target);
             if (u != null) {
-                cm.sendTextDirectPrivchat(db.getCommand("pong"), name, target);
+                cm.sendTextDirectPrivchat(db.getCommand("pong", getLang(name)), name, target);
                 u.setTimeoutTimer(0);
             }
         }
@@ -444,8 +534,10 @@ public class Chat {
         var cm = boot.getChatManager();
         try {
             if (session.isOpen()) {
-                var name = getMap().containsKey("nick") ? getMap().get("nick").get(0) : (String) getSession().getUserProperties().getOrDefault("nick", "");
-                var target = getMap().containsKey("target") ? getMap().get("target").get(0) : (String) getSession().getUserProperties().getOrDefault("target", "");
+                var name = getMap().containsKey("nick") ? getMap().get("nick").get(0)
+                        : (String) getSession().getUserProperties().getOrDefault("nick", "");
+                var target = getMap().containsKey("target") ? getMap().get("target").get(0)
+                        : (String) getSession().getUserProperties().getOrDefault("target", "");
                 if (target.equals("")) {
                     if (cm.isOnline(name)) {
                         var u = cm.getUser(name);
@@ -463,7 +555,7 @@ public class Chat {
                 }
             }
         } catch (IllegalStateException | NullPointerException e) {
-            
+
         }
 
         // WebSocket connection closes
@@ -475,15 +567,16 @@ public class Chat {
      * @param throwable
      */
     @OnError
-    public void onError(Session session, Throwable throwable
-    ) {
+    public void onError(Session session, Throwable throwable) {
         var cm = boot.getChatManager();
         try {
             if (session.isOpen()) {
-                var name = getMap().containsKey("nick") ? getMap().get("nick").get(0) : (String) getSession().getUserProperties().getOrDefault("nick", "");
-                var target = getMap().containsKey("target") ? getMap().get("target").get(0) : (String) getSession().getUserProperties().getOrDefault("target", "");
+                var name = getMap().containsKey("nick") ? getMap().get("nick").get(0)
+                        : (String) getSession().getUserProperties().getOrDefault("nick", "");
+                var target = getMap().containsKey("target") ? getMap().get("target").get(0)
+                        : (String) getSession().getUserProperties().getOrDefault("target", "");
                 if (target.equals("")) {
-                    
+
                     if (cm.isOnline(name)) {
                         var u = cm.getUser(name);
                         if (u != null) {
@@ -502,13 +595,14 @@ public class Chat {
                 }
             }
         } catch (IllegalStateException | NullPointerException e) {
-            
+
         }
         // Do error handling here
     }
-    
+
     private void disconnect() {
-        if (getHttpSession() != null && !getMap().containsKey("target") && getHttpSession().getAttribute("chat_only") != null) {
+        if (getHttpSession() != null && !getMap().containsKey("target")
+                && getHttpSession().getAttribute("chat_only") != null) {
             getHttpSession().invalidate();
         }
         if (getSession().isOpen()) {
@@ -530,7 +624,8 @@ public class Chat {
         var db = conf.getDb();
         var ut = boot.getUtil();
         String sid = null;
-        String target = getMap().containsKey("target") ? getMap().get("target").get(0) : (String) getSession().getUserProperties().getOrDefault("target", "");
+        String target = getMap().containsKey("target") ? getMap().get("target").get(0)
+                : (String) getSession().getUserProperties().getOrDefault("target", "");
         if (target.equals("") && getHttpSession() != null) {
             sid = (String) getHttpSession().getAttribute("sid");
         } else {
@@ -542,25 +637,35 @@ public class Chat {
         String room = null;
         var reason = getSession().getUserProperties().get("reason");
         if (sid == null) {
-            sid = getMap().containsKey("sid") ? getMap().get("sid").get(0) : (String) getSession().getUserProperties().get("sid");
+            sid = getMap().containsKey("sid") ? getMap().get("sid").get(0)
+                    : (String) getSession().getUserProperties().get("sid");
         }
         if (target.equals("") && getHttpSession() != null) {
-            nick = getMap().containsKey("nick") ? getMap().get("nick").get(0) : (String) getHttpSession().getAttribute("nick");
-            pwd = getMap().containsKey("pwd") ? getMap().get("pwd").get(0) : (String) getHttpSession().getAttribute("pwd");
-            skin = getMap().containsKey("skin") ? getMap().get("skin").get(0) : (String) getHttpSession().getAttribute("skin");
-            room = getMap().containsKey("room") ? getMap().get("room").get(0) : (String) getHttpSession().getAttribute("room");
+            nick = getMap().containsKey("nick") ? getMap().get("nick").get(0)
+                    : (String) getHttpSession().getAttribute("nick");
+            pwd = getMap().containsKey("pwd") ? getMap().get("pwd").get(0)
+                    : (String) getHttpSession().getAttribute("pwd");
+            skin = getMap().containsKey("skin") ? getMap().get("skin").get(0)
+                    : (String) getHttpSession().getAttribute("skin");
+            room = getMap().containsKey("room") ? getMap().get("room").get(0)
+                    : (String) getHttpSession().getAttribute("room");
         } else {
-            nick = getMap().containsKey("nick") ? getMap().get("nick").get(0) : (String) getSession().getUserProperties().get("nick");
-            skin = getMap().containsKey("skin") ? getMap().get("skin").get(0) : (String) getSession().getUserProperties().get("skin");
-            room = getMap().containsKey("room") ? getMap().get("room").get(0) : (String) getSession().getUserProperties().get("room");
-            pwd = getMap().containsKey("pwd") ? getMap().get("pwd").get(0) : (String) getSession().getUserProperties().get("pwd");
+            nick = getMap().containsKey("nick") ? getMap().get("nick").get(0)
+                    : (String) getSession().getUserProperties().get("nick");
+            skin = getMap().containsKey("skin") ? getMap().get("skin").get(0)
+                    : (String) getSession().getUserProperties().get("skin");
+            room = getMap().containsKey("room") ? getMap().get("room").get(0)
+                    : (String) getSession().getUserProperties().get("room");
+            pwd = getMap().containsKey("pwd") ? getMap().get("pwd").get(0)
+                    : (String) getSession().getUserProperties().get("pwd");
         }
         nick = nick != null ? nick : "";
         skin = skin != null ? skin : conf.getString("default_skin");
         room = room != null ? room : "";
         pwd = pwd != null ? pwd : "";
         sid = sid != null ? sid : "";
-        var data = db.getTemplate(template, skin);
+        var lang = getLang(nick);
+        var data = db.getTemplate(template, skin, lang);
         if (data.toLowerCase().startsWith("error")) {
             var temp = data;
             data = "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>%missing_template%</b></p><hr><address>%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS% Build: #%SERVER_BUILD_NUMBER%</address></body><html>";
@@ -568,7 +673,10 @@ public class Chat {
         }
         data = ut.replacePaths(data);
         data = ut.replaceFilePaths(data);
-        data = ut.replaceDefaultReplacements(data, ut.preReplace(nick), sid, ut.preReplace(skin), ut.preReplace(room), "", "");
+        data = ut.replaceCommands(data, getLang(nick));
+        data = ut.replaceDefaultReplacements(data, ut.preReplace(nick), sid, ut.preReplace(skin), ut.preReplace(room),
+                "", "");
+        data = data.replace("%user%", ut.preReplace(nick));
         data = ut.replaceServerInfo(data);
         return data;
     }
@@ -583,7 +691,7 @@ public class Chat {
         var db = conf.getDb();
         if (nick.equalsIgnoreCase("nick")) {
             return true;
-        } else  if (nick.equalsIgnoreCase("moderator")) {
+        } else if (nick.equalsIgnoreCase("moderator")) {
             return true;
         } else if (nick.equalsIgnoreCase("query")) {
             return true;
@@ -734,7 +842,7 @@ public class Chat {
                 var value = request.getParameter(key);
                 sec.getUserProperties().put(key.toLowerCase(), value);
             }
-            
+
             Enumeration headerNames = request.getHeaderNames();
             while (headerNames.hasMoreElements()) {
                 var key = (String) headerNames.nextElement();
@@ -748,9 +856,9 @@ public class Chat {
             }
         }
 
-        //hacking reflector to expose fields...
+        // hacking reflector to expose fields...
         @SuppressWarnings("unchecked")
-        private static < I, F> F getField(I instance, Class< F> fieldType) {
+        private static <I, F> F getField(I instance, Class<F> fieldType) {
             try {
                 for (var type = instance.getClass(); type != Object.class; type = type.getSuperclass()) {
                     for (var field : type.getDeclaredFields()) {
@@ -765,7 +873,7 @@ public class Chat {
             }
             return null;
         }
-        
+
     }
 
     /**
