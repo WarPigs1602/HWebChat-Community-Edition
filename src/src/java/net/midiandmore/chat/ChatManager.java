@@ -849,7 +849,7 @@ public final class ChatManager {
                 }
             }
         }
-        return "de";
+        return "en";
     }
 
     protected String getCommand(String nick, String commandName) {

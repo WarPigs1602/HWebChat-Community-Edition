@@ -71,6 +71,12 @@
       </div>
     </div>
   </nav>
+  <div id="cookie-warning" class="alert alert-warning alert-dismissible fade show" role="alert" style="display:none; margin-top: 10px;">
+    <strong>Cookie-Hinweis:</strong> Diese Website verwendet Cookies, um Ihnen das bestm&ouml;gliche Erlebnis zu bieten. Mit der Nutzung dieser Website stimmen Sie der Verwendung von Cookies zu.
+    <button type="button" class="close" onclick="document.cookie='cookie_accepted=1;path=/;max-age='+60*60*24*365;document.getElementById('cookie-warning').style.display='none';">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
   <div id="pagecontent" class="container-fluid page-main">
   %content%
   </div>
@@ -93,5 +99,17 @@ function setLang(l, el) {
   url.searchParams.set('lang', l);
   window.location.href = url.toString();
 }
+function getCookie(name) {
+  var value = "; " + document.cookie;
+  var parts = value.split("; " + name + "=");
+  if (parts.length == 2) return parts.pop().split(";").shift();
+  return null;
+}
+(function() {
+  var warning = document.getElementById('cookie-warning');
+  if (warning && !getCookie('cookie_accepted')) {
+    warning.style.display = 'block';
+  }
+})();
 </script></body>
 </html>

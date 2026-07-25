@@ -50,32 +50,40 @@ public class ChatServices {
      * @param response
      */
     private String readLang(HttpServletRequest request, Map<String, String> map) {
-        var lang = map.getOrDefault("lang", "");
-        if (lang != null && !lang.isBlank()) {
-            return lang;
-        }
-        // Kein ?lang= in der Anfrage -> auf das gespeicherte Cookie zur&uuml;ckgreifen
         var ut = Bootstrap.boot.getUtil();
-        return ut.readCookieValue(request, "lang");
+        var cookieLang = ut.readCookieValue(request, "lang");
+        if (!cookieLang.isBlank()) {
+            return cookieLang;
+        }
+        var paramLang = map.getOrDefault("lang", "");
+        if (paramLang != null && !paramLang.isBlank()) {
+            return paramLang;
+        }
+        var acceptLang = request.getHeader("Accept-Language");
+        if (acceptLang != null && acceptLang.toLowerCase().startsWith("de")) {
+            return "de";
+        }
+        return "en";
     }
 
     private void applyLang(HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
+        var ut = Bootstrap.boot.getUtil();
         var lang = readLang(request, map);
-        if (!lang.isBlank()) {
-            var session = request.getSession(false);
-            if (session != null) {
-                session.setAttribute("lang", lang);
-            }
-            // Sprache dauerhaft als Cookie speichern, damit sie Sitzungen &uuml;berdauert.
-            // Nur schreiben, wenn die Sprache explizit per ?lang= gesetzt wurde.
-            var requestedLang = map.getOrDefault("lang", "");
-            if (response != null && requestedLang != null && !requestedLang.isBlank()) {
-                var cookie = new jakarta.servlet.http.Cookie("lang", lang);
-                cookie.setPath("/");
-                cookie.setMaxAge(60 * 60 * 24 * 365);
-                cookie.setHttpOnly(false);
-                response.addCookie(cookie);
-            }
+        if (lang.isBlank()) {
+            return;
+        }
+        var session = request.getSession(false);
+        if (session != null) {
+            session.setAttribute("lang", lang);
+        }
+        var existingCookie = ut.readCookieValue(request, "lang");
+        var requestedLang = map.getOrDefault("lang", "");
+        if (response != null && (requestedLang != null && !requestedLang.isBlank() || existingCookie.isBlank())) {
+            var cookie = new jakarta.servlet.http.Cookie("lang", lang);
+            cookie.setPath("/");
+            cookie.setMaxAge(60 * 60 * 24 * 365);
+            cookie.setHttpOnly(false);
+            response.addCookie(cookie);
         }
     }
 
@@ -4173,18 +4181,6 @@ public class ChatServices {
             var sid = map.getOrDefault("sid", "");
             sid = !sid.isBlank() ? sid : generateSid();
             var room = map.getOrDefault("room", "");
-            var roomCookie = ut.readCookieValue(request, "room");
-            if (room.isBlank() && roomCookie != null && !roomCookie.isBlank()) {
-                room = roomCookie;
-                map.replace("room", room);
-            }
-            if (!room.isBlank()) {
-                var cookie = new jakarta.servlet.http.Cookie("room", room);
-                cookie.setPath("/");
-                cookie.setMaxAge(60 * 60 * 24 * 365);
-                cookie.setHttpOnly(false);
-                response.addCookie(cookie);
-            }
             var owner = map.getOrDefault("owner", "");
             skin = ut.parseHost(skin, request)[1];
             var reg = false;
@@ -4499,18 +4495,6 @@ public class ChatServices {
             var sid = (String) session.getAttribute("sid");
             sid = sid != null ? sid : generateSid();
             var room = map.getOrDefault("room", "");
-            var roomCookie = ut.readCookieValue(request, "room");
-            if (room.isBlank() && roomCookie != null && !roomCookie.isBlank()) {
-                room = roomCookie;
-                map.replace("room", room);
-            }
-            if (!room.isBlank()) {
-                var cookie = new jakarta.servlet.http.Cookie("room", room);
-                cookie.setPath("/");
-                cookie.setMaxAge(60 * 60 * 24 * 365);
-                cookie.setHttpOnly(false);
-                response.addCookie(cookie);
-            }
             var owner = map.getOrDefault("owner", "");
             session.setAttribute("sid", sid);
             session.setAttribute("room", room);

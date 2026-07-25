@@ -66,11 +66,10 @@ public class Chat {
             // gew&auml;hlte Sprache auch im Chat/WebSocket erhalten bleibt.
             // Das Cookie (bzw. der ?lang=-Parameter) hat dabei Vorrang vor
             // einem evtl. veralteten Session-Wert.
-            var langParam = getMap().containsKey("lang") ? getMap().get("lang").get(0) : "";
             var cookieHeader = (String) config.getUserProperties().get("cookie");
-
+            var langParam = ut.readCookieFromHeader(cookieHeader, "lang");
             if (langParam == null || langParam.isBlank()) {
-                langParam = ut.readCookieFromHeader(cookieHeader, "lang");
+                langParam = getMap().containsKey("lang") ? getMap().get("lang").get(0) : "";
             }
             if (langParam != null && !langParam.isBlank()) {
                 getHttpSession().setAttribute("lang", langParam);
@@ -90,9 +89,6 @@ public class Chat {
                 var skin = getMap().containsKey("skin") ? getMap().get("skin").get(0)
                         : (String) getHttpSession().getAttribute("skin");
                 boolean chatOnly = getMap().containsKey("chat_only");
-                if (room == null) {
-                    room = ut.readCookieFromHeader(cookieHeader, "room");
-                }
                 if (getHttpSession() != null && !getHttpSession().isNew()) {
                     getSession().getUserProperties().put("nick", nick);
                     getSession().getUserProperties().put("pwd", pwd);
