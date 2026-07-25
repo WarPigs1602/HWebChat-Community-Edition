@@ -87,6 +87,21 @@ public class ChatServices {
         }
     }
 
+    private String detectScheme(HttpServletRequest request) {
+        var xForwardedProto = request.getHeader("X-Forwarded-Proto");
+        if (xForwardedProto != null && !xForwardedProto.isBlank()) {
+            return xForwardedProto.split(",")[0].trim().toLowerCase();
+        }
+        return request.isSecure() ? "https" : "http";
+    }
+
+    private String stripHash(String value) {
+        if (value != null && value.startsWith("#")) {
+            return value.substring(1);
+        }
+        return value;
+    }
+
     protected void parsePage(HttpServletRequest request, HttpServletResponse response) {
         var map = request.getParameterMap();
         var conf = Bootstrap.boot.getConfig();
@@ -1772,8 +1787,9 @@ public class ChatServices {
         text = ut.replacePaths(text);
         text = ut.replaceFilePaths(text);
         text = ut.replaceServerInfo(text);
-        text = text.replace("%host_ws%", "ws://" + request.getHeader("host"));
-        text = text.replace("%host_http%", "http://" + request.getHeader("host"));
+        String scheme = detectScheme(request);
+        text = text.replace("%host_ws%", (scheme.equals("https") ? "wss" : "ws") + "://" + request.getHeader("host"));
+        text = text.replace("%host_http%", scheme + "://" + request.getHeader("host"));
         text = text.replace("%owner%", owner);
         db.updateNick(user, "visitors", nick);
         ut.submitContent(text, response);
@@ -2107,11 +2123,11 @@ public class ChatServices {
             switch (data) {
                 case "change" -> {
                     title = map.getOrDefault("title", "");
-                    bg_color_1 = map.getOrDefault("bg_color_1", "");
-                    bg_color_2 = map.getOrDefault("bg_color_2", "");
-                    color = map.getOrDefault("color", "");
-                    link_color = map.getOrDefault("link_color", "");
-                    border_color = map.getOrDefault("border_color", "");
+                    bg_color_1 = stripHash(map.getOrDefault("bg_color_1", ""));
+                    bg_color_2 = stripHash(map.getOrDefault("bg_color_2", ""));
+                    color = stripHash(map.getOrDefault("color", ""));
+                    link_color = stripHash(map.getOrDefault("link_color", ""));
+                    border_color = stripHash(map.getOrDefault("border_color", ""));
                     room = map.getOrDefault("room2", "");
                     if (bg_color_1.length() != 6 || !bg_color_1.matches("[a-fA-F0-9]*")) {
                         if (roomName.isBlank()) {
@@ -3555,11 +3571,11 @@ public class ChatServices {
             switch (data) {
                 case "change" -> {
                     title = map.getOrDefault("title", "");
-                    bg_color_1 = map.getOrDefault("bg_color_1", "");
-                    bg_color_2 = map.getOrDefault("bg_color_2", "");
-                    color = map.getOrDefault("color", "");
-                    link_color = map.getOrDefault("link_color", "");
-                    border_color = map.getOrDefault("border_color", "");
+                    bg_color_1 = stripHash(map.getOrDefault("bg_color_1", ""));
+                    bg_color_2 = stripHash(map.getOrDefault("bg_color_2", ""));
+                    color = stripHash(map.getOrDefault("color", ""));
+                    link_color = stripHash(map.getOrDefault("link_color", ""));
+                    border_color = stripHash(map.getOrDefault("border_color", ""));
                     room = map.getOrDefault("room2", "");
                     if (bg_color_1.length() != 6 || !bg_color_1.matches("[a-fA-F0-9]*")) {
                         text = getTemplate("account_form_napping_color_com", request, map);
@@ -4502,10 +4518,22 @@ public class ChatServices {
                 session.setAttribute("chat_only", "true");
                 cm.getUsersCommunity().put(nick, new UsersCommunity(Bootstrap.boot, session));
                 if (owner.equals("")) {
-                    if (reg) {
-                        printTemplate("frameset_reg", request, response, map);
+                    var room2 = map.getOrDefault("room", "");
+                    if (!room2.isBlank() && db.roomExists(room2) && db.getRoomData(room2, "chat_napping").equals("1")) {
+                        String text = null;
+                        if (reg) {
+                            text = getTemplate("frameset_reg_napping", request, map);
+                        } else {
+                            text = getTemplate("frameset_napping", request, map);
+                        }
+                        text = text.replace("%owner%", db.getRoomData(room2, "owner"));
+                        ut.submitContent(text, response);
                     } else {
-                        printTemplate("frameset", request, response, map);
+                        if (reg) {
+                            printTemplate("frameset_reg", request, response, map);
+                        } else {
+                            printTemplate("frameset", request, response, map);
+                        }
                     }
                 } else {
                     String text = null;
@@ -4724,10 +4752,22 @@ public class ChatServices {
                     }
                 }
                 if (owner.equals("")) {
-                    if (reg) {
-                        printTemplate("frameset_reg_com", request, response, map);
+                    var room2 = map.getOrDefault("room", "");
+                    if (!room2.isBlank() && db.roomExists(room2) && db.getRoomData(room2, "chat_napping").equals("1")) {
+                        String text = null;
+                        if (reg) {
+                            text = getTemplate("frameset_reg_com_napping", request, map);
+                        } else {
+                            text = getTemplate("frameset_com_napping", request, map);
+                        }
+                        text = text.replace("%owner%", db.getRoomData(room2, "owner"));
+                        ut.submitContent(text, response);
                     } else {
-                        printTemplate("frameset_com", request, response, map);
+                        if (reg) {
+                            printTemplate("frameset_reg_com", request, response, map);
+                        } else {
+                            printTemplate("frameset_com", request, response, map);
+                        }
                     }
                 } else {
                     String text = null;
@@ -4935,8 +4975,9 @@ protected String getMail(String template, HttpServletRequest request, Map<String
         data = ut.replacePaths(data);
         data = ut.replaceFilePaths(data);
         data = ut.replaceServerInfo(data);
-        data = data.replace("%host_ws%", "ws://" + request.getHeader("host"));
-        data = data.replace("%host_http%", "http://" + request.getHeader("host"));
+        String mailScheme = detectScheme(request);
+        data = data.replace("%host_ws%", (mailScheme.equals("https") ? "wss" : "ws") + "://" + request.getHeader("host"));
+        data = data.replace("%host_http%", mailScheme + "://" + request.getHeader("host"));
         return data;
     }
 
@@ -5087,30 +5128,36 @@ protected String getTemplate(String template, HttpServletRequest request, Map<St
      * @param template Der Templatename
      * @param out Die Output-Klasse
      */
-private String getStyleSheet(String template, HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
-         var skin = map.getOrDefault("skin", "");
-         var conf = Bootstrap.boot.getConfig();
-         var ut = Bootstrap.boot.getUtil();
-         var db = conf.getDb();
-         var owner = map.getOrDefault("owner", "");
-         var lang = readLang(request, map);
-         skin = ut.parseHost(skin, request)[1];
-         var data = db.getStyle(template, skin, lang);
-        data = ut.replacePaths(data);
-        data = ut.replaceFilePaths(data);
-        data = data.replace("%skin%", skin);
-        data = ut.replaceServerInfo(data);
-        data = ut.replaceDefaultReplacements(data, "", "", skin, "", "", request.getHeader("host"));
-        var room = db.getRoomNameByOwner(owner.toLowerCase());
-        if (room != null) {
-            data = data.replace("%bg_color_1%", db.getRoomData(room, "first_bgcolor"));
-            data = data.replace("%bg_color_2%", db.getRoomData(room, "second_bgcolor"));
-            data = data.replace("%color%", db.getRoomData(room, "textcolor"));
-            data = data.replace("%link_color%", db.getRoomData(room, "linkcolor"));
-            data = data.replace("%border_color%", db.getRoomData(room, "bordercolor"));
-        }
-        return data;
-    }
+ private String getStyleSheet(String template, HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
+          var skin = map.getOrDefault("skin", "");
+          var conf = Bootstrap.boot.getConfig();
+          var ut = Bootstrap.boot.getUtil();
+          var db = conf.getDb();
+          var owner = map.getOrDefault("owner", "");
+          var room = map.getOrDefault("room", "");
+          var lang = readLang(request, map);
+          skin = ut.parseHost(skin, request)[1];
+          var data = db.getStyle(template, skin, lang);
+         data = ut.replacePaths(data);
+         data = ut.replaceFilePaths(data);
+         data = data.replace("%skin%", skin);
+         data = ut.replaceServerInfo(data);
+         data = ut.replaceDefaultReplacements(data, "", "", skin, "", "", request.getHeader("host"));
+         String roomName = null;
+         if (!owner.isBlank()) {
+             roomName = db.getRoomNameByOwner(owner.toLowerCase());
+         } else if (!room.isBlank()) {
+             roomName = room;
+         }
+         if (roomName != null && db.roomExists(roomName) && db.getRoomData(roomName, "chat_napping").equals("1")) {
+             data = data.replace("%bg_color_1%", db.getRoomData(roomName, "first_bgcolor"));
+             data = data.replace("%bg_color_2%", db.getRoomData(roomName, "second_bgcolor"));
+             data = data.replace("%color%", db.getRoomData(roomName, "textcolor"));
+             data = data.replace("%link_color%", db.getRoomData(roomName, "linkcolor"));
+             data = data.replace("%border_color%", db.getRoomData(roomName, "bordercolor"));
+         }
+         return data;
+     }
 
     /**
      * Zeigt ein Stylesheet im Browser an
@@ -5143,16 +5190,20 @@ var ut = Bootstrap.boot.getUtil();
          var lang = readLang(request, map);
          skin = ut.parseHost(skin, request)[1];
          var data = db.getScript(template, skin, lang);
-        data = ut.replacePaths(data);
-        data = ut.replaceFilePaths(data);
-        data = data.replace("%skin%", skin);
-        data = data.replace("%room2%", room);
-        data = data.replace("%owner%", owner);
-        data = data.replace("%target%", target);
-        data = ut.replaceServerInfo(data);
-        data = ut.replaceDefaultReplacements(data, nick, sid, skin, room, "", request.getHeader("host"));
-        return data;
-    }
+         data = ut.replacePaths(data);
+         data = ut.replaceFilePaths(data);
+         data = data.replace("%skin%", skin);
+         data = data.replace("%room2%", room);
+         data = data.replace("%owner%", owner);
+         data = data.replace("%target%", target);
+         data = ut.replaceServerInfo(data);
+         data = ut.replaceDefaultReplacements(data, nick, sid, skin, room, "", request.getHeader("host"));
+         String scheme = detectScheme(request);
+         if (scheme.equals("https")) {
+             data = data.replace("ws://", "wss://");
+         }
+         return data;
+     }
 
     /**
      * Zeigt ein Script im Browser an
