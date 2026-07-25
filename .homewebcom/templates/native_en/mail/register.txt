@@ -1,8 +1,8 @@
-Dear One,
+Dear %nick%,
 
-We %nick% hereby send you your chat password, it reads: %pwd%
+We hereby send you your chat password: %pwd%
 
-If you have not requested this registration, please cancel this email!
+If you have not requested this registration, please ignore this email!
 
 Have fun in the chat!
 
