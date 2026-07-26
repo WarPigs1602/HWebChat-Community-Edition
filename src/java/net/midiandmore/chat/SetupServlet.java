@@ -248,18 +248,20 @@ public class SetupServlet extends HttpServlet {
         var url = "jdbc:mysql://" + dbHost + ":" + dbPort + "/" + dbName + "?user=" + dbUser + "&password=" + dbPassword + "&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC";
         try (var con = getConnection(url)) {
             var stmt = con.createStatement();
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "users` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `sex` varchar(255) NOT NULL, `nick` varchar(255) NOT NULL, `nick2` varchar(255) NOT NULL, `mail` varchar(255) NOT NULL, `color` varchar(255) NOT NULL, `pwd` varchar(255) NOT NULL, `pwd2` varchar(255) NOT NULL, `reminder` varchar(255) NOT NULL, `answer` varchar(255) NOT NULL, `timestamp_reg` bigint(20) NOT NULL, `timestamp_login` bigint(20) NOT NULL, `bday_day` varchar(255) NOT NULL, `bday_month` varchar(255) NOT NULL, `bday_year` varchar(255) NOT NULL, `homepage` varchar(255) DEFAULT '', `city` varchar(255) DEFAULT '', `hobby` varchar(255) DEFAULT '', `description` varchar(255) DEFAULT '', `slogan` varchar(255) DEFAULT '', `signature` varchar(255) DEFAULT '', `icq` varchar(255) DEFAULT '', `live` varchar(255) DEFAULT '', `yahoo` varchar(255) DEFAULT '', `facebook` varchar(255) DEFAULT '', `twitter` varchar(255) DEFAULT '', `irc` varchar(255) DEFAULT '', `youtube` varchar(255) DEFAULT '', `instagram` varchar(255) DEFAULT '', `linkedin` varchar(255) DEFAULT '', `tiktok` varchar(255) DEFAULT '', `discord` varchar(255) DEFAULT '', `twitch` varchar(255) DEFAULT '', `github` varchar(255) DEFAULT '', `reddit` varchar(255) DEFAULT '', `snapchat` varchar(255) DEFAULT '', `pinterest` varchar(255) DEFAULT '', `whatsapp` varchar(255) DEFAULT '', `telegram` varchar(255) DEFAULT '', `fam_status` varchar(255) DEFAULT '', `visitors` int(11) DEFAULT 0, `image_url` varchar(255) DEFAULT '', `login_room` varchar(255) DEFAULT '', `points` int(11) DEFAULT 0, `status` int(11) DEFAULT 0, `moderator` int(11) DEFAULT 0, `image_upload` LONGBLOB, PRIMARY KEY (`id`), UNIQUE KEY `nick` (`nick`), UNIQUE KEY `nick2` (`nick2`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "users` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `nick` varchar(255) DEFAULT NULL, `nick2` varchar(255) DEFAULT NULL, `pwd` varchar(255) DEFAULT NULL, `pwd2` varchar(255) NOT NULL DEFAULT '', `mail` varchar(255) DEFAULT NULL, `sex` char(1) NOT NULL DEFAULT '-', `reminder` varchar(255) DEFAULT NULL, `answer` varchar(255) DEFAULT NULL, `homepage` varchar(255) DEFAULT NULL, `image_url` varchar(255) DEFAULT NULL, `image_upload` longblob DEFAULT NULL, `city` varchar(255) DEFAULT NULL, `hobby` varchar(255) DEFAULT NULL, `status` int(11) NOT NULL DEFAULT 1, `points` int(11) NOT NULL DEFAULT 0, `timestamp_reg` bigint(20) NOT NULL DEFAULT 0, `timestamp_login` bigint(20) NOT NULL DEFAULT 0, `bday_day` tinyint(4) NOT NULL DEFAULT 1, `bday_month` tinyint(4) NOT NULL DEFAULT 1, `bday_year` int(11) NOT NULL DEFAULT 1970, `login_room` varchar(255) NOT NULL DEFAULT 'Lounge', `description` varchar(255) DEFAULT NULL, `slogan` varchar(255) DEFAULT NULL, `signature` text DEFAULT NULL, `ignore` text DEFAULT NULL, `sv` int(11) NOT NULL DEFAULT 0, `icq` varchar(255) DEFAULT NULL, `live` varchar(255) DEFAULT NULL, `yahoo` varchar(255) DEFAULT NULL, `facebook` varchar(255) DEFAULT NULL, `twitter` varchar(255) DEFAULT NULL, `irc` varchar(255) DEFAULT NULL, `youtube` varchar(255) DEFAULT NULL, `visitors` text DEFAULT NULL, `color` varchar(7) DEFAULT '000000', `fam_status` varchar(255) DEFAULT NULL, `moderator` tinyint(1) NOT NULL DEFAULT 0, `instagram` varchar(255) DEFAULT '', `linkedin` varchar(255) DEFAULT '', `tiktok` varchar(255) DEFAULT '', `discord` varchar(255) DEFAULT '', `twitch` varchar(255) DEFAULT '', `github` varchar(255) DEFAULT '', `reddit` varchar(255) DEFAULT '', `snapchat` varchar(255) DEFAULT '', `pinterest` varchar(255) DEFAULT '', `whatsapp` varchar(255) DEFAULT '', `telegram` varchar(255) DEFAULT '', PRIMARY KEY (`id`), UNIQUE KEY `nick` (`nick`), UNIQUE KEY `nick2` (`nick2`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "session` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `nick` varchar(255) NOT NULL, `session` varchar(255) NOT NULL, `room` varchar(255) NOT NULL, `color` varchar(255) NOT NULL, `away_status` varchar(255) NOT NULL, `away_reason` varchar(255) NOT NULL, `gag` varchar(255) NOT NULL, `status` varchar(255) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "banlist` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `name` varchar(255) NOT NULL DEFAULT '', `reason` varchar(255) NOT NULL, `banner` varchar(255) NOT NULL, `time` varchar(255) NOT NULL DEFAULT '0', PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "messages` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `sender` varchar(255) NOT NULL, `target` varchar(255) NOT NULL, `text` text NOT NULL, `time` bigint(20) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "friends` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `nick` varchar(255) NOT NULL, `nick2` varchar(255) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "roomcfg` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `owner` varchar(255) DEFAULT NULL, `room` varchar(255) NOT NULL, `topic` varchar(255) NOT NULL, `locked` varchar(255) NOT NULL, `lock_reason` varchar(255) NOT NULL, `standard` varchar(255) NOT NULL, `allow_smilies` varchar(255) NOT NULL, `page_title` varchar(255) DEFAULT '', `first_bgcolor` varchar(255) DEFAULT '', `second_bgcolor` varchar(255) DEFAULT '', `bordercolor` varchar(255) DEFAULT '', `textcolor` varchar(255) DEFAULT '', `linkcolor` varchar(255) DEFAULT '', `chat_napping` varchar(255) DEFAULT '0', PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "roomcfg` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `room` varchar(255) NOT NULL DEFAULT '', `topic` text DEFAULT NULL, `tar` int(11) NOT NULL DEFAULT 0, `locked` int(11) NOT NULL DEFAULT 0, `lock_reason` text DEFAULT NULL, `standard` int(11) NOT NULL DEFAULT 0, `allow_smilies` int(11) NOT NULL DEFAULT 1, `chat_napping` int(11) DEFAULT 0, `first_bgcolor` varchar(6) DEFAULT NULL, `second_bgcolor` varchar(6) DEFAULT NULL, `bordercolor` varchar(6) DEFAULT NULL, `textcolor` varchar(6) DEFAULT NULL, `linkcolor` varchar(6) DEFAULT NULL, `page_title` text NOT NULL, `mail` varchar(255) DEFAULT NULL, `owner` varchar(255) DEFAULT NULL, `su` longtext DEFAULT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "napping` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `nick` varchar(255) NOT NULL, `room` varchar(255) NOT NULL, `title` varchar(255) NOT NULL, `bg_color_1` varchar(255) NOT NULL, `bg_color_2` varchar(255) NOT NULL, `color_1` varchar(255) NOT NULL, `color_2` varchar(255) NOT NULL, `link_color_1` varchar(255) NOT NULL, `link_color_2` varchar(255) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "board_cat` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `topic` varchar(255) NOT NULL, `description` longtext NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "board_boards` (`id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, `cat` bigint(20) NOT NULL, `topic` varchar(255) NOT NULL, `readonly` tinyint(1) NOT NULL DEFAULT 0, `description` longtext NOT NULL, `guests` tinyint(1) NOT NULL DEFAULT 0, `deleted` tinyint(1) NOT NULL DEFAULT 0, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "board` (`id` int(11) NOT NULL AUTO_INCREMENT, `topic` varchar(255) NOT NULL, `content` longtext NOT NULL, `ref` bigint(20) NOT NULL, `user` bigint(20) NOT NULL, `board` bigint(20) NOT NULL, `posted` bigint(20) NOT NULL, `ip` varchar(255) NOT NULL, `cat` bigint(20) NOT NULL, `deleted` tinyint(1) NOT NULL DEFAULT 0, `closed` tinyint(1) NOT NULL DEFAULT 0, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "guestbook` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `owner` varchar(255) NOT NULL, `sender` varchar(255) NOT NULL, `text` text NOT NULL, `time` bigint(20) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-            stmt.close();
+             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "board` (`id` int(11) NOT NULL AUTO_INCREMENT, `topic` varchar(255) NOT NULL, `content` longtext NOT NULL, `ref` bigint(20) NOT NULL, `user` bigint(20) NOT NULL, `board` bigint(20) NOT NULL, `posted` bigint(20) NOT NULL, `ip` varchar(255) NOT NULL, `cat` bigint(20) NOT NULL, `deleted` tinyint(1) NOT NULL DEFAULT 0, `closed` tinyint(1) NOT NULL DEFAULT 0, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "guestbook` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `owner` varchar(255) NOT NULL, `sender` varchar(255) NOT NULL, `text` text NOT NULL, `time` bigint(20) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "stats` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `ts` bigint(20) NOT NULL, `year` int(11) NOT NULL, `month` int(11) NOT NULL, `day` int(11) NOT NULL, `hour` int(11) NOT NULL, `users` int(11) NOT NULL DEFAULT 0, `rooms` int(11) NOT NULL DEFAULT 0, `peak` int(11) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), KEY `idx_ts` (`ts`), KEY `idx_ymd` (`year`,`month`,`day`), KEY `idx_hour` (`hour`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "room_stats` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `room` varchar(255) NOT NULL, `ts` bigint(20) NOT NULL, `users` int(11) NOT NULL DEFAULT 0, `peak` int(11) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), KEY `idx_room` (`room`), KEY `idx_ts` (`ts`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+             stmt.close();
             out.printf("* Database tables created successfully.\r\n");
         } catch (SQLException e) {
             fatalError(e);
@@ -274,7 +276,7 @@ public class SetupServlet extends HttpServlet {
             var salt = password + "$" + timestamp;
             var sql = "INSERT INTO `" + dbPrefix + "users` (`sex`, `nick`, `nick2`, `mail`, `color`, `pwd`, `pwd2`, `reminder`, `answer`, `timestamp_reg`, `timestamp_login`, `bday_day`, `bday_month`, `bday_year`, `status`, `moderator`) VALUES (?, ?, ?, ?, ?, SHA2(?,512), SHA2(?,512), ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             try (var statement = con.prepareStatement(sql)) {
-                statement.setString(1, "male");
+                statement.setString(1, "m");
                 statement.setString(2, nick.toLowerCase());
                 statement.setString(3, nick);
                 statement.setString(4, mail);
@@ -299,24 +301,31 @@ public class SetupServlet extends HttpServlet {
     }
 
     private void createDefaultRoom(String dbHost, String dbPort, String dbName, String dbUser, String dbPassword, String dbPrefix,
-                                   String roomName) {
+                                   String roomName, String topic, int locked, String lockReason, int standard, int allowSmilies, int chatNapping) {
         var url = "jdbc:mysql://" + dbHost + ":" + dbPort + "/" + dbName + "?user=" + dbUser + "&password=" + dbPassword + "&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC";
         try (var con = getConnection(url)) {
-            var sql = "INSERT INTO `" + dbPrefix + "roomcfg` (`room`, `topic`, `locked`, `lock_reason`, `standard`, `allow_smilies`, `page_title`) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            var sql = "INSERT INTO `" + dbPrefix + "roomcfg` (`room`, `topic`, `tar`, `locked`, `lock_reason`, `standard`, `allow_smilies`, `chat_napping`, `first_bgcolor`, `second_bgcolor`, `bordercolor`, `textcolor`, `linkcolor`, `page_title`, `mail`, `owner`, `su`) VALUES (?, ?, 0, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, '')";
             try (var statement = con.prepareStatement(sql)) {
                 statement.setString(1, roomName);
-                statement.setString(2, "");
-                statement.setInt(3, 0);
-                statement.setString(4, "");
-                statement.setInt(5, 1);
-                statement.setInt(6, 1);
-                statement.setString(7, "");
+                statement.setString(2, topic);
+                statement.setInt(3, locked);
+                statement.setString(4, lockReason);
+                statement.setInt(5, standard);
+                statement.setInt(6, allowSmilies);
+                statement.setInt(7, chatNapping);
                 statement.executeUpdate();
             }
             out.printf("* Default room '%s' created successfully.\r\n", roomName);
         } catch (SQLException e) {
             logError(e);
         }
+    }
+
+    private void createDefaultRooms(String dbHost, String dbPort, String dbName, String dbUser, String dbPassword, String dbPrefix) {
+        createDefaultRoom(dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix, "Development", "", 0, "", 1, 1, 0);
+        createDefaultRoom(dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix, "Exil", "Hier landet der Müll des Chats ;)", 0, "", 1, 0, 0);
+        createDefaultRoom(dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix, "Lounge", "❤️❤️❤️ Herzlich Willkommen im Chat ❤️❤️❤️", 0, "", 1, 1, 0);
+        createDefaultRoom(dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix, "Staff-Lounge", "Nur für Staff-Mitglieder!", 1, "Nur Staff-Mitglieder können diesen Raum betreten...", 1, 1, 0);
     }
 
     private void saveConfigFile(List<String> lines) {
@@ -415,6 +424,7 @@ public class SetupServlet extends HttpServlet {
         lines.add("{\"name\":\"path_board\",\"value\":\"board\",\"description\":\"Forum\"},");
         lines.add("{\"name\":\"path_webchat\",\"value\":\"webchat_stats\",\"description\":\"API path\"},");
         lines.add("{\"name\":\"path_toplist\",\"value\":\"top\",\"description\":\"Toplist path\"},");
+        lines.add("{\"name\":\"path_stats\",\"value\":\"stats\",\"description\":\"Stats page\"},");
         lines.add("{\"name\":\"path_upload\",\"value\":\"/HWebChat_Community_Edition/UploadFile\",\"description\":\"Image upload path\"},");
         lines.add("{\"name\":\"path_webchat\",\"value\":\"webchat_stats\",\"description\":\"API path\"},");
         lines.add("{\"name\":\"path_account\",\"value\":\"account\",\"description\":\"Account page\"},");
@@ -570,7 +580,7 @@ public class SetupServlet extends HttpServlet {
 
         createDatabaseTables(dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix);
         createFirstUser(dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix, firstUserNick, firstUserPassword, firstUserEmail);
-        createDefaultRoom(dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix, room != null ? room : "Lobby");
+        createDefaultRooms(dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix);
 
         var configJson = buildConfigJson(
             dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix.isEmpty() ? "hwc_" : dbPrefix,

@@ -13,6 +13,8 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.Properties;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -67,6 +69,7 @@ public class Database {
                     var statement = getCon().prepareStatement("SET CHARACTER SET utf8mb4;")) {
                 statement.executeUpdate();
             }
+            migrateDatabase();
         } catch (SQLException se) {
             fatalError(se);
         }
@@ -82,6 +85,153 @@ public class Database {
         out.printf("\r\n* Trying to reconnect the Database...");
         connectDatabase();
         out.printf("\r\n* Database successfully reconneted!\r\n");
+    }
+
+    /**
+     * F&uuml;hrt Migrationen f&uuml;r bestehende Datenbanken durch, falls Spalten fehlen oder falsche Typen vorhanden sind.
+     * Wird inkrementell beim Verbindungsaufbau ausgef&uuml;hrt, ohne Daten zu l&ouml;schen.
+     */
+    protected void migrateDatabase() {
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            migrateUsers();
+            migrateBoardCat();
+            migrateMessages();
+            migrateNapping();
+            migrateRoomcfg();
+            migrateSession();
+        } catch (SQLException se) {
+            logError(se);
+        }
+    }
+
+    private void migrateUsers() throws SQLException {
+        var cols = new java.util.HashSet<String>();
+        try (var rs = getCon().getMetaData().getColumns(getDb(), null, getPrefix() + "users", null)) {
+            while (rs.next()) {
+                cols.add(rs.getString("COLUMN_NAME").toLowerCase());
+            }
+        }
+        var alters = new java.util.ArrayList<String>();
+        if (!cols.contains("pwd2")) {
+            alters.add("ADD COLUMN IF NOT EXISTS `pwd2` varchar(255) NOT NULL DEFAULT ''");
+        }
+        if (!cols.contains("sv")) {
+            alters.add("ADD COLUMN IF NOT EXISTS `sv` int(11) NOT NULL DEFAULT 0");
+        } else if (cols.contains("sv")) {
+            try (var rs = getCon().getMetaData().getColumns(getDb(), null, getPrefix() + "users", "sv")) {
+                if (rs.next() && !"int".equalsIgnoreCase(rs.getString("TYPE_NAME"))) {
+                    alters.add("MODIFY COLUMN IF EXISTS `sv` int(11) NOT NULL DEFAULT 0");
+                }
+            }
+        }
+        var socialColumns = new String[]{"instagram", "linkedin", "tiktok", "discord", "twitch", "github", "reddit", "snapchat", "pinterest", "whatsapp", "telegram"};
+        for (var col : socialColumns) {
+            if (!cols.contains(col)) {
+                alters.add("ADD COLUMN IF NOT EXISTS `" + col + "` varchar(255) DEFAULT ''");
+            }
+        }
+        if (!cols.contains("ignore")) {
+            alters.add("ADD COLUMN IF NOT EXISTS `ignore` text DEFAULT NULL");
+        }
+        if (!cols.contains("login_room")) {
+            alters.add("ADD COLUMN IF NOT EXISTS `login_room` varchar(255) NOT NULL DEFAULT 'Lounge'");
+        }
+        if (!cols.contains("color")) {
+            alters.add("ADD COLUMN IF NOT EXISTS `color` varchar(7) DEFAULT '000000'");
+        }
+        if (!alters.isEmpty()) {
+            try (var stmt = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "users` " + String.join(", ", alters))) {
+                stmt.executeUpdate();
+            }
+        }
+    }
+
+    private void migrateBoardCat() throws SQLException {
+        try (var rs = getCon().getMetaData().getColumns(getDb(), null, getPrefix() + "board_cat", "deleted")) {
+            if (!rs.next()) {
+                try (var stmt = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "board_cat` ADD COLUMN IF NOT EXISTS `deleted` tinyint(1) NOT NULL DEFAULT 0")) {
+                    stmt.executeUpdate();
+                }
+            }
+        }
+    }
+
+    private void migrateMessages() throws SQLException {
+        try (var rs = getCon().getMetaData().getTables(getDb(), null, getPrefix() + "messages", new String[]{"TABLE"})) {
+            if (rs.next()) {
+                try (var stmt = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "messages` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci")) {
+                    stmt.executeUpdate();
+                } catch (SQLException se) {
+                    if (!se.getMessage().contains("same")) {
+                        throw se;
+                    }
+                }
+            }
+        }
+    }
+
+    private void migrateNapping() throws SQLException {
+        try (var rs = getCon().getMetaData().getColumns(getDb(), null, getPrefix() + "napping", "su")) {
+            if (!rs.next()) {
+                try (var stmt = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "napping` ADD COLUMN IF NOT EXISTS `su` longtext DEFAULT NULL")) {
+                    stmt.executeUpdate();
+                }
+            }
+        }
+    }
+
+    private void migrateRoomcfg() throws SQLException {
+        var cols = new java.util.HashSet<String>();
+        try (var rs = getCon().getMetaData().getColumns(getDb(), null, getPrefix() + "roomcfg", null)) {
+            while (rs.next()) {
+                cols.add(rs.getString("COLUMN_NAME").toLowerCase());
+            }
+        }
+        var alters = new java.util.ArrayList<String>();
+        if (!cols.contains("tar")) {
+            alters.add("ADD COLUMN IF NOT EXISTS `tar` int(11) NOT NULL DEFAULT 0");
+        }
+        if (!cols.contains("mail")) {
+            alters.add("ADD COLUMN IF NOT EXISTS `mail` varchar(255) DEFAULT NULL");
+        }
+        if (!cols.contains("su")) {
+            alters.add("ADD COLUMN IF NOT EXISTS `su` longtext DEFAULT NULL");
+        }
+        if (!alters.isEmpty()) {
+            try (var stmt = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "roomcfg` " + String.join(", ", alters))) {
+                stmt.executeUpdate();
+            }
+        }
+    }
+
+    private void migrateSession() throws SQLException {
+        var cols = new java.util.HashSet<String>();
+        try (var rs = getCon().getMetaData().getColumns(getDb(), null, getPrefix() + "session", null)) {
+            while (rs.next()) {
+                cols.add(rs.getString("COLUMN_NAME").toLowerCase());
+            }
+        }
+        var alters = new java.util.ArrayList<String>();
+        if (!cols.contains("status")) {
+            alters.add("ADD COLUMN IF NOT EXISTS `status` int(11) NOT NULL DEFAULT 0");
+        }
+        if (!cols.contains("away_status")) {
+            alters.add("ADD COLUMN IF NOT EXISTS `away_status` int(11) NOT NULL DEFAULT 0");
+        }
+        if (!cols.contains("away_reason")) {
+            alters.add("ADD COLUMN IF NOT EXISTS `away_reason` varchar(255) NOT NULL DEFAULT ''");
+        }
+        if (!cols.contains("gag")) {
+            alters.add("ADD COLUMN IF NOT EXISTS `gag` int(11) NOT NULL DEFAULT 0");
+        }
+        if (!alters.isEmpty()) {
+            try (var stmt = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "session` " + String.join(", ", alters))) {
+                stmt.executeUpdate();
+            }
+        }
     }
 
     /**
@@ -1023,12 +1173,292 @@ public class Database {
         return count;
     }
 
-    /**
-     * Z&auml;hlt die Anzahl der Nchrichten!
-     *
-     * @param nick Der Nick
-     * @return Die Anzahl der Nachrichten
-     */
+    protected void recordStats(int users, int rooms) {
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            var cal = new GregorianCalendar();
+            var ts = cal.getTimeInMillis();
+            var year = cal.get(java.util.Calendar.YEAR);
+            var month = cal.get(java.util.Calendar.MONTH) + 1;
+            var day = cal.get(java.util.Calendar.DAY_OF_MONTH);
+            var hour = cal.get(java.util.Calendar.HOUR_OF_DAY);
+            try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "stats` (`ts`, `year`, `month`, `day`, `hour`, `users`, `rooms`) VALUES (?, ?, ?, ?, ?, ?, ?)")) {
+                statement.setLong(1, ts);
+                statement.setInt(2, year);
+                statement.setInt(3, month);
+                statement.setInt(4, day);
+                statement.setInt(5, hour);
+                statement.setInt(6, users);
+                statement.setInt(7, rooms);
+                statement.executeUpdate();
+            }
+            try (var statement = getCon().prepareStatement("SELECT MAX(`users`) FROM `" + getPrefix() + "stats`"); var rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    var peak = rs.getInt(1);
+                    if (users >= peak) {
+                        try (var upd = getCon().prepareStatement("UPDATE `" + getPrefix() + "stats` SET `peak`=1 WHERE `ts`=?")) {
+                            upd.setLong(1, ts);
+                            upd.executeUpdate();
+                        }
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+    }
+
+    protected int getPeak() {
+        var peak = 0;
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            try (var statement = getCon().prepareStatement("SELECT MAX(`users`) FROM `" + getPrefix() + "stats`"); var rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    peak = rs.getInt(1);
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return peak;
+    }
+
+    protected void updatePeak(int users) {
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            try (var statement = getCon().prepareStatement("SELECT MAX(`users`) FROM `" + getPrefix() + "stats`"); var rs = statement.executeQuery()) {
+                if (rs.next()) {
+                    var peak = rs.getInt(1);
+                    if (users > peak) {
+                        var cal = new GregorianCalendar();
+                        var ts = cal.getTimeInMillis();
+                        var year = cal.get(java.util.Calendar.YEAR);
+                        var month = cal.get(java.util.Calendar.MONTH) + 1;
+                        var day = cal.get(java.util.Calendar.DAY_OF_MONTH);
+                        var hour = cal.get(java.util.Calendar.HOUR_OF_DAY);
+                        try (var ins = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "stats` (`ts`, `year`, `month`, `day`, `hour`, `users`, `rooms`, `peak`) VALUES (?, ?, ?, ?, ?, ?, 0, 1)")) {
+                            ins.setLong(1, ts);
+                            ins.setInt(2, year);
+                            ins.setInt(3, month);
+                            ins.setInt(4, day);
+                            ins.setInt(5, hour);
+                            ins.setInt(6, users);
+                            ins.executeUpdate();
+                        }
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+    }
+
+    protected String getHourlyStats() {
+        var sb = new StringBuilder();
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            var cal = new GregorianCalendar();
+            cal.add(java.util.Calendar.HOUR_OF_DAY, -24);
+            var cutoff = cal.getTimeInMillis();
+            try (var statement = getCon().prepareStatement("SELECT `hour`, AVG(`users`) as avg_users FROM `" + getPrefix() + "stats` WHERE `ts` >= ? GROUP BY `hour` ORDER BY `hour` ASC")) {
+                statement.setLong(1, cutoff);
+                try (var rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        if (sb.length() > 0) {
+                            sb.append(",");
+                        }
+                        sb.append("{h:").append(rs.getInt("hour")).append(",u:").append(rs.getInt("avg_users")).append("}");
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return sb.toString();
+    }
+
+    protected String getDailyStats() {
+        var sb = new StringBuilder();
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            var cal = new GregorianCalendar();
+            cal.add(java.util.Calendar.DAY_OF_MONTH, -30);
+            var cutoff = cal.getTimeInMillis();
+            try (var statement = getCon().prepareStatement("SELECT `day`, AVG(`users`) as avg_users FROM `" + getPrefix() + "stats` WHERE `ts` >= ? GROUP BY `day` ORDER BY `day` ASC")) {
+                statement.setLong(1, cutoff);
+                try (var rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        if (sb.length() > 0) {
+                            sb.append(",");
+                        }
+                        sb.append("{d:").append(rs.getInt("day")).append(",u:").append(rs.getInt("avg_users")).append("}");
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return sb.toString();
+    }
+
+    protected String getMonthlyStats() {
+        var sb = new StringBuilder();
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            var cal = new GregorianCalendar();
+            cal.add(java.util.Calendar.MONTH, -12);
+            var cutoff = cal.getTimeInMillis();
+            try (var statement = getCon().prepareStatement("SELECT `month`, AVG(`users`) as avg_users FROM `" + getPrefix() + "stats` WHERE `ts` >= ? GROUP BY `month` ORDER BY `month` ASC")) {
+                statement.setLong(1, cutoff);
+                try (var rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        if (sb.length() > 0) {
+                            sb.append(",");
+                        }
+                        sb.append("{m:").append(rs.getInt("month")).append(",u:").append(rs.getInt("avg_users")).append("}");
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return sb.toString();
+    }
+
+    protected String getTopRooms() {
+        var sb = new StringBuilder();
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            try (var statement = getCon().prepareStatement("SELECT `room`, MAX(`users`) as peak FROM `" + getPrefix() + "room_stats` GROUP BY `room` ORDER BY peak DESC LIMIT 10"); var rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    if (sb.length() > 0) {
+                        sb.append(",");
+                    }
+                    sb.append("{\"r\":\"").append(rs.getString("room").replace("\"", "\\\"")).append("\",\"c\":").append(rs.getInt("peak")).append("}");
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return "[" + sb.toString() + "]";
+    }
+
+    protected void recordRoomStats(String room, int users) {
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            var cal = new GregorianCalendar();
+            var ts = cal.getTimeInMillis();
+            try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "room_stats` (`room`, `ts`, `users`) VALUES (?, ?, ?)")) {
+                statement.setString(1, room);
+                statement.setLong(2, ts);
+                statement.setInt(3, users);
+                statement.executeUpdate();
+            }
+            try (var statement = getCon().prepareStatement("SELECT MAX(`users`) FROM `" + getPrefix() + "room_stats` WHERE `room`=?")) {
+                statement.setString(1, room);
+                try (var rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        var peak = rs.getInt(1);
+                        if (users >= peak) {
+                            try (var upd = getCon().prepareStatement("UPDATE `" + getPrefix() + "room_stats` SET `peak`=1 WHERE `room`=? AND `ts`=?")) {
+                                upd.setString(1, room);
+                                upd.setLong(2, ts);
+                                upd.executeUpdate();
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+    }
+
+    protected void updateRoomPeak(String room, int users) {
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            try (var statement = getCon().prepareStatement("SELECT MAX(`users`) FROM `" + getPrefix() + "room_stats` WHERE `room`=?")) {
+                statement.setString(1, room);
+                try (var rs = statement.executeQuery()) {
+                    if (rs.next()) {
+                        var peak = rs.getInt(1);
+                        if (users > peak) {
+                            var cal = new GregorianCalendar();
+                            var ts = cal.getTimeInMillis();
+                            try (var ins = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "room_stats` (`room`, `ts`, `users`, `peak`) VALUES (?, ?, ?, 1)")) {
+                                ins.setString(1, room);
+                                ins.setLong(2, ts);
+                                ins.setInt(3, users);
+                                ins.executeUpdate();
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+    }
+
+    protected String getTopUsers() {
+        var sb = new StringBuilder();
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            var limit = getMaster().getConfig().getString("toplist_limit");
+            try (var statement = getCon().prepareStatement("SELECT `nick2`, `points` FROM `" + getPrefix() + "users` ORDER BY `points` DESC LIMIT " + limit); var rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    if (sb.length() > 0) {
+                        sb.append(",");
+                    }
+                    sb.append("{\"n\":\"").append(rs.getString("nick2").replace("\"", "\\\"")).append("\",\"p\":").append(rs.getInt("points")).append("}");
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return "[" + sb.toString() + "]";
+    }
+
+    protected String getUserRelations() {
+        var sb = new StringBuilder();
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            try (var statement = getCon().prepareStatement("SELECT `nick`, COUNT(*) as cnt FROM `" + getPrefix() + "friends` GROUP BY `nick` ORDER BY cnt DESC LIMIT 10"); var rs = statement.executeQuery()) {
+                while (rs.next()) {
+                    if (sb.length() > 0) {
+                        sb.append(",");
+                    }
+                    sb.append("{\"n\":\"").append(rs.getString("nick").replace("\"", "\\\"")).append("\",\"c\":").append(rs.getInt("cnt")).append("}");
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return "[" + sb.toString() + "]";
+    }
+
     protected int countMessage(String nick) {
         var count = 0;
         try {
@@ -1269,7 +1699,7 @@ public class Database {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
-            try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "users` (`sex`, `nick`, `nick2`, `mail`, `color`, `pwd`, `reminder`, `answer`, `timestamp_reg`, `timestamp_login`, `bday_day`, `bday_month`, `bday_year` ) VALUES (?, ?, ?, ?, ?, " + getMaster().getConfig().getString("encrypt_pwd") + ", ?, ?, ?, ?, ?, ?,?)")) {
+            try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "users` (`sex`, `nick`, `nick2`, `mail`, `color`, `pwd`, `pwd2`, `reminder`, `answer`, `timestamp_reg`, `timestamp_login`, `bday_day`, `bday_month`, `bday_year`) VALUES (?, ?, ?, ?, ?, " + getMaster().getConfig().getString("encrypt_pwd") + ", " + getMaster().getConfig().getString("encrypt_pwd") + ", ?, ?, ?, ?, ?, ?, ?)")) {
                 var regTime = currentTimeMillis();
                 var salt = new StringBuilder();
                 salt.append(pwd);
@@ -1283,13 +1713,14 @@ public class Database {
                 statement.setString(4, mail);
                 statement.setString(5, color);
                 statement.setString(6, salt.toString());
-                statement.setString(7, question);
-                statement.setString(8, answer);
-                statement.setLong(9, regTime);
+                statement.setString(7, salt.toString());
+                statement.setString(8, question);
+                statement.setString(9, answer);
                 statement.setLong(10, regTime);
-                statement.setString(11, day);
-                statement.setString(12, month);
-                statement.setString(13, year);
+                statement.setLong(11, regTime);
+                statement.setString(12, day);
+                statement.setString(13, month);
+                statement.setString(14, year);
                 statement.executeUpdate();
             }
         } catch (SQLException se) {

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "models": {
+    "inclusionai/ling-3.0-flash:free": {
+      "limit": {
+        "context": 262144,
+        "output": 16384
+      }
+    }
+  }  
+}

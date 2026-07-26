@@ -150,6 +150,7 @@ public final class ChatManager {
             removeUserFromRoom(name, room);
             getUsers().remove(name);
             getConnectionIds().remove(connectionId);
+            getMaster().getConfig().getDb().updatePeak(getUsers().size());
             var hs = u.getHttpSession();
             if (hs != null && u.isChatOnly()) {
                 getUsersCommunity().remove(u.getName());
@@ -1216,8 +1217,13 @@ public final class ChatManager {
             }
             r.getUsers().add(name);
             addRoom(room, r);
-            u.setRoom(room);
-            r.getUsers().sort(null);
+             u.setRoom(room);
+             r.getUsers().sort(null);
+        }
+        var currentRoom = u.getRoom();
+        var currentRoomObj = getRoom(currentRoom);
+        if (currentRoomObj != null) {
+            getMaster().getConfig().getDb().updateRoomPeak(currentRoom, currentRoomObj.getUsers().size());
         }
     }
 
@@ -1584,6 +1590,7 @@ public final class ChatManager {
         name = name.toLowerCase();
         getUsers().put(name, u);
         getConnectionIds().put(connectionId, name);
+        getMaster().getConfig().getDb().updatePeak(getUsers().size());
     }
 
     /**
@@ -2086,6 +2093,7 @@ public final class ChatManager {
                         u.getHttpSession().invalidate();
                     }
                     getUsersCommunity().remove(u.getName());
+                    getMaster().getConfig().getDb().updatePeak(getUsers().size());
                     return;
                 }
                 timeoutTimer = timeoutTimer + 1;

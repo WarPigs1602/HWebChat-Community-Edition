@@ -162,8 +162,14 @@ public class ChatServices {
             }
             toplist(request, response, map2);
         } else if (map2.getOrDefault("page", "").equals(conf.getString("path_captcha"))) {
-            // Captcha zur G&uuml;ltigkeitspr&uuml;fung
-            Bootstrap.boot.getCaptcha().drawCaptcha(request, response);
+            var captcha = Bootstrap.boot.getCaptcha();
+            if (captcha != null) {
+                captcha.drawCaptcha(request, response);
+            } else {
+                response.setStatus(500);
+                response.setContentType("text/html; charset=" + conf.getString("charset"));
+                ut.submitContent("<html><head><title>500 Internal Server Error</title></head><body><h1>500 Internal Server Error</h1><p>Captcha service is not initialized.</p></body></html>", response);
+            }
         } else if (map2.getOrDefault("page", "").equals(conf.getString("path_reg_form"))) {
             // Registrierungsformular
             response.setContentType("text/html; charset=" + conf.getString("charset"));
@@ -219,11 +225,12 @@ public class ChatServices {
             response.setContentType("text/html; charset=" + conf.getString("charset"));
             emot(request, response, map2);
         } else if (map2.getOrDefault("page", "").equals(conf.getString("path_help"))) {
-            // Chathilfe (Provisorium)
             response.setContentType("text/html; charset=" + conf.getString("charset"));
             help(request, response, map2);
+        } else if (map2.getOrDefault("page", "").equals(conf.getString("path_stats"))) {
+            response.setContentType("text/html; charset=" + conf.getString("charset"));
+            stats(request, response, map2);
         } else {
-            // Fehlermeldung 404 Datei nicht gefunden!
             response.setStatus(404);
             response.setContentType("text/html; charset=" + conf.getString("charset"));
             printTemplate("error", request, response, map2);
@@ -1340,11 +1347,39 @@ public class ChatServices {
         ut.submitContent(text, response);
     }
 
-    /**
-     * Zeigt die Emoticons an
-     *
-     * @param out Die Output-Klasse
-     */
+    private void stats(HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
+        var conf = Bootstrap.boot.getConfig();
+        var db = conf.getDb();
+        var ut = Bootstrap.boot.getUtil();
+        var skin = ut.parseHost(map.getOrDefault("skin", ""), request)[1];
+        var lang = readLang(request, map);
+        String template;
+        var session = request.getSession(false);
+        if (session != null && !session.isNew() && "true".equals(session.getAttribute("community"))) {
+            var nick = (String) session.getAttribute("nick");
+            var reg = nick != null && db.isRegistered(nick);
+            template = reg ? "stats_com_reg" : "stats_com";
+        } else {
+            template = "stats";
+        }
+        String text = getTemplate(template, request, map);
+        if (text.toLowerCase().startsWith("error")) {
+            response.setStatus(404);
+            text = "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>%missing_template%</b></p><hr><address>%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS%</address></body></html>";
+            text = text.replace("%missing_template%", template + ".html");
+            ut.submitContent(text, response);
+            return;
+        }
+        text = text.replace("%STATS_PEAK%", String.valueOf(db.getPeak()));
+        text = text.replace("%STATS_HOURLY%", db.getHourlyStats());
+        text = text.replace("%STATS_DAILY%", db.getDailyStats());
+        text = text.replace("%STATS_MONTHLY%", db.getMonthlyStats());
+        text = text.replace("%STATS_TOP_ROOMS%", db.getTopRooms());
+        text = text.replace("%STATS_TOP_USERS%", db.getTopUsers());
+        text = text.replace("%STATS_RELATIONS%", db.getUserRelations());
+        ut.submitContent(text, response);
+    }
+
     private void emot(HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
         var skin = map.getOrDefault("skin", "");
         var conf = Bootstrap.boot.getConfig();
