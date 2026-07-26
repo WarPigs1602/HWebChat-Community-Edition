@@ -41,6 +41,16 @@ git clone https://github.com/WarPigs1602/HWebChat-Community-Edition.git
 cd HWebChat-Community-Edition
 ```
 
+### 1a. Or use the pre-built WAR
+
+Alternatively, download the latest release directly:
+
+```text
+https://github.com/WarPigs1602/HWebChat-Community-Edition/releases/download/260726/HWebChat_Community_Edition.war
+```
+
+Then skip to step 3 (Deploy to Tomcat).
+
 ### 2. Build with Maven
 
 ```
