@@ -619,6 +619,7 @@ public class SetupServlet extends HttpServlet {
                 Bootstrap.boot.setChatManager(new ChatManager(Bootstrap.boot));
                 Bootstrap.boot.setCommands(new Commands(Bootstrap.boot));
                 Bootstrap.boot.setCaptcha(new Captcha(Bootstrap.boot));
+                Bootstrap.boot.setSendMail(new SendMail(Bootstrap.boot));
             } catch (Exception e) {
                 logError(e);
             }

@@ -159,6 +159,7 @@ public final class Bootstrap implements Software {
             out.printf("* Setup directories created. Please visit /Setup to complete configuration.\r\n");
             setChatServices(new ChatServices(this));
             setCaptcha(new Captcha(this));
+            setSendMail(new SendMail(this));
             return;
         }
         setConfig(new Config(this));

@@ -1143,7 +1143,9 @@ public class ChatServices {
                 var text = getMail("password", request, map);
                 text = text.replace("%pwd%", pwd);
                 text = text.replace("%nick%", nick);
-                mailer.sendEmail(text, db.getCommand("password_subject", lang), mail);
+                if (mailer != null) {
+                    mailer.sendEmail(text, db.getCommand("password_subject", lang), mail);
+                }
             } catch (MessagingException me) {
                 errorMessage = me.getLocalizedMessage();
                 regSuccess = false;
@@ -3933,8 +3935,9 @@ public class ChatServices {
             text = text.replace("%pwd%", pwd);
             text = text.replace("%nick%", nick);
             try {
-                mailer.sendEmail(text, db.getCommand("register_subject", lang), mail);
-
+                if (mailer != null) {
+                    mailer.sendEmail(text, db.getCommand("register_subject", lang), mail);
+                }
             } catch (MessagingException ex) {
                 Logger.getLogger(ChatServices.class
                         .getName()).log(Level.SEVERE, null, ex);
