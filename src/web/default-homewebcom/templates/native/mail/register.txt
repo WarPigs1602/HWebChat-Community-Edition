@@ -1,0 +1,9 @@
+Sehr geehrter %nick%,
+
+Hiermit senden wir dir dein Chat-Passwort. Es lautet: %pwd%
+
+Falls du diese Registrierung nicht angefordert hast, ignoriere bitte diese E-Mail!
+
+Viel Spaß im Chat!
+
+Dein HWebChat Team!

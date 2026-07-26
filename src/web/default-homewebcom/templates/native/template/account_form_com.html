@@ -1,0 +1,24 @@
+<!-- design=frameset_community_reg -->
+<h1>%SERVER_SOFTWARE% &ndash; Account verwalten</h1>
+
+<form action="%PATH_[account_com]%" method="POST" accept-charset="utf-8">
+  <p class="form-section-title">Account verwalten</p>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Was willst du machen?</label>
+      <select class="form-select form-select-sm" name="service" size="6">
+        <option value="account" selected>Profil bearbeiten</option>
+        <option value="napping">Chatnapping</option>
+        <option value="picture">Profilbild hochladen</option>
+        <option value="password">Passwort bearbeiten</option>
+        <option value="data">Accountdaten bearbeiten</option>
+        <option value="delete">Account l&ouml;schen</option>
+      </select>
+    </div>
+  </div>
+
+  <p class="form-section-title">Weiter</p>
+
+  <input type="submit" class="btn btn-primary btn-sm" name="OK" value="Weiter zur n&auml;chsten Seite">
+</form>

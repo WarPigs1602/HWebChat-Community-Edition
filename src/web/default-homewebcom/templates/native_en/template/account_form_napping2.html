@@ -1,0 +1,24 @@
+<!-- design=napping_account -->
+<form action="%PATH_[account]%" method="POST" accept-charset="utf-8">
+  <p class="form-section-title">
+    Here you can manage your account...
+  </p>
+  <p>
+  What do you want to do now?</br>
+  <select class="form-control form-control-sm col-md-6 mb-3" name="service" size="6">
+    <option value="account" selected>Processing profile</option>
+    <option value="napping">Chatnapping</option>
+    <option value="picture">Upload profile picture</option>
+    <option value="password">Processing the password</option>
+    <option value="data">Processing account data</option>
+    <option value="delete">Delete account</option>
+  </select>
+  </p>
+  <input type="hidden" name="owner" value="%owner%">
+  <p class="form-section-title">
+    ... And off we go...
+  </p>
+  <p>
+  <input type="submit" class="btn btn-secondary btn-sm" name="OK" value="Continue to the next page">
+  </p>
+</form>

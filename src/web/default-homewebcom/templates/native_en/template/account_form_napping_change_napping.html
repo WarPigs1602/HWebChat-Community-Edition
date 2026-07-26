@@ -1,0 +1,24 @@
+<!-- design=napping_account -->
+<h1>
+%SERVER_SOFTWARE% &ndash; Chatnapping
+</h1>
+<p>
+  You have changed the room data for <strong>%room2%</strong> and can add the room to your homepage with the following code:
+</p>
+<textarea readonly class="prism-live line-numbers language-html fill"><form method="POST" name="login" action="%host_http%%PATH_[login_chat]%" target="_blank" accept-charset="utf-8">
+  <input maxlength="20" name="nick" placeholder="Nickname"><br>
+  <input maxlength="20" name="pwd" type="password" placeholder="Password"><br>
+  <input name="room" value="%room2%" type="hidden">
+  <input name="owner" value="%nick%" type="hidden">
+  <input name="skin" value="%skin%" type="hidden">
+  <input value="Login" type="submit">
+</form>
+<p>
+  <a href="%host_http%%PATH_[login_chat]%&skin=%skin%&room=%room2%&owner=%nick%">Guest access</a><br>
+  <a href="%host_http%%PATH_[register]%&owner=%nick%">Register</a><br>
+  <a href="%host_http%%PATH_[password]%&owner=%nick%">Forgot password?</a>
+</p>
+<p class="users">
+<script type="text/javascript" src="%host_http%%PATH_[script_room_napping]%"></script>
+</p>
+</textarea>

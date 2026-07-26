@@ -692,33 +692,40 @@ public final class Util implements Software {
      */
     protected String replaceFilePaths(String text) {
         var conf = Bootstrap.boot.getConfig();
-        text = text.replace("%path_account%", conf.getString("path_account"));
-        text = text.replace("%path_account_com%", conf.getString("path_account_com"));
-        text = text.replace("%path_message%", conf.getString("path_message"));
-        text = text.replace("%path_chat%", conf.getString("path_chat"));
-        text = text.replace("%path_profile%", conf.getString("path_profile"));
-        text = text.replace("%path_emot%", conf.getString("path_emot"));
-        text = text.replace("%path_help%", conf.getString("path_help"));
-        text = text.replace("%path_output%", conf.getString("path_output"));
-        text = text.replace("%path_start%", conf.getString("path_start"));
-        text = text.replace("%path_image%", conf.getString("path_image"));
-        text = text.replace("%path_memory%", conf.getString("path_memory"));
-        text = text.replace("%path_captcha%", conf.getString("path_captcha"));
-        text = text.replace("%path_register%", conf.getString("path_reg_form"));
-        text = text.replace("%path_password%", conf.getString("path_password"));
-        text = text.replace("%path_login%", conf.getString("path_login"));
-        text = text.replace("%path_logout%", conf.getString("path_logout"));
-        text = text.replace("%path_link%", conf.getString("path_link"));
-        text = text.replace("%path_file%", conf.getString("path_file"));
-        text = text.replace("%path_toplist%", conf.getString("path_toplist"));
-        text = text.replace("%path_webchat%", conf.getString("path_webchat"));
-        text = text.replace("%path_hwebchat%", conf.getString("path_hwebchat"));
-        text = text.replace("%path_chat%", conf.getString("path_chat"));
-        text = text.replace("%path_login_chat%", conf.getString("path_login_chat"));
-        text = text.replace("%path_upload%", conf.getString("path_upload"));
-        text = text.replace("%path_console_index%", conf.getString("path_console"));
-        text = text.replace("%path_board%", conf.getString("path_board"));
+        text = replacePath(text, "%path_account%", conf.getString("path_account"));
+        text = replacePath(text, "%path_account_com%", conf.getString("path_account_com"));
+        text = replacePath(text, "%path_message%", conf.getString("path_message"));
+        text = replacePath(text, "%path_chat%", conf.getString("path_chat"));
+        text = replacePath(text, "%path_profile%", conf.getString("path_profile"));
+        text = replacePath(text, "%path_emot%", conf.getString("path_emot"));
+        text = replacePath(text, "%path_help%", conf.getString("path_help"));
+        text = replacePath(text, "%path_output%", conf.getString("path_output"));
+        text = replacePath(text, "%path_start%", conf.getString("path_start"));
+        text = replacePath(text, "%path_image%", conf.getString("path_image"));
+        text = replacePath(text, "%path_memory%", conf.getString("path_memory"));
+        text = replacePath(text, "%path_captcha%", conf.getString("path_captcha"));
+        text = replacePath(text, "%path_register%", conf.getString("path_reg_form"));
+        text = replacePath(text, "%path_password%", conf.getString("path_password"));
+        text = replacePath(text, "%path_login%", conf.getString("path_login"));
+        text = replacePath(text, "%path_logout%", conf.getString("path_logout"));
+        text = replacePath(text, "%path_link%", conf.getString("path_link"));
+        text = replacePath(text, "%path_file%", conf.getString("path_file"));
+        text = replacePath(text, "%path_toplist%", conf.getString("path_toplist"));
+        text = replacePath(text, "%path_webchat%", conf.getString("path_webchat"));
+        text = replacePath(text, "%path_hwebchat%", conf.getString("path_hwebchat"));
+        text = replacePath(text, "%path_chat%", conf.getString("path_chat"));
+        text = replacePath(text, "%path_login_chat%", conf.getString("path_login_chat"));
+        text = replacePath(text, "%path_upload%", conf.getString("path_upload"));
+        text = replacePath(text, "%path_console_index%", conf.getString("path_console"));
+        text = replacePath(text, "%path_board%", conf.getString("path_board"));
         return text;
+    }
+
+    private String replacePath(String text, String placeholder, String value) {
+        if (value == null) {
+            return text.replace(placeholder, "");
+        }
+        return text.replace(placeholder, value);
     }
 
     /**

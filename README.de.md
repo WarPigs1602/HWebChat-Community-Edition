@@ -41,46 +41,7 @@ git clone https://github.com/WarPigs1602/HWebChat-Community-Edition.git
 cd HWebChat-Community-Edition
 ```
 
-### 2. Laufzeit-Konfiguration (`~/.homewebcom`)
-
-Die App lädt die Konfiguration aus dem **Home-Verzeichnis des Tomcat-Prozesses**:
-
-```bash
-cp -a .homewebcom ~/.homewebcom
-# oder in ein bestehendes ~/.homewebcom mergen
-```
-
-Mindestens anpassen:
-
-- `~/.homewebcom/config/config.json` — DB, Admin-Passwort, Chat-Einstellungen  
-- `~/.homewebcom/config/hosts.json` — Host → Skin  
-
-Beispiel DB-Einträge in `config.json`:
-
-```json
-{"name":"sql.host","value":"localhost:3306","description":"Der MySQL Host"},
-{"name":"sql.user","value":"hwebchat","description":"Der MySQL Benutzer"},
-{"name":"sql.pw","value":"geheim","description":"Das MySQL Passwort"},
-{"name":"sql.db","value":"hwebchat","description":"Die MySQL Datenbank"},
-{"name":"sql.prefix","value":"hwc_","description":"Der SQL Prefix"}
-```
-
-### 3. Datenbank
-
-```bash
-mysql -u root -p -e "CREATE DATABASE hwebchat CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-mysql -u root -p hwebchat < database.sql
-```
-
-DB-User anlegen:
-
-```bash
-mysql -u root -p -e "CREATE USER 'hwebchat'@'localhost' IDENTIFIED BY 'secure_password'; GRANT ALL ON hwebchat.* TO 'hwebchat'@'localhost'; FLUSH PRIVILEGES;"
-```
-
-**Collation-Hinweis:** Einheitliche Collation für alle Tabellen (z. B. `utf8mb4_unicode_ci`). Gemischte Collations können JOINs auf Nicks/Nachrichten brechen.
-
-### 4. Mit Maven bauen
+### 2. Mit Maven bauen
 
 ```bash
 cd src/web/WEB-INF
@@ -103,7 +64,7 @@ mvn -o package                  # offline (lokales Repo)
 
 **NetBeans:** Projekt kann weiterhin geöffnet werden; der Build läuft über diese Maven-`pom.xml`.
 
-### 5. Auf Tomcat deployen
+### 3. Auf Tomcat deployen
 
 ```bash
 # Tomcat ggf. stoppen, dann:
@@ -119,9 +80,30 @@ Nach dem Deploy typischer Context-Pfad:
 http://localhost:8080/HWebChat_Community_Edition/
 ```
 
-Startseite leitet weiter auf `/HWebChat_Community_Edition/Start`.
+### 4. Erststart-Setup
 
-### 6. Nach Code-Änderungen neu deployen
+Beim ersten Aufruf erkennt die App, dass `~/.homewebcom` fehlt, und leitet automatisch auf den integrierten Setup-Assistenten weiter:
+
+```text
+http://localhost:8080/HWebChat_Community_Edition/Setup
+```
+
+Der Setup-Assistent:
+
+1. Erstellt `~/.homewebcom` und kopiert alle Templates/Configs aus dem WAR
+2. Fragt Datenbank, SMTP-Mail, Adminkonsole und den ersten Benutzer ab
+3. Legt alle benötigten Datenbanktabellen automatisch an
+4. Legt den ersten Chat-Benutzer an (mit Admin- und Forum-Moderator-Rechten)
+5. Legt den konfigurierten Standardraum an
+6. Schreibt eine vollständige `config.json` mit allen Einstellungen
+
+Nach dem Setup ist die Startseite erreichbar unter:
+
+```text
+http://localhost:8080/HWebChat_Community_Edition/Start
+```
+
+### 5. Nach Code-Änderungen neu deployen
 
 ```bash
 cd src/web/WEB-INF
@@ -146,7 +128,7 @@ Templates/Config unter `~/.homewebcom` liegen **nicht** im WAR — dort live edi
 | `~/.homewebcom/templates/native/` | Deutsch-Skin (HTML, JS, CSS) |
 | `~/.homewebcom/templates/native_en/` | Englisch-Skin (HTML, JS, CSS) |
 
-Die Repo-Kopie `.homewebcom/` ist eine Vorlage; **Produktion nutzt `~/.homewebcom`**.
+Die Repo-Kopie `src/web/default-homewebcom/` ist eine Vorlage; beim Erststart erstellt die App automatisch `~/.homewebcom` und kopiert alle Dateien dorthin.
 
 ---
 
@@ -154,6 +136,7 @@ Die Repo-Kopie `.homewebcom/` ist eine Vorlage; **Produktion nutzt `~/.homewebco
 
 - **Package:** `net.midiandmore.chat`
 - **Einstiegs-Servlet:** `ChatPages` → `/Start`
+- **Setup-Assistent:** `SetupServlet` → `/Setup` (Erststart-Konfiguration)
 - **WebSocket:** Klasse `Chat` (`@ServerEndpoint`)
 - **Upload:** `/UploadFile`
 - **Jakarta EE:** APIs unter `jakarta.*` (nicht `javax.*` für Servlet/WebSocket)
@@ -165,7 +148,7 @@ Web-Ressourcen: `src/web/`
 
 ## Sicherheit
 
-- Starke Passwörter für MySQL und Adminkonsole (`admin_password` in der Config)
+- Starke Passwörter für MySQL und Adminkonsole (werden beim Erststart-Setup vergeben)
 - Tomcat Manager nicht ungeschützt öffentlich freigeben
 - JDK und Tomcat aktuell halten
 - Rechte auf `~/.homewebcom/config` einschränken (enthält DB-Passwort)
@@ -177,6 +160,9 @@ Web-Ressourcen: `src/web/`
 
 **Sprache?**  
 Standard sind deutsche UI/Templates. Ein englischer Skin liegt unter `.homewebcom/templates/native_en/` bereit, ergänzt um passende Configs wie `help_en.json` und `profile_en.json`. Die Einstellung des Skins erfolgt in der `hosts.json`.
+
+**Erststart-Setup?**  
+Beim ersten Aufruf leitet die App auf `/Setup` weiter. Der Assistent erstellt automatisch `~/.homewebcom`, alle Datenbanktabellen, den ersten Admin-Benutzer und schreibt eine vollständige `config.json`.
 
 **HTTPS?**  
 TLS an Tomcat oder Reverse-Proxy (nginx/Caddy). Cookie-Flags `secure` in `web.xml` an das Setup anpassen.

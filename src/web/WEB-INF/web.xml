@@ -30,4 +30,12 @@
         <servlet-name>UploadFile</servlet-name>
         <url-pattern>/UploadFile</url-pattern>
     </servlet-mapping>   
+    <servlet>
+        <servlet-name>Setup</servlet-name>
+        <servlet-class>net.midiandmore.chat.SetupServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Setup</servlet-name>
+        <url-pattern>/Setup</url-pattern>
+    </servlet-mapping>
 </web-app>

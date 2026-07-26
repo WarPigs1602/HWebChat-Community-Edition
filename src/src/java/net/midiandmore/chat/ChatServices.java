@@ -102,8 +102,23 @@ public class ChatServices {
         return value;
     }
 
-    protected void parsePage(HttpServletRequest request, HttpServletResponse response) {
+    protected void parsePage(HttpServletRequest request, HttpServletResponse response) throws IOException {
         var map = request.getParameterMap();
+        if (Bootstrap.boot.isSetupNeeded()) {
+            response.setContentType("text/html; charset=UTF-8");
+            response.setCharacterEncoding("UTF-8");
+            var contextPath = request.getContextPath();
+            var setupUrl = contextPath + "/Setup";
+            var pw = response.getWriter();
+            pw.print("<!DOCTYPE html><html><head><title>Setup required</title></head><body style=\"font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f9ff;\">");
+            pw.print("<div style=\"background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto;\">");
+            pw.print("<h1 style=\"color: #e94560;\">⚙️ Setup required</h1>");
+            pw.print("<p style=\"margin: 20px 0; color: #666;\">The chat server has been started for the first time. Please complete the setup.</p>");
+            pw.print("<p style=\"margin: 20px 0;\"><a href=\"" + setupUrl + "\" style=\"background: #e94560; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;\">Start setup →</a></p>");
+            pw.print("<p style=\"font-size: 0.8em; color: #888; margin-top: 20px;\">HWebChat Community Edition | (c) 2005-2026 by Andreas Pschorn</p>");
+            pw.print("</div></body></html>");
+            return;
+        }
         var conf = Bootstrap.boot.getConfig();
         var ut = Bootstrap.boot.getUtil();
         var cm = Bootstrap.boot.getChatManager();

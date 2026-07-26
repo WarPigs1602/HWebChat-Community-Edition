@@ -3136,7 +3136,7 @@ public class Database {
                 "reddit", "snapchat", "pinterest", "whatsapp", "telegram",
                 "fam_status", "visitors", "image_url", "login_room", "pwd2"
             };
-            String[] intCols = {"points", "status"};
+            String[] intCols = {"points", "status", "moderator"};
             String[] blobCols = {"image_upload"};
 
             for (var col : textCols) {
@@ -3198,7 +3198,7 @@ public class Database {
             try (var alter = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "guestbook` ADD PRIMARY KEY (`id`)")) {
                 alter.executeUpdate();
             } catch (SQLException se) {
-                if (!se.getMessage().contains("Duplicate")) {
+                if (!se.getMessage().contains("Duplicate") && !se.getMessage().contains("Multiple primary key")) {
                     logError(se);
                 }
             }

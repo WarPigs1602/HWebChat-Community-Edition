@@ -1,0 +1,21 @@
+<!-- design=frameset_community_reg -->
+<h1>%SERVER_SOFTWARE% &ndash; Profilbild</h1>
+
+
+<form action="UploadFile" method="post" enctype="multipart/form-data">  
+  <input type="hidden" name="service" value="password">
+  <input type="hidden" name="data" value="change">
+  <p class="form-section-title">
+    W&auml;hle eine Datei zum hochladen!
+  </p>
+  <p>
+  <input type="file" name="file" size="50" class="form-control-file mb-2"/>
+  <a href="%path_hwebchat%?page=account_com&service=picture_del&data=delete&skin=%skin%">Hier klicken um ein bestehendes Profilbild zu l&ouml;schen!</a>
+  </p>
+  <p class="form-section-title">
+    Und schon fertig&hellip;
+  </p>
+  <p>
+  <input type="submit" class="btn btn-secondary btn-sm" name="OK" value="&Auml;nderung abschicken">
+  </p>
+</form>

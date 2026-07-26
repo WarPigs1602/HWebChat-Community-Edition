@@ -4,6 +4,9 @@ import static java.lang.System.currentTimeMillis;
 import static java.lang.System.err;
 import static java.lang.System.getProperty;
 import static java.lang.System.out;
+import java.io.File;
+import java.io.FileWriter;
+import java.util.Scanner;
 import java.util.Timer;
 import static java.util.logging.Level.SEVERE;
 import static java.util.logging.Level.WARNING;
@@ -18,6 +21,7 @@ public final class Bootstrap implements Software {
 
     private ChatLog chatLog;
     private ErrorLog errorLog;
+    private boolean setupNeeded;
 
     /**
      * Ruft den Fehler-Log ab
@@ -124,6 +128,40 @@ public final class Bootstrap implements Software {
         out.printf("(c) %s by %s\r\n", SERVER_YEAR, SERVER_VENDOR);
         out.printf("All rights reserved.\r\n\r\n");
         out.printf("Running on: %s (%s)\r\n", getProperty("os.name"), getProperty("os.arch"));
+        var homeWebCom = getProperty("user.home") + getProperty("file.separator") + ".homewebcom";
+        var configFile = homeWebCom + getProperty("file.separator") + "config" + getProperty("file.separator") + "config.json";
+        var configDir = new java.io.File(homeWebCom + getProperty("file.separator") + "config");
+        if (!configDir.exists() || !new java.io.File(configFile).exists()) {
+            out.printf("* First start detected - setting up .homewebcom directory...\r\n");
+            setupNeeded = true;
+            var baseDir = new java.io.File(homeWebCom);
+            if (!baseDir.exists()) {
+                baseDir.mkdirs();
+            }
+            if (!configDir.exists()) {
+                configDir.mkdirs();
+            }
+            var dataDir = new java.io.File(homeWebCom + getProperty("file.separator") + "data");
+            if (!dataDir.exists()) {
+                dataDir.mkdirs();
+            }
+            var htdocsDir = new java.io.File(homeWebCom + getProperty("file.separator") + "htdocs");
+            if (!htdocsDir.exists()) {
+                htdocsDir.mkdirs();
+            }
+            var picturesDir = new java.io.File(homeWebCom + getProperty("file.separator") + "pictures");
+            if (!picturesDir.exists()) {
+                picturesDir.mkdirs();
+            }
+            var templatesDir = new java.io.File(homeWebCom + getProperty("file.separator") + "templates");
+            if (!templatesDir.exists()) {
+                templatesDir.mkdirs();
+            }
+            copyDefaultContent(homeWebCom);
+            out.printf("* First start detected - setup required.\r\n");
+            out.printf("* Setup directories created. Please visit /Setup to complete configuration.\r\n");
+            return;
+        }
         setConfig(new Config(this));
         setThreadPool(new ThreadPool(getConfig().getInt("pool_max")));
         out.printf("* Starting chat: ");
@@ -144,6 +182,37 @@ public final class Bootstrap implements Software {
         setPingPong(new Timer());
         getPingPong().scheduleAtFixedRate(new PingPong(this), 0, 1000);
         out.printf("Done.\r\n");
+    }
+
+    private void copyDefaultContent(String homeWebCom) {
+        var context = getClass().getClassLoader();
+        var fs = getProperty("file.separator");
+        var paths = new String[]{"config", "data", "htdocs", "pictures", "templates"};
+        for (var path : paths) {
+            var resourcePath = "/default-homewebcom/" + path;
+            var url = context.getResource(resourcePath);
+            if (url == null) {
+                continue;
+            }
+            var targetDir = new java.io.File(homeWebCom + fs + path);
+            if (!targetDir.exists()) {
+                targetDir.mkdirs();
+            }
+            try {
+                var resourceStream = context.getResourceAsStream(resourcePath);
+                if (resourceStream == null) {
+                    continue;
+                }
+                var content = new java.util.Scanner(resourceStream, "UTF-8").useDelimiter("\\A").next();
+                if (path.equals("config") && content != null && !content.isBlank()) {
+                    var writer = new java.io.FileWriter(new java.io.File(targetDir, "config.json"));
+                    writer.write(content);
+                    writer.close();
+                }
+            } catch (Exception e) {
+                out.printf("* Warning: Could not copy default %s: %s\r\n", path, e.getMessage());
+            }
+        }
     }
 
     /**
@@ -322,6 +391,14 @@ public final class Bootstrap implements Software {
      */
     protected void setPingPong(Timer pingPong) {
         this.pingPong = pingPong;
+    }
+
+    protected boolean isSetupNeeded() {
+        return setupNeeded;
+    }
+
+    protected void setSetupNeeded(boolean setupNeeded) {
+        this.setupNeeded = setupNeeded;
     }
 
 }

@@ -1,0 +1,133 @@
+<!-- design=napping_account -->
+<h1>%SERVER_SOFTWARE% &ndash; Account</h1>
+
+<form action="%PATH_[account]%" method="POST" accept-charset="utf-8">%account_error_if_one%
+  <input type="hidden" name="service" value="account">
+  <input type="hidden" name="data" value="change">
+  <input type="hidden" name="owner" value="%owner%">
+
+  <p class="form-section-title">Persönliche Angaben</p>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Homepage</label>
+      <input type="url" class="form-control form-control-sm" name="homepage" value="%homepage%" placeholder="https://">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Wohnort</label>
+      <input type="text" class="form-control form-control-sm" name="city" value="%city%" placeholder="Stadt">
+    </div>
+  </div>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Hobby</label>
+      <input type="text" class="form-control form-control-sm" name="hobby" value="%hobby%" placeholder="Hobbys">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Familienstatus</label>
+      <input type="text" class="form-control form-control-sm" name="fam_status" value="%fam_status%" placeholder="z.B. Ledig">
+    </div>
+  </div>
+
+  <p class="form-section-title">Über mich</p>
+
+  <div class="mb-3">
+    <label class="form-label fw-semibold small">Beschreibung</label>
+    <textarea class="form-control form-control-sm" name="description" rows="3" placeholder="Erzähle etwas über dich...">%description%</textarea>
+  </div>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Motto</label>
+      <input type="text" class="form-control form-control-sm" name="slogan" value="%slogan%" placeholder="Dein Motto">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Signatur</label>
+      <input type="text" class="form-control form-control-sm" name="signature" value="%signature%" placeholder="Signatur">
+    </div>
+  </div>
+
+  <p class="form-section-title">Kontakt & Social</p>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Facebook</label>
+      <input type="text" class="form-control form-control-sm" name="facebook" value="%facebook%" placeholder="Facebook Profil">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Twitter / X</label>
+      <input type="text" class="form-control form-control-sm" name="twitter" value="%twitter%" placeholder="@username">
+    </div>
+  </div>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">YouTube</label>
+      <input type="text" class="form-control form-control-sm" name="youtube" value="%youtube%" placeholder="YouTube Kanal">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Instagram</label>
+      <input type="text" class="form-control form-control-sm" name="instagram" value="%instagram%" placeholder="@username">
+    </div>
+  </div>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">LinkedIn</label>
+      <input type="text" class="form-control form-control-sm" name="linkedin" value="%linkedin%" placeholder="Benutzername">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">TikTok</label>
+      <input type="text" class="form-control form-control-sm" name="tiktok" value="%tiktok%" placeholder="@username">
+    </div>
+  </div>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Discord</label>
+      <input type="text" class="form-control form-control-sm" name="discord" value="%discord%" placeholder="Benutzername">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Twitch</label>
+      <input type="text" class="form-control form-control-sm" name="twitch" value="%twitch%" placeholder="Benutzername">
+    </div>
+  </div>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">GitHub</label>
+      <input type="text" class="form-control form-control-sm" name="github" value="%github%" placeholder="Benutzername">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Reddit</label>
+      <input type="text" class="form-control form-control-sm" name="reddit" value="%reddit%" placeholder="Benutzername">
+    </div>
+  </div>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Snapchat</label>
+      <input type="text" class="form-control form-control-sm" name="snapchat" value="%snapchat%" placeholder="Benutzername">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Pinterest</label>
+      <input type="text" class="form-control form-control-sm" name="pinterest" value="%pinterest%" placeholder="Benutzername">
+    </div>
+  </div>
+
+  <div class="row g-2 mb-3">
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">WhatsApp</label>
+      <input type="text" class="form-control form-control-sm" name="whatsapp" value="%whatsapp%" placeholder="Telefonnummer mit Ländercode">
+    </div>
+    <div class="col-md-6">
+      <label class="form-label fw-semibold small">Telegram</label>
+      <input type="text" class="form-control form-control-sm" name="telegram" value="%telegram%" placeholder="@username">
+    </div>
+  </div>
+
+  <p class="form-section-title">Speichern</p>
+
+  <input type="submit" class="btn btn-primary btn-sm" name="OK" value="Änderung abschicken">
+</form>

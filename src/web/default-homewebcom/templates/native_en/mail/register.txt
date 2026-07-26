@@ -1,0 +1,9 @@
+Dear %nick%,
+
+We hereby send you your chat password: %pwd%
+
+If you have not requested this registration, please ignore this email!
+
+Have fun in the chat!
+
+Your HWebChat team!
