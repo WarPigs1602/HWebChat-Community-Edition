@@ -54,4 +54,37 @@ public final class SendMail implements Software {
         message.setText(msg);
         Transport.send(message);
     }
+
+    public static void sendTestEmail(String smtpHost, String smtpPort, String smtpUser, String smtpPassword, String smtpFrom,
+                                     String smtpAuth, String smtpStarttls, String smtpSslFactory, String to) throws MessagingException {
+        final Properties p = new Properties();
+        p.put("mail.smtp.host", smtpHost);
+        p.put("mail.smtp.port", smtpPort);
+        p.put("mail.smtp.auth", smtpAuth);
+        p.put("mail.smtp.starttls.enable", smtpStarttls);
+        p.put("mail.smtp.socketFactory.class", smtpSslFactory);
+        p.put("mail.smtp.socketFactory.port", smtpPort);
+        p.put("from-mail-address", smtpFrom);
+        p.put("use_auth", smtpAuth);
+        p.put("username", smtpUser);
+        p.put("password", smtpPassword);
+
+        Session session;
+        if ("true".equals(smtpAuth)) {
+            session = Session.getInstance(p, new jakarta.mail.Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(smtpUser, smtpPassword);
+                }
+            });
+        } else {
+            session = Session.getInstance(p);
+        }
+        Message message = new MimeMessage(session);
+        message.setFrom(new InternetAddress(smtpFrom));
+        message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
+        message.setSubject("Test from HWebChat Setup");
+        message.setText("This is a test email from HWebChat Community Edition setup.");
+        Transport.send(message);
+    }
 }

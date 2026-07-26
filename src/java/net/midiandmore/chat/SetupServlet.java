@@ -8,9 +8,10 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+ import java.sql.SQLException;
+ import java.util.ArrayList;
+ import java.util.List;
+ import jakarta.mail.MessagingException;
 import static java.lang.System.getProperty;
 import static java.lang.System.out;
 import static java.lang.System.err;
@@ -332,6 +333,34 @@ public class SetupServlet extends HttpServlet {
         }
     }
 
+    private void saveMailFile(String smtpHost, String smtpPort, String smtpUser, String smtpPassword, String smtpFrom,
+                              String smtpAuth, String smtpStarttls, String smtpSslFactory) {
+        var lines = new ArrayList<String>();
+        lines.add("[");
+        lines.add("{\"name\":\"mail.smtp.host\",\"value\":\"" + escapeJson(smtpHost) + "\",\"description\":\"SMTP host\"},");
+        lines.add("{\"name\":\"mail.smtp.port\",\"value\":\"" + escapeJson(smtpPort) + "\",\"description\":\"SMTP port\"},");
+        lines.add("{\"name\":\"mail.smtp.auth\",\"value\":\"" + escapeJson(smtpAuth) + "\",\"description\":\"SMTP authentication\"},");
+        lines.add("{\"name\":\"mail.smtp.starttls.enable\",\"value\":\"" + escapeJson(smtpStarttls) + "\",\"description\":\"Enable STARTTLS\"},");
+        lines.add("{\"name\":\"mail.smtp.socketFactory.class\",\"value\":\"" + escapeJson(smtpSslFactory) + "\",\"description\":\"SSL socket factory\"},");
+        lines.add("{\"name\":\"mail.smtp.socketFactory.port\",\"value\":\"" + escapeJson(smtpPort) + "\",\"description\":\"SSL port\"},");
+        lines.add("{\"name\":\"username\",\"value\":\"" + escapeJson(smtpUser) + "\",\"description\":\"SMTP username\"},");
+        lines.add("{\"name\":\"password\",\"value\":\"" + escapeJson(smtpPassword) + "\",\"description\":\"SMTP password\"},");
+        lines.add("{\"name\":\"from-mail-address\",\"value\":\"" + escapeJson(smtpFrom) + "\",\"description\":\"Sender address\"},");
+        lines.add("{\"name\":\"use_auth\",\"value\":\"" + escapeJson(smtpAuth) + "\",\"description\":\"Use authentication\"}");
+        lines.add("]");
+        try {
+            var mailFile = new File(getConfigDir() + getProperty("file.separator") + "mail.json");
+            var writer = new FileWriter(mailFile, StandardCharsets.UTF_8);
+            for (var line : lines) {
+                writer.write(line);
+                writer.write(System.lineSeparator());
+            }
+            writer.close();
+        } catch (IOException e) {
+            fatalError(e);
+        }
+    }
+
     private List<String> buildConfigJson(String dbHost, String dbPort, String dbName, String dbUser, String dbPassword, String dbPrefix,
                                          String smtpHost, String smtpPort, String smtpUser, String smtpPassword, String smtpFrom,
                                          String smtpAuth, String smtpStarttls, String smtpSslFactory,
@@ -554,6 +583,22 @@ public class SetupServlet extends HttpServlet {
             room != null ? room : "Lobby"
         );
         saveConfigFile(configJson);
+        saveMailFile(smtpHost, smtpPort, smtpUser, smtpPassword, smtpFrom,
+                     smtpAuth != null ? smtpAuth : "true", smtpStarttls != null ? smtpStarttls : "true", smtpSslFactory != null ? smtpSslFactory : "javax.net.ssl.SSLSocketFactory");
+        try {
+            SendMail.sendTestEmail(smtpHost, smtpPort, smtpUser, smtpPassword, smtpFrom,
+                                   smtpAuth != null ? smtpAuth : "true", smtpStarttls != null ? smtpStarttls : "true", smtpSslFactory != null ? smtpSslFactory : "javax.net.ssl.SSLSocketFactory",
+                                   firstUserEmail);
+        } catch (MessagingException e) {
+            render(request, response, "Setup", renderSetupForm("SMTP test failed: " + e.getMessage(),
+                dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix,
+                smtpHost, smtpPort, smtpUser, smtpPassword, smtpFrom,
+                smtpAuth != null ? smtpAuth : "true", smtpStarttls != null ? smtpStarttls : "true", smtpSslFactory != null ? smtpSslFactory : "javax.net.ssl.SSLSocketFactory",
+                adminUser, adminPassword, adminRealm != null ? adminRealm : "Console",
+                firstUserNick, firstUserPassword, firstUserEmail,
+                charset, timeZone, skin, room));
+            return;
+        }
         markSetupComplete();
         if (Bootstrap.boot != null) {
             Bootstrap.boot.setSetupNeeded(false);

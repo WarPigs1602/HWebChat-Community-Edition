@@ -5021,10 +5021,11 @@ protected String getConsole(String template, HttpServletRequest request, Map<Str
             data = "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>%missing_template%</b></p><hr><address>%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS%</address></body><html>";
             data = data.replace("%missing_template%", temp);
         }
-        data = parseHeader(data, template, request, map);
-        data = ut.replacePaths(data);
-        data = ut.replaceFilePaths(data);
-        var host = request.getHeader("host");
+         data = parseHeader(data, template, request, map);
+         data = ut.replacePaths(data);
+         data = ut.replaceFilePaths(data);
+         data = ut.replaceCommands(data, lang);
+         var host = request.getHeader("host");
         host = host != null ? host : "";
         data = ut.replaceServerInfo(data);
         data = data.replace("%skin%", skin);
