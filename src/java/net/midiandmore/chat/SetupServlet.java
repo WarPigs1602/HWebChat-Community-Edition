@@ -287,7 +287,7 @@ public class SetupServlet extends HttpServlet {
                 statement.setString(12, "1");
                 statement.setString(13, "1");
                 statement.setString(14, "1970");
-                statement.setInt(15, 9);
+                statement.setInt(15, 10);
                 statement.setInt(16, 1);
                 statement.executeUpdate();
             }
@@ -414,7 +414,7 @@ public class SetupServlet extends HttpServlet {
         lines.add("{\"name\":\"use_proxy\",\"value\":\"1\",\"description\":\"Use reverse proxy\"},");
         lines.add("{\"name\":\"real_ip\",\"value\":\"x-real-ip-submitter\",\"description\":\"Real IP with reverse proxies\"},");
         lines.add("{\"name\":\"cloudflare\",\"value\":\"0\",\"description\":\"Resolve Cloudflare hostnames\"},");
-        lines.add("{\"name\":\"status_admin\",\"value\":\"9\",\"description\":\"Minimum status for admins\"},");
+        lines.add("{\"name\":\"status_admin\",\"value\":\"10\",\"description\":\"Minimum status for admins\"},");
         lines.add("{\"name\":\"status_staff\",\"value\":\"4\",\"description\":\"Minimum status for VIPs\"},");
         lines.add("{\"name\":\"ignore_ban_status\",\"value\":\"4\",\"description\":\"Minimum permission to bypass bans\"},");
         lines.add("{\"name\":\"lock_status\",\"value\":\"4\",\"description\":\"Minimum permission to distribute superuser rights in rooms\"},");
