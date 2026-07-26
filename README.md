@@ -161,7 +161,7 @@ Web resources: `web/`
 ## FAQ
 
 **Language?**  
-Default UI/templates are German. An English skin is available as `.homewebcom/templates/native_en/`, plus matching config files like `help_en.json` and `profile_en.json`. Set the skin in `hosts.json` to switch languages.
+Default UI/templates are German. An English skin is available as `.homewebcom/templates/native_en/`, plus matching config files like `help_en.json` and `profile_en.json`. The language is automatically detected and can be changed in the frontend.
 
 **First-start setup?**  
 On first request, the app redirects to `/Setup`. The wizard creates `~/.homewebcom`, database tables, the first admin user, and writes a complete `config.json` automatically.

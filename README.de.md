@@ -159,7 +159,7 @@ Web-Ressourcen: `web/`
 ## FAQ
 
 **Sprache?**  
-Standard sind deutsche UI/Templates. Ein englischer Skin liegt unter `.homewebcom/templates/native_en/` bereit, ergänzt um passende Configs wie `help_en.json` und `profile_en.json`. Die Einstellung des Skins erfolgt in der `hosts.json`.
+Standard sind deutsche UI/Templates. Ein englischer Skin liegt unter `.homewebcom/templates/native_en/` bereit, ergänzt um passende Configs wie `help_en.json` und `profile_en.json`. Die Sprache wird automatisch erkannt und kann im Frontend umgestellt werden.
 
 **Erststart-Setup?**  
 Beim ersten Aufruf leitet die App auf `/Setup` weiter. Der Assistent erstellt automatisch `~/.homewebcom`, alle Datenbanktabellen, den ersten Admin-Benutzer und schreibt eine vollständige `config.json`.
