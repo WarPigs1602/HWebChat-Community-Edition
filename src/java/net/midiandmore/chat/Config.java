@@ -1,10 +1,12 @@
 package net.midiandmore.chat;
 
 import jakarta.json.Json;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.IOException;
+import java.io.BufferedReader;
 import static java.lang.System.getProperty;
 import static java.lang.System.out;
 import java.util.ArrayList;
@@ -72,6 +74,8 @@ public final class Config {
             setDb(new Database(getMaster()));
             out.printf("Done.\r\n* Loading system configuration ");
             setP(loadDataFromJSONasProperties("config.json", "name", "value"));
+            out.printf("Done.\r\n* Merging missing default configuration ");
+            mergeMissingDefaults();
             out.printf("Done.\r\n* Loading MySQL configuration: ");
             getDb().loadConfig(getP());
             out.printf("Done.\r\n* Loading permanent bans: ");
@@ -116,8 +120,108 @@ public final class Config {
         }
     }
 
+    private void mergeMissingDefaults() {
+        try {
+            var markerFile = new File(getUh() + getFs() + ".homewebcom" + getFs() + "config" + getFs() + ".setup_complete");
+            if (!markerFile.exists()) {
+                return;
+            }
+            var defaultValues = loadDefaults();
+            if (defaultValues.isEmpty()) {
+                return;
+            }
+            var missing = new java.util.ArrayList<String>();
+            for (var key : defaultValues.keySet()) {
+                if (!getP().containsKey(key)) {
+                    missing.add(key);
+                }
+            }
+            if (missing.isEmpty()) {
+                return;
+            }
+            var confFile = new File(getUh() + getFs() + ".homewebcom" + getFs() + "config" + getFs() + "config.json");
+            var sb = new StringBuilder();
+            try (var reader = new java.io.BufferedReader(new java.io.InputStreamReader(new java.io.FileInputStream(confFile), "UTF-8"))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    sb.append(line).append("\n");
+                }
+            }
+            var content = sb.toString();
+            if (content.trim().endsWith("]")) {
+                content = content.trim();
+                if (content.endsWith("\n]")) {
+                    content = content.substring(0, content.length() - 1);
+                } else {
+                    content = content.substring(0, content.length() - 1);
+                }
+                for (var key : missing) {
+                    var json = Json.createObjectBuilder();
+                    json.add("name", key);
+                    json.add("value", defaultValues.get(key));
+                    json.add("description", "");
+                    content += ",\n" + json.build().toString();
+                }
+                content += "\n]";
+                try (var writer = new FileWriter(confFile)) {
+                    writer.write(content);
+                }
+                for (var key : missing) {
+                    getP().setProperty(key, defaultValues.get(key));
+                }
+                out.printf("Added %d missing configuration fields: %s\r\n", missing.size(), String.join(", ", missing));
+            }
+        } catch (Exception e) {
+            out.printf("Warning: Could not merge missing defaults: %s\r\n", e.getMessage());
+        }
+    }
+
+    private java.util.Map<String, String> loadDefaults() {
+        var map = new java.util.HashMap<String, String>();
+        var possiblePaths = new java.util.ArrayList<String>();
+        var classLoader = getClass().getClassLoader();
+        var resource = classLoader.getResource("default-homewebcom/config/config.json");
+        if (resource != null) {
+            possiblePaths.add(resource.getPath());
+        }
+        var classPath = new File(getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getAbsolutePath();
+        if (classPath.endsWith("target/classes")) {
+            possiblePaths.add(classPath + "/default-homewebcom/config/config.json");
+        } else if (classPath.contains("target" + getFs() + "classes")) {
+            possiblePaths.add(classPath + getFs() + "default-homewebcom" + getFs() + "config" + getFs() + "config.json");
+        }
+        var codeSource = getClass().getResource("Config.class");
+        if (codeSource != null) {
+            var classFile = new File(codeSource.getPath());
+            var classesDir = classFile.getParentFile().getParentFile().getAbsolutePath();
+            possiblePaths.add(classesDir + getFs() + "default-homewebcom" + getFs() + "config" + getFs() + "config.json");
+        }
+        for (var path : possiblePaths) {
+            try {
+                var file = new File(path);
+                if (!file.exists()) {
+                    continue;
+                }
+                InputStream is = new FileInputStream(file);
+                var rdr = createReader(is);
+                var results = rdr.readArray();
+                for (int i = 0; i < results.size(); i++) {
+                    var jobj = results.getJsonObject(i);
+                    var name = jobj.getString("name");
+                    var value = jobj.getString("value");
+                    map.put(name, value);
+                }
+                is.close();
+                return map;
+            } catch (Exception e) {
+                out.printf("Warning: Could not load defaults from %s: %s\r\n", path, e.getMessage());
+            }
+        }
+        return map;
+    }
+
     /*
-    protected void createConfigFile(Hashtable<String, String> h, String fileName, String title) {
+     protected void createConfigFile(Hashtable<String, String> h, String fileName, String title) {
         StringBuilder sb = new StringBuilder();
         sb.append(getUh());
         sb.append(getFs());

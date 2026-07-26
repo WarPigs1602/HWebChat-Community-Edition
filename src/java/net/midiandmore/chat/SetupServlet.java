@@ -506,6 +506,9 @@ public class SetupServlet extends HttpServlet {
         lines.add("{\"name\":\"captcha_cicolor_rr\",\"value\":\"200\",\"description\":\"Die Captcha Kreisfarbe (RR in dezimalen Farben)\"},");
         lines.add("{\"name\":\"captcha_cicolor_gg\",\"value\":\"200\",\"description\":\"Die Captcha Kreisfarbe (GG in dezimalen Farben)\"},");
         lines.add("{\"name\":\"captcha_cicolor_bb\",\"value\":\"200\",\"description\":\"Die Captcha Kreisfarbe (BB in dezimalen Farben)\"},");
+        lines.add("{\"name\":\"captcha_noise_lines\",\"value\":\"5\",\"description\":\"Die Anzahl der Captcha-St&ouml;rlinien\"},");
+        lines.add("{\"name\":\"captcha_noise_dots\",\"value\":\"80\",\"description\":\"Die Anzahl der Captcha-St&ouml;rpunkte\"},");
+        lines.add("{\"name\":\"captcha_text_shadow\",\"value\":\"2\",\"description\":\"Die Captcha-Textschattentiefe\"},");
         lines.add("{\"name\":\"toplist_limit\",\"value\":\"100\",\"description\":\"Die maximale Anzahl der Chatter in der Topliste\"},");
         lines.add("{\"name\":\"guestbook_welcome\",\"value\":\"Willkommen im Gästebuch! Hier kannst du dich für den Chatter eintragen und Nachrichten hinterlassen.\",\"description\":\"Die Willkommensnachricht im Gästebuch\"}");
         lines.add("]");
