@@ -60,29 +60,29 @@ cd web/WEB-INF
 mvn clean package
 ```
 
-Artifact:
+ Artifact:
 
-```text
-web/target/HWebChat_Community_Edition.war
-```
+ ```text
+ target/HWebChat_Community_Edition.war
+ ```
 
-Useful variants:
+ Useful variants:
 
-```bash
-mvn clean package -DskipTests   # skip tests
-mvn clean compile               # compile only
-mvn -o package                  # offline (local repo only)
-```
+ ```bash
+ mvn clean package -DskipTests   # skip tests
+ mvn clean compile               # compile only
+ mvn -o package                  # offline (local repo only)
+ ```
 
-**NetBeans:** You can still open the project; the build is defined by this Maven `pom.xml` (not only Ant).
+ **NetBeans:** You can still open the project; the build is defined by this Maven `pom.xml` (not only Ant).
 
-### 3. Deploy to Tomcat
+ ### 3. Deploy to Tomcat
 
-```bash
-# Stop Tomcat if needed, then:
-cp web/target/HWebChat_Community_Edition.war "$CATALINA_HOME/webapps/"
-# Start Tomcat — it expands the WAR automatically
-```
+ ```bash
+ # Stop Tomcat if needed, then:
+ cp target/HWebChat_Community_Edition.war "$CATALINA_HOME/webapps/"
+ # Start Tomcat — it expands the WAR automatically
+ ```
 
 Or copy into your existing `webapps` path (e.g. `/home/you/tomcat/webapps/`).
 

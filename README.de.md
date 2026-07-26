@@ -60,9 +60,9 @@ mvn clean package
 
 Artefakt:
 
-```text
-web/target/HWebChat_Community_Edition.war
-```
+ ```text
+ target/HWebChat_Community_Edition.war
+ ```
 
 Weitere Varianten:
 
@@ -76,11 +76,11 @@ mvn -o package                  # offline (lokales Repo)
 
 ### 3. Auf Tomcat deployen
 
-```bash
-# Tomcat ggf. stoppen, dann:
-cp web/target/HWebChat_Community_Edition.war "$CATALINA_HOME/webapps/"
-# Tomcat starten — entpackt das WAR automatisch
-```
+ ```bash
+ # Tomcat ggf. stoppen, dann:
+ cp target/HWebChat_Community_Edition.war "$CATALINA_HOME/webapps/"
+ # Tomcat starten — entpackt das WAR automatisch
+ ```
 
 Oder in deinen bestehenden `webapps`-Pfad (z. B. `/home/du/tomcat/webapps/`).
 
