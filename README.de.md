@@ -44,14 +44,14 @@ cd HWebChat-Community-Edition
 ### 2. Mit Maven bauen
 
 ```bash
-cd src/web/WEB-INF
+cd web/WEB-INF
 mvn clean package
 ```
 
 Artefakt:
 
 ```text
-src/target/HWebChat_Community_Edition.war
+web/target/HWebChat_Community_Edition.war
 ```
 
 Weitere Varianten:
@@ -68,7 +68,7 @@ mvn -o package                  # offline (lokales Repo)
 
 ```bash
 # Tomcat ggf. stoppen, dann:
-cp src/target/HWebChat_Community_Edition.war "$CATALINA_HOME/webapps/"
+cp web/target/HWebChat_Community_Edition.war "$CATALINA_HOME/webapps/"
 # Tomcat starten — entpackt das WAR automatisch
 ```
 
@@ -106,7 +106,7 @@ http://localhost:8080/HWebChat_Community_Edition/Start
 ### 5. Nach Code-Änderungen neu deployen
 
 ```bash
-cd src/web/WEB-INF
+cd web/WEB-INF
 mvn clean package
 rm -rf "$CATALINA_HOME/webapps/HWebChat_Community_Edition"
 cp ../../target/HWebChat_Community_Edition.war "$CATALINA_HOME/webapps/"
@@ -128,7 +128,7 @@ Templates/Config unter `~/.homewebcom` liegen **nicht** im WAR — dort live edi
 | `~/.homewebcom/templates/native/` | Deutsch-Skin (HTML, JS, CSS) |
 | `~/.homewebcom/templates/native_en/` | Englisch-Skin (HTML, JS, CSS) |
 
-Die Repo-Kopie `src/web/default-homewebcom/` ist eine Vorlage; beim Erststart erstellt die App automatisch `~/.homewebcom` und kopiert alle Dateien dorthin.
+Die Repo-Kopie `web/default-homewebcom/` ist eine Vorlage; beim Erststart erstellt die App automatisch `~/.homewebcom` und kopiert alle Dateien dorthin.
 
 ---
 
@@ -141,8 +141,8 @@ Die Repo-Kopie `src/web/default-homewebcom/` ist eine Vorlage; beim Erststart er
 - **Upload:** `/UploadFile`
 - **Jakarta EE:** APIs unter `jakarta.*` (nicht `javax.*` für Servlet/WebSocket)
 
-Java-Quellen: `src/src/java/net/midiandmore/chat/`  
-Web-Ressourcen: `src/web/`
+Java-Quellen: `src/java/net/midiandmore/chat/`  
+Web-Ressourcen: `web/`
 
 ---
 

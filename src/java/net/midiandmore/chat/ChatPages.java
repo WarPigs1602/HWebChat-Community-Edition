@@ -54,10 +54,12 @@ public class ChatPages extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        try {
-            request.setCharacterEncoding(getMaster().getConfig().getString("charset"));
-            response.setCharacterEncoding(getMaster().getConfig().getString("charset"));
-        } catch (UnsupportedEncodingException ex) {
+        if (getMaster().getConfig() != null) {
+            try {
+                request.setCharacterEncoding(getMaster().getConfig().getString("charset"));
+                response.setCharacterEncoding(getMaster().getConfig().getString("charset"));
+            } catch (UnsupportedEncodingException ex) {
+            }
         }
         getMaster().getChatServices().parsePage(request, response);
     }

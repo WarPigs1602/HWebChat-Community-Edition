@@ -555,6 +555,18 @@ public class SetupServlet extends HttpServlet {
         );
         saveConfigFile(configJson);
         markSetupComplete();
+        if (Bootstrap.boot != null) {
+            Bootstrap.boot.setSetupNeeded(false);
+            try {
+                Bootstrap.boot.setConfig(new Config(Bootstrap.boot));
+                Bootstrap.boot.setChatServices(new ChatServices(Bootstrap.boot));
+                Bootstrap.boot.setUtil(new Util(Bootstrap.boot));
+                Bootstrap.boot.setChatManager(new ChatManager(Bootstrap.boot));
+                Bootstrap.boot.setCommands(new Commands(Bootstrap.boot));
+            } catch (Exception e) {
+                logError(e);
+            }
+        }
 
         var contextPath = request.getContextPath();
         var chatUrl = contextPath + "/Start";

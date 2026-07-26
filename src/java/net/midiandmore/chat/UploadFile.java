@@ -32,6 +32,10 @@ public class UploadFile extends HttpServlet {
     public void doPost(jakarta.servlet.http.HttpServletRequest request,
             jakarta.servlet.http.HttpServletResponse response)
             throws ServletException, java.io.IOException {
+        if (boot.getConfig() == null || boot.isSetupNeeded()) {
+            response.sendError(jakarta.servlet.http.HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Setup required");
+            return;
+        }
         var partAttr = request.getPart("file");
         var contentType = partAttr.getContentType();
         var co = boot.getConfig();
