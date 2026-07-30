@@ -26,6 +26,7 @@ import static java.lang.System.currentTimeMillis;
 import static java.net.IDN.toASCII;
 import static java.util.Calendar.DATE;
 import static java.util.Calendar.MONTH;
+import static net.midiandmore.chat.Bootstrap.logError;
 import static java.util.Calendar.YEAR;
 import static java.util.Locale.US;
 import static java.util.TimeZone.getDefault;
@@ -471,7 +472,7 @@ public final class Util implements Software {
         try {
             value = URLEncoder.encode(value, conf.getString("charset"));
         } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(Util.class.getName()).log(Level.SEVERE, null, ex);
+            logError(ex);
         }
         return value;
     }
@@ -487,7 +488,7 @@ public final class Util implements Software {
         try {
             value = URLDecoder.decode(value, conf.getString("charset"));
         } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(Util.class.getName()).log(Level.SEVERE, null, ex);
+            logError(ex);
         }
         return value;
     }

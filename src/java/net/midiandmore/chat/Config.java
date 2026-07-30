@@ -19,6 +19,7 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import static net.midiandmore.chat.Bootstrap.fatalError;
+import static net.midiandmore.chat.Bootstrap.logError;
 
 /**
  * Die Chatkonfiguration
@@ -172,7 +173,7 @@ public final class Config {
                 out.printf("Added %d missing configuration fields: %s\r\n", missing.size(), String.join(", ", missing));
             }
         } catch (Exception e) {
-            out.printf("Warning: Could not merge missing defaults: %s\r\n", e.getMessage());
+            logError(e);
         }
     }
 
@@ -214,7 +215,7 @@ public final class Config {
                 is.close();
                 return map;
             } catch (Exception e) {
-                out.printf("Warning: Could not load defaults from %s: %s\r\n", path, e.getMessage());
+                logError(e);
             }
         }
         return map;
@@ -339,7 +340,7 @@ public final class Config {
         try {
             is = new FileWriter(conf);
         } catch (IOException ex) {
-            Logger.getLogger(Config.class.getName()).log(Level.SEVERE, null, ex);
+            logError(ex);
         }
         PrintWriter pw = new PrintWriter(is);
         int i = 0;
@@ -362,7 +363,7 @@ public final class Config {
         try {
             is.close();
         } catch (IOException ex) {
-            Logger.getLogger(Config.class.getName()).log(Level.SEVERE, null, ex);
+            logError(ex);
         }
     }
 
@@ -392,7 +393,7 @@ public final class Config {
         try {
             is = new FileWriter(conf);
         } catch (IOException ex) {
-            Logger.getLogger(Config.class.getName()).log(Level.SEVERE, null, ex);
+            logError(ex);
         }
         PrintWriter pw = new PrintWriter(is);
         int i = 0;
@@ -414,7 +415,7 @@ public final class Config {
         try {
             is.close();
         } catch (IOException ex) {
-            Logger.getLogger(Config.class.getName()).log(Level.SEVERE, null, ex);
+            logError(ex);
         }
 
     }

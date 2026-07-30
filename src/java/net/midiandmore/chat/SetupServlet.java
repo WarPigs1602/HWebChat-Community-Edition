@@ -30,7 +30,7 @@ public class SetupServlet extends HttpServlet {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (ClassNotFoundException cnfe) {
-            err.printf("MySQL driver not found: %s\r\n", cnfe.getMessage());
+            logError(cnfe);
         }
     }
 
@@ -239,7 +239,7 @@ public class SetupServlet extends HttpServlet {
         try (var con = getConnection(url)) {
             return con.isValid(1000);
         } catch (SQLException e) {
-            out.printf("* Database connection test failed: %s\r\n", e.getMessage());
+            logError(e);
             return false;
         }
     }

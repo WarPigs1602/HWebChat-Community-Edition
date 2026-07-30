@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
+import static net.midiandmore.chat.Bootstrap.logError;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -242,14 +243,14 @@ public class ChatServices {
         try {
             filter.init(Bootstrap.boot);
         } catch (ServletException ex) {
-            Logger.getLogger(ChatServices.class.getName()).log(Level.SEVERE, null, ex);
+            logError(ex);
         }
         try {
             filter.doFilter(request, response);
         } catch (IOException ex) {
-            Logger.getLogger(ChatServices.class.getName()).log(Level.SEVERE, null, ex);
+            logError(ex);
         } catch (ServletException ex) {
-            Logger.getLogger(ChatServices.class.getName()).log(Level.SEVERE, null, ex);
+            logError(ex);
         }
         if (!filter.error) {
             var service = map.getOrDefault("service", "");
@@ -1233,7 +1234,7 @@ public class ChatServices {
                 picture = Files.readAllBytes(path);
                 contentType = "image/svg+xml";
             } catch (IOException ex) {
-                Logger.getLogger(ChatServices.class.getName()).log(Level.SEVERE, "Failed to load default profile picture", ex);
+                ErrorLog.LOG.log(Level.SEVERE, "Failed to load default profile picture", ex);
                 picture = new byte[0];
             }
         }
@@ -1243,7 +1244,7 @@ public class ChatServices {
             out.write(picture);
             out.flush();
         } catch (IOException ex) {
-            Logger.getLogger(ChatServices.class.getName()).log(Level.SEVERE, "Failed to send profile picture", ex);
+            ErrorLog.LOG.log(Level.SEVERE, "Failed to send profile picture", ex);
         }
     }
 
@@ -3904,8 +3905,7 @@ public class ChatServices {
                     mailer.sendEmail(text, db.getCommand("register_subject", lang), mail);
                 }
             } catch (MessagingException ex) {
-                Logger.getLogger(ChatServices.class
-                        .getName()).log(Level.SEVERE, null, ex);
+                logError(ex);
             }
         }
         String rf = null;

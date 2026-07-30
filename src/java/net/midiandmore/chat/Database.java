@@ -30,6 +30,7 @@ import static java.util.logging.Level.SEVERE;
 import static java.util.logging.Logger.getLogger;
 import static net.midiandmore.chat.Bootstrap.fatalError;
 import static net.midiandmore.chat.Bootstrap.logError;
+import static net.midiandmore.chat.Bootstrap.logFatalError;
 
 /**
  * Die Datenbankverwaltungsklasse
@@ -71,7 +72,7 @@ public class Database {
             }
             migrateDatabase();
         } catch (SQLException se) {
-            fatalError(se);
+            logFatalError(se);
         }
     }
 
@@ -1377,8 +1378,7 @@ public class Database {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
-            try (var statement = getCon().prepareStatement("DELETE FROM `" + getPrefix() + "session` WHERE ?")) {
-                statement.setString(1, "1");
+            try (var statement = getCon().prepareStatement("DELETE FROM `" + getPrefix() + "session`")) {
                 statement.executeUpdate();
             }
         } catch (SQLException se) {
@@ -2626,6 +2626,7 @@ public class Database {
             }
             return content;
         } catch (SQLException ex) {
+            logError(ex);
         } finally {
             try {
                 is.close();

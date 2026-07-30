@@ -162,6 +162,8 @@ public final class Bootstrap implements Software {
             return;
         }
         setConfig(new Config(this));
+        setErrorLog(new ErrorLog(this));
+        getErrorLog().setLog();
         setThreadPool(new ThreadPool(getConfig().getInt("pool_max")));
         out.printf("* Starting chat: ");
         setChatManager(new ChatManager(this));
@@ -171,8 +173,6 @@ public final class Bootstrap implements Software {
         getConfig().setCurrentDate(getUtil().getCurrentDateReverse());
         getConfig().getDb().delAllSessions();
         setCaptcha(new Captcha(this));
-        setErrorLog(new ErrorLog(this));
-        getErrorLog().setLog();
         setChatLog(new ChatLog(this));
         getChatLog().setLog();
         setSendMail(new SendMail(this));
@@ -209,7 +209,7 @@ public final class Bootstrap implements Software {
                     writer.close();
                 }
             } catch (Exception e) {
-                out.printf("* Warning: Could not copy default %s: %s\r\n", path, e.getMessage());
+                logError(e);
             }
         }
     }

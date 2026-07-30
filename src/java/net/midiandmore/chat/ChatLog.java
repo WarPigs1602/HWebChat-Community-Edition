@@ -1,8 +1,10 @@
 package net.midiandmore.chat;
 
 import java.io.IOException;
+import java.io.File;
 import java.util.logging.FileHandler;
 import static java.util.logging.Level.ALL;
+import static java.util.logging.Level.SEVERE;
 import java.util.logging.Logger;
 import static java.util.logging.Logger.getLogger;
 
@@ -47,6 +49,10 @@ public class ChatLog {
         sb.append(getMaster().getUtil().getCurrentDateReverse());
         sb.append("-chat.log");
         var chat = sb.toString();
+        var logDir = new File(getMaster().getConfig().getUh() + getMaster().getConfig().getFs() + ".homewebcom" + getMaster().getConfig().getFs() + "log");
+        if (!logDir.exists()) {
+            logDir.mkdirs();
+        }
         try {
             fh = new FileHandler(chat, true); 
             fh.setLevel(ALL);
@@ -55,6 +61,8 @@ public class ChatLog {
             getLogger("HWebChatLog").addHandler(fh);
             getLogger("HWebChatLog").setLevel(ALL);
         } catch (SecurityException | IOException e) {
+            getLogger("HWebChatLog").log(SEVERE, "Failed to initialize chat log file handler", e);
+            e.printStackTrace();
         }
     }
 

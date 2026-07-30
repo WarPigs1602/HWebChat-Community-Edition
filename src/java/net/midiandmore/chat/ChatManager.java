@@ -15,10 +15,12 @@ import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 import static java.util.logging.Level.FINE;
+import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.WARNING;
 import static jakarta.json.Json.createObjectBuilder;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import static net.midiandmore.chat.Bootstrap.logError;
 import static net.midiandmore.chat.ChatLog.LOGGING;
 import static net.midiandmore.chat.ErrorLog.LOG;
 
@@ -162,7 +164,7 @@ public final class ChatManager {
                 } catch (IllegalStateException | NullPointerException e) {
 
                 } catch (IOException ex) {
-                    Logger.getLogger(ChatManager.class.getName()).log(Level.SEVERE, null, ex);
+                    logError(ex);
                 }
                 db.delSession(u.getName());
                 u = null;
@@ -375,7 +377,7 @@ public final class ChatManager {
                 sendTimedMsgToOne(text, nick);
             }
         }
-        LOGGING.log(FINE, "{0}<br>", ut.removeHtml(text));
+        LOGGING.log(INFO, "{0}", ut.removeHtml(text));
     }
 
     /**
@@ -406,7 +408,7 @@ public final class ChatManager {
                 sendScroll(nick);
             }
         });
-        LOGGING.log(FINE, "{0}<br>", ut.removeHtml(text));
+        LOGGING.log(INFO, "{0}", ut.removeHtml(text));
     }
 
     /**
@@ -545,6 +547,10 @@ public final class ChatManager {
     protected void sendCommandToFriends(String commandName, String friendNick, java.util.Map<String, String> replacements) {
         var ut = getMaster().getUtil();
         var db = getMaster().getConfig().getDb();
+        var logText = db.getCommand(commandName, "de");
+        for (var entry : replacements.entrySet()) {
+            logText = logText.replace(entry.getKey(), entry.getValue());
+        }
         for (var u : getUsers().values()) {
             if (u != null && friendNick != null && u.getFriends() != null && u.getFriends().contains(friendNick.toLowerCase())) {
                 var lang = getUserLang(u.getName());
@@ -556,6 +562,7 @@ public final class ChatManager {
                 sendSystemToOne(text, u.getName());
             }
         }
+        LOGGING.log(INFO, "[FRIEND nick={0}] {1}", new Object[]{friendNick, ut.removeHtml(logText)});
     }
 
     /**
@@ -583,7 +590,7 @@ public final class ChatManager {
         for (var name : getUsers().keySet()) {
             sendText(text, name);
         }
-        LOGGING.log(FINE, "{0}<br>", ut.removeHtml(text));
+        LOGGING.log(INFO, "{0}", ut.removeHtml(text));
     }
 
     /**
@@ -604,7 +611,7 @@ public final class ChatManager {
             }
             text = ut.replaceSmilies(text);
             sendText(text, name);
-            LOGGING.log(FINE, "{0}<br>", ut.removeHtml(text));
+            LOGGING.log(INFO, "{0}", ut.removeHtml(text));
         }
     }
 
@@ -619,7 +626,7 @@ public final class ChatManager {
         for (var name : getUsers().keySet()) {
             sendTimedMsgToOne(text, name);
         }
-        LOGGING.log(FINE, "{0}<br>", ut.removeHtml(text));
+        LOGGING.log(INFO, "{0}", ut.removeHtml(text));
     }
 
     /**
@@ -633,7 +640,7 @@ public final class ChatManager {
         for (var name : getUsers().keySet()) {
             sendSystemToOne(text, name);
         }
-        LOGGING.log(FINE, "{0}<br>", ut.removeHtml(text));
+        LOGGING.log(INFO, "{0}", ut.removeHtml(text));
     }
 
     /**
@@ -650,7 +657,7 @@ public final class ChatManager {
                 sendScroll(name);
             }
         }
-        LOGGING.log(FINE, "{0}<br>", ut.removeHtml(text));
+        LOGGING.log(INFO, "{0}", ut.removeHtml(text));
     }
 
     /**
@@ -667,7 +674,7 @@ public final class ChatManager {
                 sendTimedMsgToOne(text, nick);
             }
         }
-        LOGGING.log(FINE, "{0}<br>", ut.removeHtml(text));
+        LOGGING.log(INFO, "{0}", ut.removeHtml(text));
     }
 
     /**
@@ -684,7 +691,7 @@ public final class ChatManager {
                 sendSystemToOne(text, nick);
             }
         }
-        LOGGING.log(FINE, "{0}<br>", ut.removeHtml(text));
+        LOGGING.log(INFO, "{0}", ut.removeHtml(text));
     }
 
     /**
@@ -710,7 +717,7 @@ public final class ChatManager {
         }).forEachOrdered((nick) -> {
             sendScroll(nick);
         });
-        LOGGING.log(FINE, "{0}<br>", ut.removeHtml(text));
+        LOGGING.log(INFO, "{0}", ut.removeHtml(text));
     }
 
     /**
@@ -745,7 +752,7 @@ public final class ChatManager {
             for (var name1 : e) {
                 var u1 = getUser(name1);
                 if (u1 == null) {
-                    return;
+                    continue;
                 }
                 if (!ignore) {
                     sendText(text, name1);
@@ -756,7 +763,7 @@ public final class ChatManager {
                 }
             }
         }
-        LOGGING.log(FINE, "{0}<br>", ut.removeHtml(text));
+        LOGGING.log(INFO, "{0}", ut.removeHtml(text));
     }
 
     /**
@@ -778,7 +785,7 @@ public final class ChatManager {
         for (var nick : e) {
             sendTimedMsgToOne(text, nick);
         }
-        LOGGING.log(FINE, "{0}<br>", ut.removeHtml(text));
+        LOGGING.log(INFO, "{0}", ut.removeHtml(text));
     }
 
     /**
@@ -800,7 +807,7 @@ public final class ChatManager {
         for (var nick : e) {
             sendSystemToOne(text, nick);
         }
-        LOGGING.log(FINE, "{0}<br>", ut.removeHtml(text));
+        LOGGING.log(INFO, "{0}", ut.removeHtml(text));
     }
 
     /**
@@ -825,7 +832,7 @@ public final class ChatManager {
                     sendToOne(text, nick);
                 }
             }
-            LOGGING.log(FINE, "{0}<br>", ut.removeHtml(text));
+            LOGGING.log(INFO, "{0}", ut.removeHtml(text));
         }
     }
 
@@ -875,6 +882,10 @@ public final class ChatManager {
         if (e == null) {
             return;
         }
+        var logText = db.getCommand(commandName, "de");
+        for (var entry : replacements.entrySet()) {
+            logText = logText.replace(entry.getKey(), entry.getValue());
+        }
         for (var nick : e) {
             var lang = getUserLang(nick);
             var text = db.getCommand(commandName, lang);
@@ -886,6 +897,7 @@ public final class ChatManager {
             }
             sendTimedMsgToOne(text, nick);
         }
+        LOGGING.log(INFO, "[CMD room={0}] {1}", new Object[]{room, ut.removeHtml(logText)});
     }
 
     /**
@@ -899,6 +911,10 @@ public final class ChatManager {
         if (e == null) {
             return;
         }
+        var logText = db.getCommand(commandName, "de");
+        for (var entry : replacements.entrySet()) {
+            logText = logText.replace(entry.getKey(), entry.getValue());
+        }
         for (var nick : e) {
             var lang = getUserLang(nick);
             var text = db.getCommand(commandName, lang);
@@ -910,6 +926,7 @@ public final class ChatManager {
             }
             sendSystemToOne(text, nick);
         }
+        LOGGING.log(INFO, "[SYS room={0}] {1}", new Object[]{room, ut.removeHtml(logText)});
     }
 
     protected void sendCommandToRoomExclude(String commandName, String room, String excludeNick, java.util.Map<String, String> replacements) {
@@ -918,6 +935,10 @@ public final class ChatManager {
         var e = getAllUserNamesInRoom(room);
         if (e == null) {
             return;
+        }
+        var logText = db.getCommand(commandName, "de");
+        for (var entry : replacements.entrySet()) {
+            logText = logText.replace(entry.getKey(), entry.getValue());
         }
         for (var nick : e) {
             if (nick.equalsIgnoreCase(excludeNick)) {
@@ -933,12 +954,17 @@ public final class ChatManager {
             }
             sendTimedMsgToOne(text, nick);
         }
+        LOGGING.log(INFO, "[CMD room={0} exclude={1}] {2}", new Object[]{room, excludeNick, ut.removeHtml(logText)});
     }
 
     protected void sendCommandToSupervisor(String commandName, java.util.Map<String, String> replacements) {
         var ut = getMaster().getUtil();
         var db = getMaster().getConfig().getDb();
         var supervisorList = getSupervisor();
+        var logText = db.getCommand(commandName, "de");
+        for (var entry : replacements.entrySet()) {
+            logText = logText.replace(entry.getKey(), entry.getValue());
+        }
         for (var supervisor : supervisorList) {
             var lang = getUserLang(supervisor.getName());
             var text = db.getCommand(commandName, lang);
@@ -947,6 +973,7 @@ public final class ChatManager {
             }
             sendSystemToOne(text, supervisor.getName());
         }
+        LOGGING.log(INFO, "[SUP] {0}", ut.removeHtml(logText));
     }
 
     private ArrayList<String> getAllUserNamesInRoom(String room) {
