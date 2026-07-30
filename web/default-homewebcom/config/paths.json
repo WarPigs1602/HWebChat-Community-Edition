@@ -116,7 +116,6 @@
 {"name":"style_privchat","path":"%path_hwebchat%?page=%path_output%&service=style&skin=%skin%&doc=page_privchat"},
 {"name":"timeout_url","path":"%path_hwebchat%?page=%path_output%&service=page&skin=%skin%&doc=timeout"},
 {"name":"toplist","path":"%path_hwebchat%?page=%path_toplist%&skin=%skin%"},
-{"name":"stats","path":"%path_hwebchat%?page=%path_stats%&skin=%skin%"},
 {"name":"ua","path":"%path_hwebchat%?page=%path_output%&service=ua&skin=%skin%"},
 {"name":"user_msg","path":"%path_hwebchat%?page=%path_message%&skin=%skin%"},
 {"name":"webchat","path":"%path_hwebchat%?page=%path_webchat%"},

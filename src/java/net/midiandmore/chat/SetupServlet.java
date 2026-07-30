@@ -259,8 +259,6 @@ public class SetupServlet extends HttpServlet {
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "board_boards` (`id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, `cat` bigint(20) NOT NULL, `topic` varchar(255) NOT NULL, `readonly` tinyint(1) NOT NULL DEFAULT 0, `description` longtext NOT NULL, `guests` tinyint(1) NOT NULL DEFAULT 0, `deleted` tinyint(1) NOT NULL DEFAULT 0, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
              stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "board` (`id` int(11) NOT NULL AUTO_INCREMENT, `topic` varchar(255) NOT NULL, `content` longtext NOT NULL, `ref` bigint(20) NOT NULL, `user` bigint(20) NOT NULL, `board` bigint(20) NOT NULL, `posted` bigint(20) NOT NULL, `ip` varchar(255) NOT NULL, `cat` bigint(20) NOT NULL, `deleted` tinyint(1) NOT NULL DEFAULT 0, `closed` tinyint(1) NOT NULL DEFAULT 0, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
              stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "guestbook` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `owner` varchar(255) NOT NULL, `sender` varchar(255) NOT NULL, `text` text NOT NULL, `time` bigint(20) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "stats` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `ts` bigint(20) NOT NULL, `year` int(11) NOT NULL, `month` int(11) NOT NULL, `day` int(11) NOT NULL, `hour` int(11) NOT NULL, `users` int(11) NOT NULL DEFAULT 0, `rooms` int(11) NOT NULL DEFAULT 0, `peak` int(11) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), KEY `idx_ts` (`ts`), KEY `idx_ymd` (`year`,`month`,`day`), KEY `idx_hour` (`hour`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "room_stats` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `room` varchar(255) NOT NULL, `ts` bigint(20) NOT NULL, `users` int(11) NOT NULL DEFAULT 0, `peak` int(11) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), KEY `idx_room` (`room`), KEY `idx_ts` (`ts`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
              stmt.close();
             out.printf("* Database tables created successfully.\r\n");
         } catch (SQLException e) {
@@ -424,9 +422,7 @@ public class SetupServlet extends HttpServlet {
         lines.add("{\"name\":\"path_board\",\"value\":\"board\",\"description\":\"Forum\"},");
         lines.add("{\"name\":\"path_webchat\",\"value\":\"webchat_stats\",\"description\":\"API path\"},");
         lines.add("{\"name\":\"path_toplist\",\"value\":\"top\",\"description\":\"Toplist path\"},");
-        lines.add("{\"name\":\"path_stats\",\"value\":\"stats\",\"description\":\"Stats page\"},");
         lines.add("{\"name\":\"path_upload\",\"value\":\"/HWebChat_Community_Edition/UploadFile\",\"description\":\"Image upload path\"},");
-        lines.add("{\"name\":\"path_webchat\",\"value\":\"webchat_stats\",\"description\":\"API path\"},");
         lines.add("{\"name\":\"path_account\",\"value\":\"account\",\"description\":\"Account page\"},");
         lines.add("{\"name\":\"path_account_com\",\"value\":\"account_com\",\"description\":\"Account Community Page\"},");
         lines.add("{\"name\":\"path_reg_edit\",\"value\":\"reg_edit\",\"description\":\"Account management page\"},");

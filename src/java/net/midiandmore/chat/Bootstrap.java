@@ -74,7 +74,6 @@ public final class Bootstrap implements Software {
     private Timer dayChange;
     private SendMail sendMail;
     private Timer pingPong;
-    private Timer statsTimer;
 
     protected SendMail getSendMail() {
         return sendMail;
@@ -181,8 +180,6 @@ public final class Bootstrap implements Software {
         getDayChange().scheduleAtFixedRate(new DayChangeTimer(this), 1000, 1000);
         setPingPong(new Timer());
         getPingPong().scheduleAtFixedRate(new PingPong(this), 0, 1000);
-        setStatsTimer(new Timer());
-        getStatsTimer().scheduleAtFixedRate(new StatsTimer(this), 0, 900000);
         out.printf("Done.\r\n");
     }
 
@@ -392,13 +389,6 @@ public final class Bootstrap implements Software {
         this.pingPong = pingPong;
     }
 
-    protected Timer getStatsTimer() {
-        return statsTimer;
-    }
-
-    protected void setStatsTimer(Timer statsTimer) {
-        this.statsTimer = statsTimer;
-    }
 
     protected boolean isSetupNeeded() {
         return setupNeeded;
