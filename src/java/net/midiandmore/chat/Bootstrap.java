@@ -22,6 +22,7 @@ public final class Bootstrap implements Software {
     private ChatLog chatLog;
     private ErrorLog errorLog;
     private boolean setupNeeded;
+    private ChatStats chatStats;
 
     /**
      * Ruft den Fehler-Log ab
@@ -74,6 +75,23 @@ public final class Bootstrap implements Software {
     private Timer dayChange;
     private SendMail sendMail;
     private Timer pingPong;
+    private Timer statsTimer;
+
+    protected Timer getStatsTimer() {
+        return statsTimer;
+    }
+
+    protected void setStatsTimer(Timer statsTimer) {
+        this.statsTimer = statsTimer;
+    }
+
+    protected ChatStats getChatStats() {
+        return chatStats;
+    }
+
+    protected void setChatStats(ChatStats chatStats) {
+        this.chatStats = chatStats;
+    }
 
     protected SendMail getSendMail() {
         return sendMail;
@@ -170,6 +188,7 @@ public final class Bootstrap implements Software {
         setUtil(new Util(this));
         setCommands(new Commands(this));
         setChatServices(new ChatServices(this));
+        setChatStats(new ChatStats(this));
         getConfig().setCurrentDate(getUtil().getCurrentDateReverse());
         getConfig().getDb().delAllSessions();
         setCaptcha(new Captcha(this));
@@ -180,6 +199,8 @@ public final class Bootstrap implements Software {
         getDayChange().scheduleAtFixedRate(new DayChangeTimer(this), 1000, 1000);
         setPingPong(new Timer());
         getPingPong().scheduleAtFixedRate(new PingPong(this), 0, 1000);
+        setStatsTimer(new Timer());
+        getStatsTimer().scheduleAtFixedRate(new StatsTimer(this), 60000, 60000);
         out.printf("Done.\r\n");
     }
 

@@ -1,0 +1,34 @@
+<!-- design=start -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h6 class="text-muted mb-2">Gesamtzahl Chat-Nachrichten</h6><div class="display-6 fw-bold text-primary">%stat_total_messages%</div></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h6 class="text-muted mb-2">Registrierte Nutzer</h6><div class="display-6 fw-bold text-success">%stat_registered%</div></div></div></div>
+    <div class="col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h6 class="text-muted mb-2">Aktive Räume</h6><div class="display-6 fw-bold text-warning">%stat_rooms%</div></div></div></div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-white border-0 fw-bold">📅 Tägliche Nachrichten</div><div class="card-body"><canvas id="dailyMsgChart"></canvas></div></div></div>
+    <div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-white border-0 fw-bold">📅 Tägliche Nutzer (Peak)</div><div class="card-body"><canvas id="dailyUserChart"></canvas></div></div></div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-white border-0 fw-bold">⏰ Stündliche Nachrichten</div><div class="card-body"><canvas id="hourlyMsgChart"></canvas></div></div></div>
+    <div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-white border-0 fw-bold">⏰ Stündliche Nutzer (Ø)</div><div class="card-body"><canvas id="hourlyUserChart"></canvas></div></div></div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-white border-0 fw-bold">📈 Monatliche Nachrichten</div><div class="card-body"><canvas id="monthlyMsgChart"></canvas></div></div></div>
+    <div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-white border-0 fw-bold">📈 Monatliche Nutzer (Peak)</div><div class="card-body"><canvas id="monthlyUserChart"></canvas></div></div></div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-white border-0 fw-bold">🎯 Top Räume - Nachrichten</div><div class="card-body"><canvas id="topRoomsMsgChart"></canvas></div></div></div>
+    <div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-white border-0 fw-bold">🎯 Top Räume - Nutzer</div><div class="card-body"><canvas id="topRoomsUserChart"></canvas></div></div></div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-white border-0 fw-bold">🌟 Nutzer-Peaks (täglich)</div><div class="card-body"><canvas id="peaksChart"></canvas></div></div></div>
+    <div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-white border-0 fw-bold">👥 Direkte Beziehungen (Private Chats)</div><div class="card-body"><canvas id="relationsChart"></canvas></div></div></div>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-12"><div class="card border-0 shadow-sm"><div class="card-header bg-white border-0 fw-bold">🔄 Neue direkte Beziehungen (Top 10 Interaktionen)</div><div class="card-body"><div class="table-responsive"><table class="table table-hover">
+        <thead><tr><th>Nutzer A</th><th>Nutzer B</th><th>Interaktionen</th><th>Letzte Interaktion</th></tr></thead>
+        <tbody>%stat_relationships%</tbody>
+    </table></div></div></div></div>
+</div>
+%stat_chart_script%

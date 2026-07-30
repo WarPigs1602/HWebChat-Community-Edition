@@ -719,6 +719,7 @@ public final class Util implements Software {
         text = replacePath(text, "%path_upload%", conf.getString("path_upload"));
         text = replacePath(text, "%path_console_index%", conf.getString("path_console"));
         text = replacePath(text, "%path_board%", conf.getString("path_board"));
+        text = replacePath(text, "%path_stats%", conf.getString("path_stats"));
         return text;
     }
 

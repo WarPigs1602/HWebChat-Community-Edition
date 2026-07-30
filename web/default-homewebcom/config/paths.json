@@ -118,6 +118,7 @@
 {"name":"toplist","path":"%path_hwebchat%?page=%path_toplist%&skin=%skin%"},
 {"name":"ua","path":"%path_hwebchat%?page=%path_output%&service=ua&skin=%skin%"},
 {"name":"user_msg","path":"%path_hwebchat%?page=%path_message%&skin=%skin%"},
+{"name":"stats","path":"%path_hwebchat%?page=%path_stats%&skin=%skin%"},
 {"name":"webchat","path":"%path_hwebchat%?page=%path_webchat%"},
 {"name":"webchat_json","path":"%path_hwebchat%?page=%path_webchat%&use_json=1"},
 {"name":"webchat_json_napping","path":"%path_hwebchat%?page=%path_webchat%&use_json=1&room2=%room2%"},

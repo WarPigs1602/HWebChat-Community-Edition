@@ -94,6 +94,7 @@
 {"name":"path_toplist","value":"top","description":"Der Pfad zur Topliste"},
 {"name":"path_upload","value":"/HWebChat_Community_Edition/UploadFile","description":"Der Pfad zum hochladen von Bildern!"},
 {"name":"path_webchat","value":"webchat_stats","description":"Der Pfad zur API"},
+{"name":"path_stats","value":"stats","description":"Der Pfad zur Statistikseite"},
 {"name":"ping","value":"30","description":"Der Pingintervall"},
 {"name":"pool_max","value":"10000","description":"Die maximale Poolgr&ouml;sse!"},
 {"name":"pool_min","value":"64","description":"Die minimale Poolgr&ouml;sse!"},

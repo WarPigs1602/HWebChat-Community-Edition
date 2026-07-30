@@ -92,21 +92,22 @@ public class Database {
      * F&uuml;hrt Migrationen f&uuml;r bestehende Datenbanken durch, falls Spalten fehlen oder falsche Typen vorhanden sind.
      * Wird inkrementell beim Verbindungsaufbau ausgef&uuml;hrt, ohne Daten zu l&ouml;schen.
      */
-    protected void migrateDatabase() {
-        try {
-            if (getCon() == null || !getCon().isValid(1000)) {
-                connectDatabase();
-            }
-            migrateUsers();
-            migrateBoardCat();
-            migrateMessages();
-            migrateNapping();
-            migrateRoomcfg();
-            migrateSession();
-        } catch (SQLException se) {
-            logError(se);
-        }
-    }
+     protected void migrateDatabase() {
+         try {
+             if (getCon() == null || !getCon().isValid(1000)) {
+                 connectDatabase();
+             }
+             migrateUsers();
+             migrateBoardCat();
+             migrateMessages();
+             migrateNapping();
+             migrateRoomcfg();
+             migrateSession();
+             migrateStatsTables();
+         } catch (SQLException se) {
+             logError(se);
+         }
+     }
 
     private void migrateUsers() throws SQLException {
         var cols = new java.util.HashSet<String>();
@@ -208,29 +209,54 @@ public class Database {
         }
     }
 
-    private void migrateSession() throws SQLException {
-        var cols = new java.util.HashSet<String>();
-        try (var rs = getCon().getMetaData().getColumns(getDb(), null, getPrefix() + "session", null)) {
-            while (rs.next()) {
-                cols.add(rs.getString("COLUMN_NAME").toLowerCase());
-            }
-        }
-        var alters = new java.util.ArrayList<String>();
-        if (!cols.contains("status")) {
-            alters.add("ADD COLUMN IF NOT EXISTS `status` int(11) NOT NULL DEFAULT 0");
-        }
-        if (!cols.contains("away_status")) {
-            alters.add("ADD COLUMN IF NOT EXISTS `away_status` int(11) NOT NULL DEFAULT 0");
-        }
-        if (!cols.contains("away_reason")) {
-            alters.add("ADD COLUMN IF NOT EXISTS `away_reason` varchar(255) NOT NULL DEFAULT ''");
-        }
-        if (!cols.contains("gag")) {
-            alters.add("ADD COLUMN IF NOT EXISTS `gag` int(11) NOT NULL DEFAULT 0");
-        }
-        if (!alters.isEmpty()) {
-            try (var stmt = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "session` " + String.join(", ", alters))) {
-                stmt.executeUpdate();
+     private void migrateSession() throws SQLException {
+         var cols = new java.util.HashSet<String>();
+         try (var rs = getCon().getMetaData().getColumns(getDb(), null, getPrefix() + "session", null)) {
+             while (rs.next()) {
+                 cols.add(rs.getString("COLUMN_NAME").toLowerCase());
+             }
+         }
+         var alters = new java.util.ArrayList<String>();
+         if (!cols.contains("status")) {
+             alters.add("ADD COLUMN IF NOT EXISTS `status` int(11) NOT NULL DEFAULT 0");
+         }
+         if (!cols.contains("away_status")) {
+             alters.add("ADD COLUMN IF NOT EXISTS `away_status` int(11) NOT NULL DEFAULT 0");
+         }
+         if (!cols.contains("away_reason")) {
+             alters.add("ADD COLUMN IF NOT EXISTS `away_reason` varchar(255) NOT NULL DEFAULT ''");
+         }
+         if (!cols.contains("gag")) {
+             alters.add("ADD COLUMN IF NOT EXISTS `gag` int(11) NOT NULL DEFAULT 0");
+         }
+         if (!alters.isEmpty()) {
+             try (var stmt = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "session` " + String.join(", ", alters))) {
+                 stmt.executeUpdate();
+             }
+         }
+     }
+
+    private void migrateStatsTables() {
+        String[] ddl = {
+            "CREATE TABLE IF NOT EXISTS `" + getPrefix() + "chat_history` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `room` varchar(255) NOT NULL, `sender` varchar(255) NOT NULL, `target` varchar(255) DEFAULT NULL, `text` text NOT NULL, `timestamp` bigint(20) NOT NULL, `type` varchar(20) NOT NULL DEFAULT 'public', PRIMARY KEY (`id`), KEY `idx_room` (`room`), KEY `idx_sender` (`sender`), KEY `idx_timestamp` (`timestamp`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+            "CREATE TABLE IF NOT EXISTS `" + getPrefix() + "stats_peaks` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `date` date NOT NULL, `peak_users` int(11) NOT NULL DEFAULT 0, `peak_room` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (`id`), UNIQUE KEY `peak_date` (`date`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+            "CREATE TABLE IF NOT EXISTS `" + getPrefix() + "stats_hourly` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `hour_bucket` datetime NOT NULL, `room` varchar(255) NOT NULL, `avg_users` int(11) NOT NULL DEFAULT 0, `peak_users` int(11) NOT NULL DEFAULT 0, `messages` int(11) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `hour_room` (`hour_bucket`, `room`(100))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+            "CREATE TABLE IF NOT EXISTS `" + getPrefix() + "stats_daily` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `day_bucket` date NOT NULL, `room` varchar(255) NOT NULL, `avg_users` int(11) NOT NULL DEFAULT 0, `peak_users` int(11) NOT NULL DEFAULT 0, `messages` int(11) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `day_room` (`day_bucket`, `room`(100))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+            "CREATE TABLE IF NOT EXISTS `" + getPrefix() + "stats_monthly` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `month_bucket` varchar(7) NOT NULL, `room` varchar(255) NOT NULL, `avg_users` int(11) NOT NULL DEFAULT 0, `peak_users` int(11) NOT NULL DEFAULT 0, `messages` int(11) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `month_room` (`month_bucket`, `room`(100))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+            "CREATE TABLE IF NOT EXISTS `" + getPrefix() + "user_relationships` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `user1` varchar(255) NOT NULL, `user2` varchar(255) NOT NULL, `interaction_count` int(11) NOT NULL DEFAULT 0, `last_interaction` bigint(20) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `user_pair` (`user1`(90), `user2`(90))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        };
+        for (String sql : ddl) {
+            try {
+                if (getCon() == null || !getCon().isValid(1000)) {
+                    connectDatabase();
+                }
+                try (var stmt = getCon().prepareStatement(sql)) {
+                    stmt.executeUpdate();
+                }
+            } catch (SQLException se) {
+                if (!se.getMessage().toLowerCase().contains("already exists")) {
+                    logError(se);
+                }
             }
         }
     }
@@ -1178,7 +1204,22 @@ public class Database {
         return count;
     }
 
-
+    protected int countPublicMessages() {
+        var count = 0;
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            try (var statement = getCon().prepareStatement("SELECT COUNT(*) FROM `" + getPrefix() + "chat_history` WHERE type = 'public'"); var resultset = statement.executeQuery()) {
+                while (resultset.next()) {
+                    count = resultset.getInt(1);
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return count;
+    }
 
 
 
@@ -3502,6 +3543,403 @@ public class Database {
      */
     protected void setTimezone(String timezone) {
         this.timezone = timezone;
+    }
+
+    protected void addChatMessage(String room, String sender, String target, String text, String type) {
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            migrateStatsTables();
+            try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "chat_history` (`room`, `sender`, `target`, `text`, `timestamp`, `type`) VALUES (?, ?, ?, ?, ?, ?)")) {
+                statement.setString(1, room);
+                statement.setString(2, sender);
+                statement.setString(3, target);
+                statement.setString(4, text);
+                statement.setLong(5, currentTimeMillis());
+                statement.setString(6, type);
+                statement.executeUpdate();
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+    }
+
+    protected void upsertRelationship(String user1, String user2) {
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            migrateStatsTables();
+            if (user1.equalsIgnoreCase(user2)) {
+                return;
+            }
+            var a = user1.toLowerCase();
+            var b = user2.toLowerCase();
+            if (a.compareTo(b) > 0) {
+                var tmp = a; a = b; b = tmp;
+            }
+            try (var check = getCon().prepareStatement("SELECT id, interaction_count FROM `" + getPrefix() + "user_relationships` WHERE user1=? AND user2=?")) {
+                check.setString(1, a);
+                check.setString(2, b);
+                try (var rs = check.executeQuery()) {
+                    if (rs.next()) {
+                        var id = rs.getLong("id");
+                        var count = rs.getInt("interaction_count") + 1;
+                        try (var update = getCon().prepareStatement("UPDATE `" + getPrefix() + "user_relationships` SET interaction_count=?, last_interaction=? WHERE id=?")) {
+                            update.setInt(1, count);
+                            update.setLong(2, currentTimeMillis());
+                            update.setLong(3, id);
+                            update.executeUpdate();
+                        }
+                    } else {
+                        try (var insert = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "user_relationships` (`user1`, `user2`, `interaction_count`, `last_interaction`) VALUES (?, ?, 1, ?)")) {
+                            insert.setString(1, a);
+                            insert.setString(2, b);
+                            insert.setLong(3, currentTimeMillis());
+                            insert.executeUpdate();
+                        }
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+    }
+
+    protected void recordPeak(int peakUsers, String peakRoom) {
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            migrateStatsTables();
+            var today = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+            try (var check = getCon().prepareStatement("SELECT id, peak_users FROM `" + getPrefix() + "stats_peaks` WHERE date=?")) {
+                check.setString(1, today);
+                try (var rs = check.executeQuery()) {
+                    if (rs.next()) {
+                        var existing = rs.getInt("peak_users");
+                        if (peakUsers > existing) {
+                            try (var update = getCon().prepareStatement("UPDATE `" + getPrefix() + "stats_peaks` SET peak_users=?, peak_room=? WHERE date=?")) {
+                                update.setInt(1, peakUsers);
+                                update.setString(2, peakRoom);
+                                update.setString(3, today);
+                                update.executeUpdate();
+                            }
+                        }
+                    } else {
+                        try (var insert = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "stats_peaks` (`date`, `peak_users`, `peak_room`) VALUES (?, ?, ?)")) {
+                            insert.setString(1, today);
+                            insert.setInt(2, peakUsers);
+                            insert.setString(3, peakRoom);
+                            insert.executeUpdate();
+                        }
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+    }
+
+    protected void upsertHourly(String room, int avgUsers, int peakUsers, int messages) {
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            migrateStatsTables();
+            var hour = new java.text.SimpleDateFormat("yyyy-MM-dd HH:00:00").format(new java.util.Date());
+            try (var check = getCon().prepareStatement("SELECT id, avg_users, peak_users, messages FROM `" + getPrefix() + "stats_hourly` WHERE hour_bucket=? AND room=?")) {
+                check.setString(1, hour);
+                check.setString(2, room);
+                try (var rs = check.executeQuery()) {
+                    if (rs.next()) {
+                        var id = rs.getLong("id");
+                        var oldAvg = rs.getInt("avg_users");
+                        var oldPeak = rs.getInt("peak_users");
+                        var oldMsgs = rs.getInt("messages");
+                        var newAvg = (oldAvg + avgUsers) / 2;
+                        var newPeak = Math.max(oldPeak, peakUsers);
+                        var newMsgs = oldMsgs + messages;
+                        try (var update = getCon().prepareStatement("UPDATE `" + getPrefix() + "stats_hourly` SET avg_users=?, peak_users=?, messages=? WHERE id=?")) {
+                            update.setInt(1, newAvg);
+                            update.setInt(2, newPeak);
+                            update.setInt(3, newMsgs);
+                            update.setLong(4, id);
+                            update.executeUpdate();
+                        }
+                    } else {
+                        try (var insert = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "stats_hourly` (`hour_bucket`, `room`, `avg_users`, `peak_users`, `messages`) VALUES (?, ?, ?, ?, ?)")) {
+                            insert.setString(1, hour);
+                            insert.setString(2, room);
+                            insert.setInt(3, avgUsers);
+                            insert.setInt(4, peakUsers);
+                            insert.setInt(5, messages);
+                            insert.executeUpdate();
+                        }
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+    }
+
+    protected void upsertDaily(String room, int avgUsers, int peakUsers, int messages) {
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            migrateStatsTables();
+            var day = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+            try (var check = getCon().prepareStatement("SELECT id, avg_users, peak_users, messages FROM `" + getPrefix() + "stats_daily` WHERE day_bucket=? AND room=?")) {
+                check.setString(1, day);
+                check.setString(2, room);
+                try (var rs = check.executeQuery()) {
+                    if (rs.next()) {
+                        var id = rs.getLong("id");
+                        var oldAvg = rs.getInt("avg_users");
+                        var oldPeak = rs.getInt("peak_users");
+                        var oldMsgs = rs.getInt("messages");
+                        var newAvg = (oldAvg + avgUsers) / 2;
+                        var newPeak = Math.max(oldPeak, peakUsers);
+                        var newMsgs = messages;
+                        try (var update = getCon().prepareStatement("UPDATE `" + getPrefix() + "stats_daily` SET avg_users=?, peak_users=?, messages=? WHERE id=?")) {
+                            update.setInt(1, newAvg);
+                            update.setInt(2, newPeak);
+                            update.setInt(3, newMsgs);
+                            update.setLong(4, id);
+                            update.executeUpdate();
+                        }
+                    } else {
+                        try (var insert = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "stats_daily` (`day_bucket`, `room`, `avg_users`, `peak_users`, `messages`) VALUES (?, ?, ?, ?, ?)")) {
+                            insert.setString(1, day);
+                            insert.setString(2, room);
+                            insert.setInt(3, avgUsers);
+                            insert.setInt(4, peakUsers);
+                            insert.setInt(5, messages);
+                            insert.executeUpdate();
+                        }
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+    }
+
+    protected void upsertMonthly(String room, int avgUsers, int peakUsers, int messages) {
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            migrateStatsTables();
+            var month = new java.text.SimpleDateFormat("yyyy-MM").format(new java.util.Date());
+            try (var check = getCon().prepareStatement("SELECT id, avg_users, peak_users, messages FROM `" + getPrefix() + "stats_monthly` WHERE month_bucket=? AND room=?")) {
+                check.setString(1, month);
+                check.setString(2, room);
+                try (var rs = check.executeQuery()) {
+                    if (rs.next()) {
+                        var id = rs.getLong("id");
+                        var oldAvg = rs.getInt("avg_users");
+                        var oldPeak = rs.getInt("peak_users");
+                        var oldMsgs = rs.getInt("messages");
+                        var newAvg = (oldAvg + avgUsers) / 2;
+                        var newPeak = Math.max(oldPeak, peakUsers);
+                        var newMsgs = messages;
+                        try (var update = getCon().prepareStatement("UPDATE `" + getPrefix() + "stats_monthly` SET avg_users=?, peak_users=?, messages=? WHERE id=?")) {
+                            update.setInt(1, newAvg);
+                            update.setInt(2, newPeak);
+                            update.setInt(3, newMsgs);
+                            update.setLong(4, id);
+                            update.executeUpdate();
+                        }
+                    } else {
+                        try (var insert = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "stats_monthly` (`month_bucket`, `room`, `avg_users`, `peak_users`, `messages`) VALUES (?, ?, ?, ?, ?)")) {
+                            insert.setString(1, month);
+                            insert.setString(2, room);
+                            insert.setInt(3, avgUsers);
+                            insert.setInt(4, peakUsers);
+                            insert.setInt(5, messages);
+                            insert.executeUpdate();
+                        }
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+    }
+
+    protected java.util.Map<String, Integer> getChatMessageCountsSince(long since) {
+        var map = new java.util.HashMap<String, Integer>();
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            migrateStatsTables();
+            try (var statement = getCon().prepareStatement("SELECT room, COUNT(*) AS cnt FROM `" + getPrefix() + "chat_history` WHERE timestamp >= ? AND type = 'public' GROUP BY room")) {
+                statement.setLong(1, since);
+                try (var rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        map.put(rs.getString("room"), rs.getInt("cnt"));
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return map;
+    }
+
+    protected java.util.List<java.util.Map<String, Object>> getStatsHourly() {
+        var list = new java.util.ArrayList<java.util.Map<String, Object>>();
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            migrateStatsTables();
+            try (var statement = getCon().prepareStatement("SELECT hour_bucket, room, avg_users, peak_users, messages FROM `" + getPrefix() + "stats_hourly` ORDER BY hour_bucket DESC LIMIT 48")) {
+                try (var rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        var map = new java.util.HashMap<String, Object>();
+                        map.put("hour_bucket", rs.getString("hour_bucket"));
+                        map.put("room", rs.getString("room"));
+                        map.put("avg_users", rs.getInt("avg_users"));
+                        map.put("peak_users", rs.getInt("peak_users"));
+                        map.put("messages", rs.getInt("messages"));
+                        list.add(map);
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return list;
+    }
+
+    protected java.util.List<java.util.Map<String, Object>> getStatsDaily() {
+        var list = new java.util.ArrayList<java.util.Map<String, Object>>();
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            migrateStatsTables();
+            try (var statement = getCon().prepareStatement("SELECT day_bucket, room, avg_users, peak_users, messages FROM `" + getPrefix() + "stats_daily` ORDER BY day_bucket DESC LIMIT 30")) {
+                try (var rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        var map = new java.util.HashMap<String, Object>();
+                        map.put("day_bucket", rs.getString("day_bucket"));
+                        map.put("room", rs.getString("room"));
+                        map.put("avg_users", rs.getInt("avg_users"));
+                        map.put("peak_users", rs.getInt("peak_users"));
+                        map.put("messages", rs.getInt("messages"));
+                        list.add(map);
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return list;
+    }
+
+    protected java.util.List<java.util.Map<String, Object>> getStatsMonthly() {
+        var list = new java.util.ArrayList<java.util.Map<String, Object>>();
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            migrateStatsTables();
+            try (var statement = getCon().prepareStatement("SELECT month_bucket, room, avg_users, peak_users, messages FROM `" + getPrefix() + "stats_monthly` ORDER BY month_bucket DESC LIMIT 12")) {
+                try (var rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        var map = new java.util.HashMap<String, Object>();
+                        map.put("month_bucket", rs.getString("month_bucket"));
+                        map.put("room", rs.getString("room"));
+                        map.put("avg_users", rs.getInt("avg_users"));
+                        map.put("peak_users", rs.getInt("peak_users"));
+                        map.put("messages", rs.getInt("messages"));
+                        list.add(map);
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return list;
+    }
+
+    protected java.util.List<java.util.Map<String, Object>> getPeaks() {
+        var list = new java.util.ArrayList<java.util.Map<String, Object>>();
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            migrateStatsTables();
+            try (var statement = getCon().prepareStatement("SELECT date, peak_users, peak_room FROM `" + getPrefix() + "stats_peaks` ORDER BY date DESC LIMIT 30")) {
+                try (var rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        var map = new java.util.HashMap<String, Object>();
+                        map.put("date", rs.getString("date"));
+                        map.put("peak_users", rs.getInt("peak_users"));
+                        map.put("peak_room", rs.getString("peak_room"));
+                        list.add(map);
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return list;
+    }
+
+    protected java.util.List<java.util.Map<String, Object>> getTopRooms() {
+        var list = new java.util.ArrayList<java.util.Map<String, Object>>();
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            migrateStatsTables();
+            try (var statement = getCon().prepareStatement("SELECT room, COUNT(*) as msg_count, COUNT(DISTINCT sender) as users FROM `" + getPrefix() + "chat_history` WHERE timestamp > UNIX_TIMESTAMP(NOW() - INTERVAL 30 DAY) AND type = 'public' GROUP BY room ORDER BY msg_count DESC LIMIT 10")) {
+                try (var rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        var map = new java.util.HashMap<String, Object>();
+                        map.put("room", rs.getString("room"));
+                        map.put("msg_count", rs.getInt("msg_count"));
+                        map.put("users", rs.getInt("users"));
+                        list.add(map);
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return list;
+    }
+
+    protected java.util.List<java.util.Map<String, Object>> getUserRelationships() {
+        var list = new java.util.ArrayList<java.util.Map<String, Object>>();
+        try {
+            if (getCon() == null || !getCon().isValid(1000)) {
+                connectDatabase();
+            }
+            try (var statement = getCon().prepareStatement("SELECT user1, user2, interaction_count, last_interaction FROM `" + getPrefix() + "user_relationships` ORDER BY interaction_count DESC LIMIT 50")) {
+                try (var rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        var map = new java.util.HashMap<String, Object>();
+                        map.put("user1", rs.getString("user1"));
+                        map.put("user2", rs.getString("user2"));
+                        map.put("interaction_count", rs.getInt("interaction_count"));
+                        map.put("last_interaction", rs.getLong("last_interaction"));
+                        list.add(map);
+                    }
+                }
+            }
+        } catch (SQLException se) {
+            connectDatabase(se);
+        }
+        return list;
     }
 
 }

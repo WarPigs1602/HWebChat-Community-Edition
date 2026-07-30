@@ -193,7 +193,9 @@ public class Commands implements Software {
                             input = ut.parseBb(input);
                             input = ut.replaceSmilies(input);
                             text = text.replace("%content%", ut.preReplace(input));
-                            cm.sendToUser(text, nick, target);
+                                cm.sendToUser(text, nick, target);
+                                db.addChatMessage("privchat", nick, target, input, "private");
+                                db.upsertRelationship(nick, target);
                         } else if (count == getMaster().getConfig().getInt("flood_max_repeat")) {
                             var text = getCommand("flood_repeat_msg");
                             cm.sendToOneDirect(text + "<br>", nick);
@@ -237,6 +239,7 @@ public class Commands implements Software {
             text = text.replace("%nick%", ut.preReplace(u.getNewName()));
             text = text.replace("%content%", ut.preReplace(input));
             cm.sendToAllUsersInRoom(text, nick, true);
+            db.addChatMessage(u.getRoom(), nick, null, input, "public");
         }
     }
 
@@ -266,7 +269,7 @@ public class Commands implements Software {
             text = text.replace("%nick%", ut.preReplace(u.getNewName()));
             text = text.replace("%content%", ut.preReplace(input));
             cm.sendToAllUsersInRoom(text, nick, true);
-
+            db.addChatMessage(u.getRoom(), nick, null, input, "public");
         }
     }
 

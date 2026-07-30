@@ -189,6 +189,9 @@ public class ChatServices {
                 var webChat = cm.getWebChat();
                 ut.submitContent(webChat, response);
             }
+        } else if (map2.getOrDefault("page", "").equals(conf.getString("path_stats"))) {
+            response.setContentType("text/html; charset=" + conf.getString("charset"));
+            statistics(request, response, map2);
         } else if (map2.getOrDefault("page", "").equals(conf.getString("path_password"))) {
             // Passwortwiederherstellungsformular
             response.setContentType("text/html; charset=" + conf.getString("charset"));
@@ -5409,6 +5412,113 @@ pwd = map.getOrDefault("pwd", "");
             text = text.replace("%color%", db.getData(nick, "color"));
         }
         ut.submitContent(text, response);
+    }
+
+    private void statistics(HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
+        var conf = Bootstrap.boot.getConfig();
+        var ut = Bootstrap.boot.getUtil();
+        var db = conf.getDb();
+        var cm = Bootstrap.boot.getChatManager();
+        var lang = readLang(request, map);
+        boolean de = "de".equalsIgnoreCase(lang);
+
+        var hourly = db.getStatsHourly();
+        var daily = db.getStatsDaily();
+        var monthly = db.getStatsMonthly();
+        var peaks = db.getPeaks();
+        var topRooms = db.getTopRooms();
+        var relationships = db.getUserRelationships();
+
+        var relSb = new StringBuilder();
+        int relCount = 0;
+        for (var rel : relationships) {
+            if (relCount++ >= 10) break;
+            relSb.append("<tr><td>").append(ut.preReplace((String) rel.get("user1")));
+            relSb.append("</td><td>").append(ut.preReplace((String) rel.get("user2")));
+            relSb.append("</td><td>").append(rel.get("interaction_count"));
+            relSb.append("</td><td>").append(ut.getTime((Long) rel.get("last_interaction")));
+            relSb.append("</td></tr>");
+        }
+        if (relationships.isEmpty()) {
+            relSb.append("<tr><td colspan=\"4\" class=\"text-center text-muted\">").append(de ? "Noch keine direkten Beziehungen aufgezeichnet." : "No direct relationships recorded yet.").append("</td></tr>");
+        }
+
+        String t_msgs = de ? "Nachrichten" : "Messages";
+        String t_peak_users = de ? "Peak Nutzer" : "Peak Users";
+        String t_avg_users = de ? "Ø Nutzer" : "Avg Users";
+        String t_active_users = de ? "Aktive Nutzer" : "Active Users";
+
+        var chartSb = new StringBuilder();
+        chartSb.append("<script>");
+        chartSb.append("const dailyData=").append(toJson(daily)).append(";");
+        chartSb.append("const hourlyData=").append(toJson(hourly)).append(";");
+        chartSb.append("const monthlyData=").append(toJson(monthly)).append(";");
+        chartSb.append("const peaksData=").append(toJson(peaks)).append(";");
+        chartSb.append("const topRoomsData=").append(toJson(topRooms)).append(";");
+        chartSb.append("const relData=").append(toJson(relationships.subList(0, Math.min(10, relationships.size())))).append(";");
+        chartSb.append("function buildLabels(data,key){return data.map(function(it){return it[key];});}");
+        chartSb.append("function buildSeries(data,valKey){return data.map(function(it){return it[valKey];});}");
+        chartSb.append("if(dailyData.length){new Chart(document.getElementById('dailyMsgChart'),{type:'bar',data:{labels:buildLabels(dailyData,'day_bucket'),datasets:[{label:'").append(t_msgs).append("',data:buildSeries(dailyData,'messages'),backgroundColor:'#0d6efd'}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}});}");
+        chartSb.append("if(dailyData.length){new Chart(document.getElementById('dailyUserChart'),{type:'bar',data:{labels:buildLabels(dailyData,'day_bucket'),datasets:[{label:'").append(t_peak_users).append("',data:buildSeries(dailyData,'peak_users'),backgroundColor:'#ffc107'}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}});}");
+        chartSb.append("if(hourlyData.length){new Chart(document.getElementById('hourlyMsgChart'),{type:'line',data:{labels:buildLabels(hourlyData,'hour_bucket'),datasets:[{label:'").append(t_msgs).append("',data:buildSeries(hourlyData,'messages'),borderColor:'#198754',backgroundColor:'rgba(25,135,84,0.1)',fill:true,tension:0.3}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}});}");
+        chartSb.append("if(hourlyData.length){new Chart(document.getElementById('hourlyUserChart'),{type:'line',data:{labels:buildLabels(hourlyData,'hour_bucket'),datasets:[{label:'").append(t_avg_users).append("',data:buildSeries(hourlyData,'avg_users'),borderColor:'#fd7e14',tension:0.3}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}});}");
+        chartSb.append("if(monthlyData.length){new Chart(document.getElementById('monthlyMsgChart'),{type:'bar',data:{labels:buildLabels(monthlyData,'month_bucket'),datasets:[{label:'").append(t_msgs).append("',data:buildSeries(monthlyData,'messages'),backgroundColor:'#6610f2'}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}});}");
+        chartSb.append("if(monthlyData.length){new Chart(document.getElementById('monthlyUserChart'),{type:'bar',data:{labels:buildLabels(monthlyData,'month_bucket'),datasets:[{label:'").append(t_peak_users).append("',data:buildSeries(monthlyData,'peak_users'),backgroundColor:'#dc3545'}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}});}");
+        chartSb.append("if(topRoomsData.length){new Chart(document.getElementById('topRoomsMsgChart'),{type:'bar',data:{labels:buildLabels(topRoomsData,'room'),datasets:[{label:'").append(t_msgs).append("',data:buildSeries(topRoomsData,'msg_count'),backgroundColor:'#20c997'}]},options:{indexAxis:'y',responsive:true,scales:{x:{beginAtZero:true}}}});}");
+        chartSb.append("if(topRoomsData.length){new Chart(document.getElementById('topRoomsUserChart'),{type:'bar',data:{labels:buildLabels(topRoomsData,'room'),datasets:[{label:'").append(t_active_users).append("',data:buildSeries(topRoomsData,'users'),backgroundColor:'#0dcaf0'}]},options:{indexAxis:'y',responsive:true,scales:{x:{beginAtZero:true}}}});}");
+        chartSb.append("if(peaksData.length){new Chart(document.getElementById('peaksChart'),{type:'line',data:{labels:buildLabels(peaksData,'date'),datasets:[{label:'").append(t_peak_users).append("',data:buildSeries(peaksData,'peak_users'),borderColor:'#d63384',backgroundColor:'rgba(214,51,132,0.1)',fill:true,tension:0.3}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}});}");
+        chartSb.append("if(relData.length){new Chart(document.getElementById('relationsChart'),{type:'doughnut',data:{labels:relData.map(function(it){return it.user1+' ↔ '+it.user2;}),datasets:[{data:relData.map(function(it){return it.interaction_count;}),backgroundColor:['#0d6efd','#6610f2','#d63384','#dc3545','#fd7e14','#ffc107','#198754','#20c997','#0dcaf0','#6f42c1']}]},options:{responsive:true}});}");
+        chartSb.append("</script>");
+
+        var skin = ut.parseHost(map.getOrDefault("skin", ""), request)[1];
+        skin = skin != null ? skin : map.getOrDefault("skin", "");
+        var session = request.getSession(false);
+        boolean loggedIn = session != null && session.getAttribute("nick") != null;
+
+        var templateName = loggedIn ? "stats_community" : "stats";
+        var data = getTemplate(templateName, request, map);
+        data = data.replace("%stat_online%", cm.getUserSizeInChat());
+        data = data.replace("%stat_total_messages%", String.valueOf(db.countPublicMessages() > -1 ? db.countPublicMessages() : 0));
+        data = data.replace("%stat_registered%", String.valueOf(db.countChatter() > -1 ? db.countChatter() : 0));
+        data = data.replace("%stat_rooms%", String.valueOf(cm.getRooms().size()));
+        data = data.replace("%stat_relationships%", relSb.toString());
+        data = data.replace("%stat_chart_script%", chartSb.toString());
+
+        ut.submitContent(data, response);
+    }
+
+    private String toJson(Object obj) {
+        if (obj == null) return "null";
+        if (obj instanceof java.util.Map<?, ?> map) {
+            var sb = new StringBuilder();
+            sb.append("{");
+            var iter = map.entrySet().iterator();
+            while (iter.hasNext()) {
+                var e = iter.next();
+                sb.append("\"").append(e.getKey().toString().replace("\\", "\\\\").replace("\"", "\\\"")).append("\":");
+                sb.append(toJson(e.getValue()));
+                if (iter.hasNext()) sb.append(",");
+            }
+            sb.append("}");
+            return sb.toString();
+        }
+        if (obj instanceof Iterable<?> list) {
+            var sb = new StringBuilder();
+            sb.append("[");
+            var iter = list.iterator();
+            while (iter.hasNext()) {
+                sb.append(toJson(iter.next()));
+                if (iter.hasNext()) sb.append(",");
+            }
+            sb.append("]");
+            return sb.toString();
+        }
+        if (obj instanceof String s) {
+            return "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r") + "\"";
+        }
+        if (obj instanceof Boolean b) return b.toString();
+        if (obj instanceof Number n) return n.toString();
+        return "\"" + obj.toString().replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
     }
 
 }
