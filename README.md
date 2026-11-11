@@ -46,7 +46,7 @@ cd HWebChat-Community-Edition
 Alternatively, download the latest release directly:
 
 ```text
-https://github.com/WarPigs1602/HWebChat-Community-Edition/releases/download/260726/HWebChat_Community_Edition.war
+https://github.com/WarPigs1602/HWebChat-Community-Edition/releases/download/261111/HWebChat_Community_Edition.war
 ```
 
 Then skip to step 3 (Deploy to Tomcat).
