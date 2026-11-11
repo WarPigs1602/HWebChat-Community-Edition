@@ -280,6 +280,46 @@ public final class ChatManager {
         }
     }
 
+    protected synchronized void sendTyping(Session source, boolean active) {
+        for (var user : getUsers().values()) {
+            if (user.getSession() == source) {
+                var name = user.getNewName() == null || user.getNewName().isBlank()
+                        ? user.getName() : user.getNewName();
+                for (var recipient : getUsers().values()) {
+                    if (recipient != user && user.getRoom().equals(recipient.getRoom())) {
+                        sendTypingEvent(recipient.getSession(), user.getName(), name, user.getColor(), active);
+                    }
+                }
+                return;
+            }
+        }
+        for (var user : getUsersPrivchat().values()) {
+            if (user.getSession() == source) {
+                var recipient = getUserPrivchat(user.getTarget(), user.getName());
+                if (recipient != null) {
+                    var name = user.getNewName() == null || user.getNewName().isBlank()
+                            ? user.getName() : user.getNewName();
+                    sendTypingEvent(recipient.getSession(), user.getName(), name, user.getColor(), active);
+                }
+                return;
+            }
+        }
+    }
+
+    private void sendTypingEvent(Session recipient, String id, String name, String color, boolean active) {
+        if (recipient == null || !recipient.isOpen()) {
+            return;
+        }
+        var message = createObjectBuilder().add("category", "typing")
+                .add("id", id).add("name", name).add("color", color == null ? "" : color)
+                .add("active", active).build().toString();
+        try {
+            recipient.getBasicRemote().sendText(message);
+        } catch (IOException | IllegalStateException ex) {
+            logError(ex);
+        }
+    }
+
     /**
      * Sendet einen Text zu einem Chatter und stellt diesen im Webserver dar
      *

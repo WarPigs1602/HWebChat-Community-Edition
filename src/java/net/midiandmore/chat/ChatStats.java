@@ -1,12 +1,16 @@
 package net.midiandmore.chat;
 
-import java.util.Date;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.TimeZone;
 
 public class ChatStats {
     private Bootstrap master;
     private int currentPeakUsers;
     private String currentPeakRoom;
     private long lastPeakRecord;
+    private LocalDate peakDate;
 
     public ChatStats(Bootstrap master) {
         setMaster(master);
@@ -18,7 +22,15 @@ public class ChatStats {
     public void track() {
         var cm = getMaster().getChatManager();
         var db = getMaster().getConfig().getDb();
-        var now = new Date().getTime();
+        var now = System.currentTimeMillis();
+        var zone = TimeZone.getTimeZone(getMaster().getConfig().getString("time_zone")).toZoneId();
+        var current = Instant.ofEpochMilli(now).atZone(zone);
+        if (!current.toLocalDate().equals(peakDate)) {
+            peakDate = current.toLocalDate();
+            setCurrentPeakUsers(0);
+            setCurrentPeakRoom("");
+            setLastPeakRecord(0);
+        }
         int totalUsers = cm.getUsers().size();
         String peakRoom = "";
         int roomPeak = 0;
@@ -40,34 +52,29 @@ public class ChatStats {
             setCurrentPeakUsers(totalUsers);
         }
         if (now - getLastPeakRecord() > 60000) {
-            db.recordPeak(getCurrentPeakUsers(), getCurrentPeakRoom());
+            db.recordPeak(getCurrentPeakUsers(), getCurrentPeakRoom(), current);
             setLastPeakRecord(now);
         }
-        java.util.Calendar cal = java.util.Calendar.getInstance();
-        cal.set(java.util.Calendar.MINUTE, 0);
-        cal.set(java.util.Calendar.SECOND, 0);
-        cal.set(java.util.Calendar.MILLISECOND, 0);
-        long hourlySince = cal.getTimeInMillis();
+        long hourlySince = current.truncatedTo(ChronoUnit.HOURS).withEarlierOffsetAtOverlap()
+                .toInstant().toEpochMilli();
         java.util.Map<String, Integer> hourlyMsgs = db.getChatMessageCountsSince(hourlySince);
-        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
-        long dailySince = cal.getTimeInMillis();
+        long dailySince = current.toLocalDate().atStartOfDay(zone).toInstant().toEpochMilli();
         java.util.Map<String, Integer> dailyMsgs = db.getChatMessageCountsSince(dailySince);
-        cal.set(java.util.Calendar.DAY_OF_MONTH, 1);
-        long monthlySince = cal.getTimeInMillis();
+        long monthlySince = current.toLocalDate().withDayOfMonth(1).atStartOfDay(zone).toInstant().toEpochMilli();
         java.util.Map<String, Integer> monthlyMsgs = db.getChatMessageCountsSince(monthlySince);
         for (var entry : cm.getRooms().entrySet()) {
             var room = entry.getKey();
             var users = entry.getValue().getUsers().size();
-            db.upsertHourly(room, users, users, hourlyMsgs.getOrDefault(room, 0));
-            db.upsertDaily(room, users, users, dailyMsgs.getOrDefault(room, 0));
-            db.upsertMonthly(room, users, users, monthlyMsgs.getOrDefault(room, 0));
+            db.upsertHourly(room, users, users, hourlyMsgs.getOrDefault(room, 0), current);
+            db.upsertDaily(room, users, users, dailyMsgs.getOrDefault(room, 0), current);
+            db.upsertMonthly(room, users, users, monthlyMsgs.getOrDefault(room, 0), current);
         }
         int totalHourlyMsgs = hourlyMsgs.values().stream().mapToInt(Integer::intValue).sum();
         int totalDailyMsgs = dailyMsgs.values().stream().mapToInt(Integer::intValue).sum();
         int totalMonthlyMsgs = monthlyMsgs.values().stream().mapToInt(Integer::intValue).sum();
-        db.upsertHourly("", totalUsers, totalUsers, totalHourlyMsgs);
-        db.upsertDaily("", totalUsers, totalUsers, totalDailyMsgs);
-        db.upsertMonthly("", totalUsers, totalUsers, totalMonthlyMsgs);
+        db.upsertHourly("", totalUsers, totalUsers, totalHourlyMsgs, current);
+        db.upsertDaily("", totalUsers, totalUsers, totalDailyMsgs, current);
+        db.upsertMonthly("", totalUsers, totalUsers, totalMonthlyMsgs, current);
     }
 
     protected Bootstrap getMaster() {

@@ -10,6 +10,8 @@ Webbasierter Community-Chat (Jakarta EE / WebSocket) für Apache Tomcat.
 ## Features
 
 - Öffentliche und private Chaträume (Echtzeit per WebSocket)
+- Schreibanzeige mit Nickfarben für Räume und Privatchats (bis zu fünf Namen)
+- Nick-Vervollständigung mit Tab in der Eingabezeile; mehrfaches Tab wechselt zwischen Treffern
 - Gast-Login und registrierte Benutzer
 - Offline-Nachrichten (Flüstern, wenn der Empfänger offline ist)
 - Emojis, Datei-Uploads
@@ -17,6 +19,10 @@ Webbasierter Community-Chat (Jakarta EE / WebSocket) für Apache Tomcat.
 - Adminkonsole, Communities / Napping-Räume
 - Skins und Templates unter `~/.homewebcom` (`native` Deutsch, `native_en` Englisch)
 - Speicherung in MySQL / MariaDB, PostgreSQL oder SQLite
+
+Die Statistik verwendet wie der Chat die Einstellung `time_zone` aus der Konfiguration.
+Bereits gespeicherte Statistikintervalle werden bei einer Änderung der Zeitzone nicht umgerechnet.
+Bei der Zeitumstellung im Herbst werden die beiden gleich benannten Stunden zusammengefasst.
 
 ---
 

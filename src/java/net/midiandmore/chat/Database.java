@@ -11,6 +11,8 @@ import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -3707,13 +3709,13 @@ public class Database {
         }
     }
 
-    protected void recordPeak(int peakUsers, String peakRoom) {
+    protected void recordPeak(int peakUsers, String peakRoom, ZonedDateTime current) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             migrateStatsTables();
-            var today = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+            var today = current.format(DateTimeFormatter.ISO_LOCAL_DATE);
             try (var check = getCon().prepareStatement("SELECT id, peak_users FROM `" + getPrefix() + "stats_peaks` WHERE date=?")) {
                 check.setString(1, today);
                 try (var rs = check.executeQuery()) {
@@ -3742,13 +3744,13 @@ public class Database {
         }
     }
 
-    protected void upsertHourly(String room, int avgUsers, int peakUsers, int messages) {
+    protected void upsertHourly(String room, int avgUsers, int peakUsers, int messages, ZonedDateTime current) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             migrateStatsTables();
-            var hour = new java.text.SimpleDateFormat("yyyy-MM-dd HH:00:00").format(new java.util.Date());
+            var hour = current.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:00:00"));
             try (var check = getCon().prepareStatement("SELECT id, sample_count, user_count_total, peak_users FROM `" + getPrefix() + "stats_hourly` WHERE hour_bucket=? AND room=?")) {
                 check.setString(1, hour);
                 check.setString(2, room);
@@ -3786,13 +3788,13 @@ public class Database {
         }
     }
 
-    protected void upsertDaily(String room, int avgUsers, int peakUsers, int messages) {
+    protected void upsertDaily(String room, int avgUsers, int peakUsers, int messages, ZonedDateTime current) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             migrateStatsTables();
-            var day = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
+            var day = current.format(DateTimeFormatter.ISO_LOCAL_DATE);
             try (var check = getCon().prepareStatement("SELECT id, sample_count, user_count_total, peak_users FROM `" + getPrefix() + "stats_daily` WHERE day_bucket=? AND room=?")) {
                 check.setString(1, day);
                 check.setString(2, room);
@@ -3830,13 +3832,13 @@ public class Database {
         }
     }
 
-    protected void upsertMonthly(String room, int avgUsers, int peakUsers, int messages) {
+    protected void upsertMonthly(String room, int avgUsers, int peakUsers, int messages, ZonedDateTime current) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
             migrateStatsTables();
-            var month = new java.text.SimpleDateFormat("yyyy-MM").format(new java.util.Date());
+            var month = current.format(DateTimeFormatter.ofPattern("yyyy-MM"));
             try (var check = getCon().prepareStatement("SELECT id, sample_count, user_count_total, peak_users FROM `" + getPrefix() + "stats_monthly` WHERE month_bucket=? AND room=?")) {
                 check.setString(1, month);
                 check.setString(2, room);

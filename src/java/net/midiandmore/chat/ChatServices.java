@@ -5276,7 +5276,24 @@ var skin = map.getOrDefault("skin", "");
             data = "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>%missing_template%</b></p><hr><address>%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS%</address></body><html>";
             data = data.replace("%missing_template%", temp);
         }
+        if (template.equals("frameset") || template.equals("frameset_napping")
+                || template.equals("frameset_privchat") || template.equals("frameset_privchat_napping")) {
+            data = addTypingIndicatorScript(data);
+        }
         return addChatPanelNavigationRules(data);
+    }
+
+    static String addTypingIndicatorScript(String design) {
+        var bodyEnd = java.util.regex.Pattern.compile("</body\\s*>", java.util.regex.Pattern.CASE_INSENSITIVE)
+                .matcher(design);
+        if (!bodyEnd.find()) {
+            throw new IllegalArgumentException("Chat design does not contain a closing body element");
+        }
+        return design.substring(0, bodyEnd.start())
+                + "<script src=\"%path_file%typing-indicator.js\"></script>"
+                + "<script src=\"%path_file%nick-completion.js\"></script>"
+                + "<script src=\"%path_file%message-history.js\"></script>"
+                + design.substring(bodyEnd.start());
     }
 
     static UsersCommunity activeCommunitySession(HttpSession session, ChatManager manager) {

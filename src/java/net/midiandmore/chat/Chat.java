@@ -42,6 +42,7 @@ public class Chat {
     private Session session;
     private String cat;
     private Map<String, List<String>> map;
+    private long lastTypingUpdate;
 
     /**
      *
@@ -482,6 +483,21 @@ public class Chat {
         var com = boot.getCommands();
         var json = createReader(new StringReader(message)).readObject();
         var category = json.getString("category");
+        if (category.equals("typing")) {
+            var state = json.get("active");
+            if (state != jakarta.json.JsonValue.TRUE && state != jakarta.json.JsonValue.FALSE) {
+                ErrorLog.LOG.warning("Ignoring typing event with invalid state");
+                return;
+            }
+            var active = state == jakarta.json.JsonValue.TRUE;
+            var now = System.nanoTime();
+            if (active && lastTypingUpdate != 0 && now - lastTypingUpdate < 1_000_000_000L) {
+                return;
+            }
+            lastTypingUpdate = active ? now : 0;
+            boot.getChatManager().sendTyping(getSession(), active);
+            return;
+        }
         var target = json.getString("target");
         var text = json.getString("message");
         var sid = getMap().containsKey("sid") ? getMap().get("sid").get(0)
