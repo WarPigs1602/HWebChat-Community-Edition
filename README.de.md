@@ -15,7 +15,7 @@ Webbasierter Community-Chat (Jakarta EE / WebSocket) für Apache Tomcat.
 - Moderation (Kick, Ban, Gag, …)
 - Adminkonsole, Communities / Napping-Räume
 - Skins und Templates unter `~/.homewebcom` (`native` Deutsch, `native_en` Englisch)
-- Speicherung in MySQL / MariaDB
+- Speicherung in MySQL / MariaDB, PostgreSQL oder SQLite
 
 ---
 
@@ -26,7 +26,7 @@ Webbasierter Community-Chat (Jakarta EE / WebSocket) für Apache Tomcat.
 | **JDK** | **21** (source/target in der `pom.xml`) |
 | **Maven** | 3.8+ |
 | **Apache Tomcat** | 10.1+ (Jakarta EE 9+, Servlet 6 / WebSocket) |
-| **MySQL oder MariaDB** | empfohlen 10.6+ |
+| **Datenbank** | MySQL/MariaDB 10.6+, PostgreSQL oder SQLite |
 | **Konfig-Home** | `~/.homewebcom` (Home des Users, unter dem Tomcat läuft) |
 
 ---
@@ -137,7 +137,13 @@ Templates/Config unter `~/.homewebcom` liegen **nicht** im WAR — dort live edi
 | `~/.homewebcom/templates/native/` | Deutsch-Skin (HTML, JS, CSS) |
 | `~/.homewebcom/templates/native_en/` | Englisch-Skin (HTML, JS, CSS) |
 
+Der Setup-Assistent unterstützt alle drei Datenbank-Backends. SQLite ist die Voreinstellung. Für eine manuelle Konfiguration setzt `sql.type` den Wert `sqlite`, `mysql` oder `postgresql`. PostgreSQL verwendet `sql.host` (`host:port`), `sql.db`, `sql.user` und `sql.pw`; `pgcrypto` muss in der Datenbank installiert sein (der Setup-Assistent versucht, die Erweiterung anzulegen). SQLite verwendet `sql.path` und standardmäßig `~/.homewebcom/data/hwebchat.sqlite`; `sql.user` und `sql.pw` werden ignoriert.
+
 Die Repo-Kopie `web/default-homewebcom/` ist eine Vorlage; beim Erststart erstellt die App automatisch `~/.homewebcom` und kopiert alle Dateien dorthin.
+
+Im Chat-Tab eingebettete Seiten blenden ihre eigene Navigationsleiste aus; außerhalb des Chat-Tabs bleibt sie sichtbar. Dies gilt auch für bereits kopierte Seitendesigns mit einer `nav.navbar` direkt im `body`.
+
+Öffentliche und Community-Seiten wählen die Navigation anhand der aktiven Community-Sitzung: registrierter Benutzer, Gast oder nicht angemeldet. Abgelaufene Sitzungen erhalten die öffentliche Navigation.
 
 ---
 

@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -38,6 +37,7 @@ import static net.midiandmore.chat.Bootstrap.logFatalError;
  * @author Andreas Pschorn
  */
 public class Database {
+    private boolean statsTablesMigrated;
 
     /**
      * Ruft den JDBC-Treiber ab
@@ -46,11 +46,6 @@ public class Database {
      */
     public Database(Bootstrap master) {
         setMaster(master);
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-        } catch (ClassNotFoundException cnfe) {
-            fatalError(cnfe);
-        }
     }
 
     /**
@@ -64,16 +59,44 @@ public class Database {
                 }
                 getCon().close();
             }
-            var drcon = getConnection("jdbc:mysql://" + getHost() + "/" + getDb() + "?user=" + getUser() + "&password=" + getPw() + "&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=" + getTimezone());
+            var drcon = openDatabaseConnection();
             setCon(drcon);
-            try ( // Sollte Probleme mit Emojis und anderen Sonderzeichen beheben!
-                    var statement = getCon().prepareStatement("SET CHARACTER SET utf8mb4;")) {
-                statement.executeUpdate();
+            if (getDatabaseType() == SqlDialect.Type.MYSQL) {
+                try (var statement = getCon().prepareStatement("SET CHARACTER SET utf8mb4;")) {
+                    statement.executeUpdate();
+                }
             }
             migrateDatabase();
+        } catch (ClassNotFoundException cnfe) {
+            fatalError(cnfe);
         } catch (SQLException se) {
             logFatalError(se);
         }
+    }
+
+    private Connection openDatabaseConnection() throws SQLException, ClassNotFoundException {
+        Class.forName(getDatabaseType().driverClass());
+        var url = switch (getDatabaseType()) {
+            case MYSQL -> "jdbc:mysql://" + getHost() + "/" + getDb() + "?useUnicode=yes&characterEncoding=UTF-8&serverTimezone=" + getTimezone();
+            case POSTGRESQL -> "jdbc:postgresql://" + getHost() + "/" + getDb();
+            case SQLITE -> "jdbc:sqlite:" + getSqlitePath();
+        };
+        if (getDatabaseType() == SqlDialect.Type.SQLITE) {
+            var parent = java.nio.file.Path.of(getSqlitePath()).toAbsolutePath().getParent();
+            if (parent != null) {
+                try {
+                    java.nio.file.Files.createDirectories(parent);
+                } catch (java.io.IOException ioe) {
+                    throw new SQLException("Unable to create the SQLite database directory", ioe);
+                }
+            }
+            var connection = getConnection(url);
+            SqlDialect.initialize(connection, getDatabaseType());
+            return connection;
+        }
+        var connection = getConnection(url, getUser(), getPw());
+        SqlDialect.initialize(connection, getDatabaseType());
+        return connection;
     }
 
     /**
@@ -111,7 +134,7 @@ public class Database {
 
     private void migrateUsers() throws SQLException {
         var cols = new java.util.HashSet<String>();
-        try (var rs = getCon().getMetaData().getColumns(getDb(), null, getPrefix() + "users", null)) {
+        try (var rs = getCon().getMetaData().getColumns(getMetadataCatalog(), null, getPrefix() + "users", null)) {
             while (rs.next()) {
                 cols.add(rs.getString("COLUMN_NAME").toLowerCase());
             }
@@ -122,8 +145,8 @@ public class Database {
         }
         if (!cols.contains("sv")) {
             alters.add("ADD COLUMN IF NOT EXISTS `sv` int(11) NOT NULL DEFAULT 0");
-        } else if (cols.contains("sv")) {
-            try (var rs = getCon().getMetaData().getColumns(getDb(), null, getPrefix() + "users", "sv")) {
+        } else if (cols.contains("sv") && getDatabaseType() == SqlDialect.Type.MYSQL) {
+            try (var rs = getCon().getMetaData().getColumns(getMetadataCatalog(), null, getPrefix() + "users", "sv")) {
                 if (rs.next() && !"int".equalsIgnoreCase(rs.getString("TYPE_NAME"))) {
                     alters.add("MODIFY COLUMN IF EXISTS `sv` int(11) NOT NULL DEFAULT 0");
                 }
@@ -145,14 +168,12 @@ public class Database {
             alters.add("ADD COLUMN IF NOT EXISTS `color` varchar(7) DEFAULT '000000'");
         }
         if (!alters.isEmpty()) {
-            try (var stmt = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "users` " + String.join(", ", alters))) {
-                stmt.executeUpdate();
-            }
+            applyColumnChanges(getPrefix() + "users", alters);
         }
     }
 
     private void migrateBoardCat() throws SQLException {
-        try (var rs = getCon().getMetaData().getColumns(getDb(), null, getPrefix() + "board_cat", "deleted")) {
+        try (var rs = getCon().getMetaData().getColumns(getMetadataCatalog(), null, getPrefix() + "board_cat", "deleted")) {
             if (!rs.next()) {
                 try (var stmt = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "board_cat` ADD COLUMN IF NOT EXISTS `deleted` tinyint(1) NOT NULL DEFAULT 0")) {
                     stmt.executeUpdate();
@@ -162,7 +183,10 @@ public class Database {
     }
 
     private void migrateMessages() throws SQLException {
-        try (var rs = getCon().getMetaData().getTables(getDb(), null, getPrefix() + "messages", new String[]{"TABLE"})) {
+        try (var rs = getCon().getMetaData().getTables(getMetadataCatalog(), null, getPrefix() + "messages", new String[]{"TABLE"})) {
+            if (getDatabaseType() != SqlDialect.Type.MYSQL) {
+                return;
+            }
             if (rs.next()) {
                 try (var stmt = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "messages` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci")) {
                     stmt.executeUpdate();
@@ -176,7 +200,7 @@ public class Database {
     }
 
     private void migrateNapping() throws SQLException {
-        try (var rs = getCon().getMetaData().getColumns(getDb(), null, getPrefix() + "napping", "su")) {
+        try (var rs = getCon().getMetaData().getColumns(getMetadataCatalog(), null, getPrefix() + "napping", "su")) {
             if (!rs.next()) {
                 try (var stmt = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "napping` ADD COLUMN IF NOT EXISTS `su` longtext DEFAULT NULL")) {
                     stmt.executeUpdate();
@@ -187,7 +211,7 @@ public class Database {
 
     private void migrateRoomcfg() throws SQLException {
         var cols = new java.util.HashSet<String>();
-        try (var rs = getCon().getMetaData().getColumns(getDb(), null, getPrefix() + "roomcfg", null)) {
+        try (var rs = getCon().getMetaData().getColumns(getMetadataCatalog(), null, getPrefix() + "roomcfg", null)) {
             while (rs.next()) {
                 cols.add(rs.getString("COLUMN_NAME").toLowerCase());
             }
@@ -203,15 +227,13 @@ public class Database {
             alters.add("ADD COLUMN IF NOT EXISTS `su` longtext DEFAULT NULL");
         }
         if (!alters.isEmpty()) {
-            try (var stmt = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "roomcfg` " + String.join(", ", alters))) {
-                stmt.executeUpdate();
-            }
+            applyColumnChanges(getPrefix() + "roomcfg", alters);
         }
     }
 
      private void migrateSession() throws SQLException {
          var cols = new java.util.HashSet<String>();
-         try (var rs = getCon().getMetaData().getColumns(getDb(), null, getPrefix() + "session", null)) {
+         try (var rs = getCon().getMetaData().getColumns(getMetadataCatalog(), null, getPrefix() + "session", null)) {
              while (rs.next()) {
                  cols.add(rs.getString("COLUMN_NAME").toLowerCase());
              }
@@ -230,21 +252,23 @@ public class Database {
              alters.add("ADD COLUMN IF NOT EXISTS `gag` int(11) NOT NULL DEFAULT 0");
          }
          if (!alters.isEmpty()) {
-             try (var stmt = getCon().prepareStatement("ALTER TABLE `" + getPrefix() + "session` " + String.join(", ", alters))) {
-                 stmt.executeUpdate();
-             }
+             applyColumnChanges(getPrefix() + "session", alters);
          }
      }
 
-    private void migrateStatsTables() {
+    private synchronized void migrateStatsTables() {
+        if (statsTablesMigrated) {
+            return;
+        }
         String[] ddl = {
             "CREATE TABLE IF NOT EXISTS `" + getPrefix() + "chat_history` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `room` varchar(255) NOT NULL, `sender` varchar(255) NOT NULL, `target` varchar(255) DEFAULT NULL, `text` text NOT NULL, `timestamp` bigint(20) NOT NULL, `type` varchar(20) NOT NULL DEFAULT 'public', PRIMARY KEY (`id`), KEY `idx_room` (`room`), KEY `idx_sender` (`sender`), KEY `idx_timestamp` (`timestamp`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
             "CREATE TABLE IF NOT EXISTS `" + getPrefix() + "stats_peaks` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `date` date NOT NULL, `peak_users` int(11) NOT NULL DEFAULT 0, `peak_room` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (`id`), UNIQUE KEY `peak_date` (`date`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
-            "CREATE TABLE IF NOT EXISTS `" + getPrefix() + "stats_hourly` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `hour_bucket` datetime NOT NULL, `room` varchar(255) NOT NULL, `avg_users` int(11) NOT NULL DEFAULT 0, `peak_users` int(11) NOT NULL DEFAULT 0, `messages` int(11) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `hour_room` (`hour_bucket`, `room`(100))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
-            "CREATE TABLE IF NOT EXISTS `" + getPrefix() + "stats_daily` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `day_bucket` date NOT NULL, `room` varchar(255) NOT NULL, `avg_users` int(11) NOT NULL DEFAULT 0, `peak_users` int(11) NOT NULL DEFAULT 0, `messages` int(11) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `day_room` (`day_bucket`, `room`(100))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
-            "CREATE TABLE IF NOT EXISTS `" + getPrefix() + "stats_monthly` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `month_bucket` varchar(7) NOT NULL, `room` varchar(255) NOT NULL, `avg_users` int(11) NOT NULL DEFAULT 0, `peak_users` int(11) NOT NULL DEFAULT 0, `messages` int(11) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `month_room` (`month_bucket`, `room`(100))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+            "CREATE TABLE IF NOT EXISTS `" + getPrefix() + "stats_hourly` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `hour_bucket` datetime NOT NULL, `room` varchar(255) NOT NULL, `avg_users` int(11) NOT NULL DEFAULT 0, `peak_users` int(11) NOT NULL DEFAULT 0, `messages` int(11) NOT NULL DEFAULT 0, `sample_count` bigint(20) NOT NULL DEFAULT 0, `user_count_total` bigint(20) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `hour_room` (`hour_bucket`, `room`(100))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+            "CREATE TABLE IF NOT EXISTS `" + getPrefix() + "stats_daily` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `day_bucket` date NOT NULL, `room` varchar(255) NOT NULL, `avg_users` int(11) NOT NULL DEFAULT 0, `peak_users` int(11) NOT NULL DEFAULT 0, `messages` int(11) NOT NULL DEFAULT 0, `sample_count` bigint(20) NOT NULL DEFAULT 0, `user_count_total` bigint(20) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `day_room` (`day_bucket`, `room`(100))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+            "CREATE TABLE IF NOT EXISTS `" + getPrefix() + "stats_monthly` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `month_bucket` varchar(7) NOT NULL, `room` varchar(255) NOT NULL, `avg_users` int(11) NOT NULL DEFAULT 0, `peak_users` int(11) NOT NULL DEFAULT 0, `messages` int(11) NOT NULL DEFAULT 0, `sample_count` bigint(20) NOT NULL DEFAULT 0, `user_count_total` bigint(20) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `month_room` (`month_bucket`, `room`(100))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
             "CREATE TABLE IF NOT EXISTS `" + getPrefix() + "user_relationships` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `user1` varchar(255) NOT NULL, `user2` varchar(255) NOT NULL, `interaction_count` int(11) NOT NULL DEFAULT 0, `last_interaction` bigint(20) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `user_pair` (`user1`(90), `user2`(90))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
         };
+        boolean created = true;
         for (String sql : ddl) {
             try {
                 if (getCon() == null || !getCon().isValid(1000)) {
@@ -256,8 +280,71 @@ public class Database {
             } catch (SQLException se) {
                 if (!se.getMessage().toLowerCase().contains("already exists")) {
                     logError(se);
+                    created = false;
                 }
             }
+        }
+        if (!created) {
+            return;
+        }
+        try {
+            migrateStatsAggregationColumns("stats_hourly");
+            migrateStatsAggregationColumns("stats_daily");
+            migrateStatsAggregationColumns("stats_monthly");
+            createPortableChatHistoryIndexes();
+            statsTablesMigrated = true;
+        } catch (SQLException se) {
+            logError(se);
+        }
+    }
+
+    private void createPortableChatHistoryIndexes() throws SQLException {
+        if (getDatabaseType() == SqlDialect.Type.MYSQL) {
+            return;
+        }
+        var indexes = new String[]{"room", "sender", "timestamp"};
+        for (var column : indexes) {
+            var index = getPrefix() + "idx_chat_history_" + column;
+            try (var stmt = getCon().prepareStatement("CREATE INDEX IF NOT EXISTS `" + index + "` ON `" + getPrefix() + "chat_history` (`" + column + "`)")) {
+                stmt.executeUpdate();
+            }
+        }
+    }
+
+    private void migrateStatsAggregationColumns(String table) throws SQLException {
+        var columns = new java.util.HashSet<String>();
+        try (var rs = getCon().getMetaData().getColumns(getMetadataCatalog(), null, getPrefix() + table, null)) {
+            while (rs.next()) {
+                columns.add(rs.getString("COLUMN_NAME").toLowerCase());
+            }
+        }
+        var alters = new java.util.ArrayList<String>();
+        if (!columns.contains("sample_count")) {
+            alters.add("ADD COLUMN IF NOT EXISTS `sample_count` bigint(20) NOT NULL DEFAULT 0");
+        }
+        if (!columns.contains("user_count_total")) {
+            alters.add("ADD COLUMN IF NOT EXISTS `user_count_total` bigint(20) NOT NULL DEFAULT 0");
+        }
+        if (!alters.isEmpty()) {
+            applyColumnChanges(getPrefix() + table, alters);
+        }
+        try (var stmt = getCon().prepareStatement("UPDATE `" + getPrefix() + table + "` SET `user_count_total`=`avg_users`, `sample_count`=1 WHERE `sample_count`=0")) {
+            stmt.executeUpdate();
+        }
+    }
+
+    private void applyColumnChanges(String table, java.util.List<String> changes) throws SQLException {
+        if (getDatabaseType() == SqlDialect.Type.SQLITE) {
+            for (var change : changes) {
+                var sqliteChange = change.replace("ADD COLUMN IF NOT EXISTS", "ADD COLUMN");
+                try (var statement = getCon().prepareStatement("ALTER TABLE `" + table + "` " + sqliteChange)) {
+                    statement.executeUpdate();
+                }
+            }
+            return;
+        }
+        try (var statement = getCon().prepareStatement("ALTER TABLE `" + table + "` " + String.join(", ", changes))) {
+            statement.executeUpdate();
         }
     }
 
@@ -272,6 +359,12 @@ public class Database {
         setUser(p.getProperty("sql.user"));
         setHost(p.getProperty("sql.host"));
         setPrefix(p.getProperty("sql.prefix"));
+        setDatabaseType(SqlDialect.Type.fromConfig(p.getProperty("sql.type")));
+        var configuredPath = p.getProperty("sql.path");
+        setSqlitePath(configuredPath == null || configuredPath.isBlank()
+                ? getProperty("user.home") + getProperty("file.separator") + ".homewebcom"
+                        + getProperty("file.separator") + "data" + getProperty("file.separator") + "hwebchat.sqlite"
+                : configuredPath);
         setTimezone(p.getProperty("time_zone"));
         connectDatabase();
     }
@@ -1501,12 +1594,12 @@ public class Database {
      * Startet einen Thread im Forum
      *
      */
-    protected void addThread(String topic, String content, long ref, long user, long board, String ip, long cat) {
+    protected long addThread(String topic, String content, long ref, long user, long board, String ip, long cat) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
-            try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "board` (`topic`, `content`, `ref`, `user`, `board`, `posted`, `ip`, `cat`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
+            try (var statement = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "board` (`topic`, `content`, `ref`, `user`, `board`, `posted`, `ip`, `cat`) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", java.sql.Statement.RETURN_GENERATED_KEYS)) {
                 var posted = currentTimeMillis();
                 statement.setString(1, topic);
                 statement.setString(2, content);
@@ -1517,10 +1610,16 @@ public class Database {
                 statement.setString(7, ip);
                 statement.setLong(8, cat);
                 statement.executeUpdate();
+                try (var keys = statement.getGeneratedKeys()) {
+                    if (keys.next()) {
+                        return keys.getLong(1);
+                    }
+                }
             }
         } catch (SQLException se) {
             connectDatabase(se);
         }
+        return 0;
     }
 
     /**
@@ -1627,8 +1726,8 @@ public class Database {
             }
             try (var statement = getCon().prepareStatement("UPDATE `" + getPrefix() + "users` SET " + field + "=? WHERE nick2=? OR nick=?")) {
                 statement.setString(1, value);
-                statement.setString(2, nick.toLowerCase());
-                statement.setString(3, nick);
+                statement.setString(2, nick);
+                statement.setString(3, nick.toLowerCase());
                 statement.executeUpdate();
             }
         } catch (SQLException se) {
@@ -1715,7 +1814,7 @@ public class Database {
                 connectDatabase();
             }
             try (var statement = getCon().prepareStatement("UPDATE `" + getPrefix() + "users` SET `image_upload`=?,`image_url`=? WHERE nick=? OR nick2=?")) {
-                statement.setBlob(1, is);
+                statement.setBinaryStream(1, is);
                 statement.setString(2, contentType);
                 statement.setString(3, nick.toLowerCase());
                 statement.setString(4, nick.toLowerCase());
@@ -2188,26 +2287,6 @@ public class Database {
      * @param field Das Feld zum abfragen
      * @return Die Daten
      */
-    protected long getBoardId() {
-        long dat = 0;
-        try {
-            if (getCon() == null || !getCon().isValid(1000)) {
-                connectDatabase();
-            }
-            try (var statement = getCon().prepareStatement("SELECT LAST_INSERT_ID();")) {
-                try (var resultset = statement.executeQuery()) {
-                    while (resultset.next()) {
-                        dat = resultset.getLong(1);
-                    }
-                }
-            }
-        } catch (SQLException se) {
-            connectDatabase(se);
-        }
-        //System.out.printf("%s\r\n", dat);
-        return dat;
-    }
-
     /**
      * Fr&auml;gt Daten aus den Forum ab
      *
@@ -2740,20 +2819,16 @@ public class Database {
      * @return Die Daten
      */
     protected byte[] getPicture(String nick) {
-        Blob image = null;
         byte[] dat = null;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
             }
-            try (var statement = getCon().prepareStatement("SELECT image_upload FROM `" + getPrefix() + "users` WHERE nick2=?")) {
+            try (var statement = getCon().prepareStatement("SELECT image_upload FROM `" + getPrefix() + "users` WHERE nick=?")) {
                 statement.setString(1, nick.toLowerCase());
                 try (var resultset = statement.executeQuery()) {
                     while (resultset.next()) {
-                        image = resultset.getBlob("image_upload");
-                        if (image != null) {
-                            dat = image.getBytes(1, (int) image.length());
-                        }
+                        dat = resultset.getBytes("image_upload");
                     }
                 }
             }
@@ -2977,6 +3052,28 @@ public class Database {
     private String user;
     private String host;
     private String prefix;
+    private String sqlitePath;
+    private SqlDialect.Type databaseType = SqlDialect.Type.SQLITE;
+
+    private SqlDialect.Type getDatabaseType() {
+        return databaseType;
+    }
+
+    private void setDatabaseType(SqlDialect.Type databaseType) {
+        this.databaseType = databaseType;
+    }
+
+    private String getSqlitePath() {
+        return sqlitePath;
+    }
+
+    private void setSqlitePath(String sqlitePath) {
+        this.sqlitePath = sqlitePath;
+    }
+
+    private String getMetadataCatalog() {
+        return getDatabaseType() == SqlDialect.Type.SQLITE ? null : getDb();
+    }
 
     private Bootstrap getMaster() {
         return master;
@@ -3339,41 +3436,38 @@ public class Database {
             };
             String[] intCols = {"points", "status", "moderator"};
             String[] blobCols = {"image_upload"};
+            var columns = new java.util.HashSet<String>();
+            try (var rs = getCon().getMetaData().getColumns(getMetadataCatalog(), null, table, null)) {
+                while (rs.next()) {
+                    columns.add(rs.getString("COLUMN_NAME").toLowerCase());
+                }
+            }
 
             for (var col : textCols) {
-                try {
+                if (!columns.contains(col)) {
                     try (var alter = getCon().prepareStatement(
                             "ALTER TABLE `" + table + "` ADD COLUMN IF NOT EXISTS `" + col + "` VARCHAR(255) DEFAULT ''")) {
                         alter.executeUpdate();
                     }
-                } catch (SQLException se) {
-                    if (!se.getMessage().contains("Duplicate column name")) {
-                        logError(se);
-                    }
+                    columns.add(col);
                 }
             }
             for (var col : intCols) {
-                try {
+                if (!columns.contains(col)) {
                     try (var alter = getCon().prepareStatement(
                             "ALTER TABLE `" + table + "` ADD COLUMN IF NOT EXISTS `" + col + "` INT DEFAULT 0")) {
                         alter.executeUpdate();
                     }
-                } catch (SQLException se) {
-                    if (!se.getMessage().contains("Duplicate column name")) {
-                        logError(se);
-                    }
+                    columns.add(col);
                 }
             }
             for (var col : blobCols) {
-                try {
+                if (!columns.contains(col)) {
                     try (var alter = getCon().prepareStatement(
                             "ALTER TABLE `" + table + "` ADD COLUMN IF NOT EXISTS `" + col + "` LONGBLOB")) {
                         alter.executeUpdate();
                     }
-                } catch (SQLException se) {
-                    if (!se.getMessage().contains("Duplicate column name")) {
-                        logError(se);
-                    }
+                    columns.add(col);
                 }
             }
         } catch (SQLException se) {
@@ -3385,6 +3479,12 @@ public class Database {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
+            }
+            if (getDatabaseType() != SqlDialect.Type.MYSQL) {
+                try (var statement = getCon().prepareStatement("CREATE TABLE IF NOT EXISTS `" + getPrefix() + "guestbook` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `owner` varchar(255) NOT NULL, `sender` varchar(255) NOT NULL, `text` text NOT NULL, `time` bigint(20) NOT NULL, PRIMARY KEY (`id`))")) {
+                    statement.executeUpdate();
+                }
+                return;
             }
             try (var statement = getCon().prepareStatement("CREATE TABLE IF NOT EXISTS `" + getPrefix() + "guestbook` (`id` bigint(20) NOT NULL, `owner` varchar(255) NOT NULL, `sender` varchar(255) NOT NULL, `text` text NOT NULL, `time` bigint(20) NOT NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci")) {
                 statement.executeUpdate();
@@ -3500,21 +3600,21 @@ public class Database {
     }
 
     /**
-     * Gibt die MySQL-Connection aus
+     * Gibt die SQL-Verbindung aus
      *
-     * @return MySQL-Connection
+     * @return SQL-Verbindung
      */
     public Connection getCon() {
         return con;
     }
 
     /**
-     * Setzt die MySQL-Connection
+     * Setzt die SQL-Verbindung
      *
-     * @param con MySQL-Connection
+     * @param con SQL-Verbindung
      */
     public void setCon(Connection con) {
-        this.con = con;
+        this.con = con == null ? null : SqlDialect.wrap(con, getDatabaseType());
     }
 
     /**
@@ -3649,32 +3749,33 @@ public class Database {
             }
             migrateStatsTables();
             var hour = new java.text.SimpleDateFormat("yyyy-MM-dd HH:00:00").format(new java.util.Date());
-            try (var check = getCon().prepareStatement("SELECT id, avg_users, peak_users, messages FROM `" + getPrefix() + "stats_hourly` WHERE hour_bucket=? AND room=?")) {
+            try (var check = getCon().prepareStatement("SELECT id, sample_count, user_count_total, peak_users FROM `" + getPrefix() + "stats_hourly` WHERE hour_bucket=? AND room=?")) {
                 check.setString(1, hour);
                 check.setString(2, room);
                 try (var rs = check.executeQuery()) {
                     if (rs.next()) {
                         var id = rs.getLong("id");
-                        var oldAvg = rs.getInt("avg_users");
-                        var oldPeak = rs.getInt("peak_users");
-                        var oldMsgs = rs.getInt("messages");
-                        var newAvg = (oldAvg + avgUsers) / 2;
-                        var newPeak = Math.max(oldPeak, peakUsers);
-                        var newMsgs = oldMsgs + messages;
-                        try (var update = getCon().prepareStatement("UPDATE `" + getPrefix() + "stats_hourly` SET avg_users=?, peak_users=?, messages=? WHERE id=?")) {
+                        var newSampleCount = rs.getLong("sample_count") + 1;
+                        var newUserCountTotal = rs.getLong("user_count_total") + avgUsers;
+                        var newAvg = (int) (newUserCountTotal / newSampleCount);
+                        var newPeak = Math.max(rs.getInt("peak_users"), peakUsers);
+                        try (var update = getCon().prepareStatement("UPDATE `" + getPrefix() + "stats_hourly` SET avg_users=?, peak_users=?, messages=?, sample_count=?, user_count_total=? WHERE id=?")) {
                             update.setInt(1, newAvg);
                             update.setInt(2, newPeak);
-                            update.setInt(3, newMsgs);
-                            update.setLong(4, id);
+                            update.setInt(3, messages);
+                            update.setLong(4, newSampleCount);
+                            update.setLong(5, newUserCountTotal);
+                            update.setLong(6, id);
                             update.executeUpdate();
                         }
                     } else {
-                        try (var insert = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "stats_hourly` (`hour_bucket`, `room`, `avg_users`, `peak_users`, `messages`) VALUES (?, ?, ?, ?, ?)")) {
+                        try (var insert = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "stats_hourly` (`hour_bucket`, `room`, `avg_users`, `peak_users`, `messages`, `sample_count`, `user_count_total`) VALUES (?, ?, ?, ?, ?, 1, ?)")) {
                             insert.setString(1, hour);
                             insert.setString(2, room);
                             insert.setInt(3, avgUsers);
                             insert.setInt(4, peakUsers);
                             insert.setInt(5, messages);
+                            insert.setInt(6, avgUsers);
                             insert.executeUpdate();
                         }
                     }
@@ -3692,32 +3793,33 @@ public class Database {
             }
             migrateStatsTables();
             var day = new java.text.SimpleDateFormat("yyyy-MM-dd").format(new java.util.Date());
-            try (var check = getCon().prepareStatement("SELECT id, avg_users, peak_users, messages FROM `" + getPrefix() + "stats_daily` WHERE day_bucket=? AND room=?")) {
+            try (var check = getCon().prepareStatement("SELECT id, sample_count, user_count_total, peak_users FROM `" + getPrefix() + "stats_daily` WHERE day_bucket=? AND room=?")) {
                 check.setString(1, day);
                 check.setString(2, room);
                 try (var rs = check.executeQuery()) {
                     if (rs.next()) {
                         var id = rs.getLong("id");
-                        var oldAvg = rs.getInt("avg_users");
-                        var oldPeak = rs.getInt("peak_users");
-                        var oldMsgs = rs.getInt("messages");
-                        var newAvg = (oldAvg + avgUsers) / 2;
-                        var newPeak = Math.max(oldPeak, peakUsers);
-                        var newMsgs = messages;
-                        try (var update = getCon().prepareStatement("UPDATE `" + getPrefix() + "stats_daily` SET avg_users=?, peak_users=?, messages=? WHERE id=?")) {
+                        var newSampleCount = rs.getLong("sample_count") + 1;
+                        var newUserCountTotal = rs.getLong("user_count_total") + avgUsers;
+                        var newAvg = (int) (newUserCountTotal / newSampleCount);
+                        var newPeak = Math.max(rs.getInt("peak_users"), peakUsers);
+                        try (var update = getCon().prepareStatement("UPDATE `" + getPrefix() + "stats_daily` SET avg_users=?, peak_users=?, messages=?, sample_count=?, user_count_total=? WHERE id=?")) {
                             update.setInt(1, newAvg);
                             update.setInt(2, newPeak);
-                            update.setInt(3, newMsgs);
-                            update.setLong(4, id);
+                            update.setInt(3, messages);
+                            update.setLong(4, newSampleCount);
+                            update.setLong(5, newUserCountTotal);
+                            update.setLong(6, id);
                             update.executeUpdate();
                         }
                     } else {
-                        try (var insert = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "stats_daily` (`day_bucket`, `room`, `avg_users`, `peak_users`, `messages`) VALUES (?, ?, ?, ?, ?)")) {
+                        try (var insert = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "stats_daily` (`day_bucket`, `room`, `avg_users`, `peak_users`, `messages`, `sample_count`, `user_count_total`) VALUES (?, ?, ?, ?, ?, 1, ?)")) {
                             insert.setString(1, day);
                             insert.setString(2, room);
                             insert.setInt(3, avgUsers);
                             insert.setInt(4, peakUsers);
                             insert.setInt(5, messages);
+                            insert.setInt(6, avgUsers);
                             insert.executeUpdate();
                         }
                     }
@@ -3735,32 +3837,33 @@ public class Database {
             }
             migrateStatsTables();
             var month = new java.text.SimpleDateFormat("yyyy-MM").format(new java.util.Date());
-            try (var check = getCon().prepareStatement("SELECT id, avg_users, peak_users, messages FROM `" + getPrefix() + "stats_monthly` WHERE month_bucket=? AND room=?")) {
+            try (var check = getCon().prepareStatement("SELECT id, sample_count, user_count_total, peak_users FROM `" + getPrefix() + "stats_monthly` WHERE month_bucket=? AND room=?")) {
                 check.setString(1, month);
                 check.setString(2, room);
                 try (var rs = check.executeQuery()) {
                     if (rs.next()) {
                         var id = rs.getLong("id");
-                        var oldAvg = rs.getInt("avg_users");
-                        var oldPeak = rs.getInt("peak_users");
-                        var oldMsgs = rs.getInt("messages");
-                        var newAvg = (oldAvg + avgUsers) / 2;
-                        var newPeak = Math.max(oldPeak, peakUsers);
-                        var newMsgs = messages;
-                        try (var update = getCon().prepareStatement("UPDATE `" + getPrefix() + "stats_monthly` SET avg_users=?, peak_users=?, messages=? WHERE id=?")) {
+                        var newSampleCount = rs.getLong("sample_count") + 1;
+                        var newUserCountTotal = rs.getLong("user_count_total") + avgUsers;
+                        var newAvg = (int) (newUserCountTotal / newSampleCount);
+                        var newPeak = Math.max(rs.getInt("peak_users"), peakUsers);
+                        try (var update = getCon().prepareStatement("UPDATE `" + getPrefix() + "stats_monthly` SET avg_users=?, peak_users=?, messages=?, sample_count=?, user_count_total=? WHERE id=?")) {
                             update.setInt(1, newAvg);
                             update.setInt(2, newPeak);
-                            update.setInt(3, newMsgs);
-                            update.setLong(4, id);
+                            update.setInt(3, messages);
+                            update.setLong(4, newSampleCount);
+                            update.setLong(5, newUserCountTotal);
+                            update.setLong(6, id);
                             update.executeUpdate();
                         }
                     } else {
-                        try (var insert = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "stats_monthly` (`month_bucket`, `room`, `avg_users`, `peak_users`, `messages`) VALUES (?, ?, ?, ?, ?)")) {
+                        try (var insert = getCon().prepareStatement("INSERT INTO `" + getPrefix() + "stats_monthly` (`month_bucket`, `room`, `avg_users`, `peak_users`, `messages`, `sample_count`, `user_count_total`) VALUES (?, ?, ?, ?, ?, 1, ?)")) {
                             insert.setString(1, month);
                             insert.setString(2, room);
                             insert.setInt(3, avgUsers);
                             insert.setInt(4, peakUsers);
                             insert.setInt(5, messages);
+                            insert.setInt(6, avgUsers);
                             insert.executeUpdate();
                         }
                     }
@@ -3799,7 +3902,7 @@ public class Database {
                 connectDatabase();
             }
             migrateStatsTables();
-            try (var statement = getCon().prepareStatement("SELECT hour_bucket, room, avg_users, peak_users, messages FROM `" + getPrefix() + "stats_hourly` ORDER BY hour_bucket DESC LIMIT 48")) {
+            try (var statement = getCon().prepareStatement("SELECT hour_bucket, room, avg_users, peak_users, messages FROM `" + getPrefix() + "stats_hourly` WHERE room = '' ORDER BY hour_bucket DESC LIMIT 48")) {
                 try (var rs = statement.executeQuery()) {
                     while (rs.next()) {
                         var map = new java.util.HashMap<String, Object>();
@@ -3825,7 +3928,7 @@ public class Database {
                 connectDatabase();
             }
             migrateStatsTables();
-            try (var statement = getCon().prepareStatement("SELECT day_bucket, room, avg_users, peak_users, messages FROM `" + getPrefix() + "stats_daily` ORDER BY day_bucket DESC LIMIT 30")) {
+            try (var statement = getCon().prepareStatement("SELECT day_bucket, room, avg_users, peak_users, messages FROM `" + getPrefix() + "stats_daily` WHERE room = '' ORDER BY day_bucket DESC LIMIT 30")) {
                 try (var rs = statement.executeQuery()) {
                     while (rs.next()) {
                         var map = new java.util.HashMap<String, Object>();
@@ -3851,7 +3954,7 @@ public class Database {
                 connectDatabase();
             }
             migrateStatsTables();
-            try (var statement = getCon().prepareStatement("SELECT month_bucket, room, avg_users, peak_users, messages FROM `" + getPrefix() + "stats_monthly` ORDER BY month_bucket DESC LIMIT 12")) {
+            try (var statement = getCon().prepareStatement("SELECT month_bucket, room, avg_users, peak_users, messages FROM `" + getPrefix() + "stats_monthly` WHERE room = '' ORDER BY month_bucket DESC LIMIT 12")) {
                 try (var rs = statement.executeQuery()) {
                     while (rs.next()) {
                         var map = new java.util.HashMap<String, Object>();
@@ -3901,7 +4004,8 @@ public class Database {
                 connectDatabase();
             }
             migrateStatsTables();
-            try (var statement = getCon().prepareStatement("SELECT room, COUNT(*) as msg_count, COUNT(DISTINCT sender) as users FROM `" + getPrefix() + "chat_history` WHERE timestamp > UNIX_TIMESTAMP(NOW() - INTERVAL 30 DAY) AND type = 'public' GROUP BY room ORDER BY msg_count DESC LIMIT 10")) {
+            try (var statement = getCon().prepareStatement("SELECT room, COUNT(*) as msg_count, COUNT(DISTINCT sender) as users FROM `" + getPrefix() + "chat_history` WHERE timestamp > ? AND type = 'public' GROUP BY room ORDER BY msg_count DESC LIMIT 10")) {
+                statement.setLong(1, currentTimeMillis() - 30L * 24 * 60 * 60 * 1000);
                 try (var rs = statement.executeQuery()) {
                     while (rs.next()) {
                         var map = new java.util.HashMap<String, Object>();

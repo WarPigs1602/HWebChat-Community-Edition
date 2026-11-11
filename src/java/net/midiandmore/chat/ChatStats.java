@@ -43,13 +43,13 @@ public class ChatStats {
             db.recordPeak(getCurrentPeakUsers(), getCurrentPeakRoom());
             setLastPeakRecord(now);
         }
-        long hourlySince = Math.max(0, now - 60000);
-        java.util.Map<String, Integer> hourlyMsgs = db.getChatMessageCountsSince(hourlySince);
         java.util.Calendar cal = java.util.Calendar.getInstance();
-        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
         cal.set(java.util.Calendar.MINUTE, 0);
         cal.set(java.util.Calendar.SECOND, 0);
         cal.set(java.util.Calendar.MILLISECOND, 0);
+        long hourlySince = cal.getTimeInMillis();
+        java.util.Map<String, Integer> hourlyMsgs = db.getChatMessageCountsSince(hourlySince);
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
         long dailySince = cal.getTimeInMillis();
         java.util.Map<String, Integer> dailyMsgs = db.getChatMessageCountsSince(dailySince);
         cal.set(java.util.Calendar.DAY_OF_MONTH, 1);
@@ -62,6 +62,12 @@ public class ChatStats {
             db.upsertDaily(room, users, users, dailyMsgs.getOrDefault(room, 0));
             db.upsertMonthly(room, users, users, monthlyMsgs.getOrDefault(room, 0));
         }
+        int totalHourlyMsgs = hourlyMsgs.values().stream().mapToInt(Integer::intValue).sum();
+        int totalDailyMsgs = dailyMsgs.values().stream().mapToInt(Integer::intValue).sum();
+        int totalMonthlyMsgs = monthlyMsgs.values().stream().mapToInt(Integer::intValue).sum();
+        db.upsertHourly("", totalUsers, totalUsers, totalHourlyMsgs);
+        db.upsertDaily("", totalUsers, totalUsers, totalDailyMsgs);
+        db.upsertMonthly("", totalUsers, totalUsers, totalMonthlyMsgs);
     }
 
     protected Bootstrap getMaster() {

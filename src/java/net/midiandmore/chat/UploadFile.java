@@ -52,7 +52,8 @@ public class UploadFile extends HttpServlet {
 
             var db = co.getDb();
             var nick = (String) request.getSession().getAttribute("nick");
-            var community = request.getSession().getAttribute("community") != null;
+            var community = useCommunityTemplate(request.getSession().getAttribute("community") != null,
+                    map.get("upload_context"));
             if (contentType == null || !contentType.toLowerCase().startsWith("image/")) {
                 if (community) {
                     cs.printTemplate("picture_not_picture_com", request, response, map);
@@ -85,10 +86,27 @@ public class UploadFile extends HttpServlet {
             }
 
         } catch (IOException ex) {
-            var err = cs.getTemplate("picture_error", request, map);
+            var community = useCommunityTemplate(request.getSession().getAttribute("community") != null,
+                    map.get("upload_context"));
+            var err = cs.getTemplate(community ? "picture_error_com" : "picture_error", request, map);
             err = err.replace("%message%", ex.getLocalizedMessage());
             out.println(err);
         }
+    }
+
+    static boolean useCommunityTemplate(boolean community, String uploadContext) {
+        return community && !"chat".equals(uploadContext);
+    }
+
+    static String markChatUploadForm(String template) {
+        var form = java.util.regex.Pattern.compile("<form\\b[^>]*>", java.util.regex.Pattern.CASE_INSENSITIVE)
+                .matcher(template);
+        if (!form.find()) {
+            throw new IllegalStateException("Profile picture upload template does not contain a form");
+        }
+        return template.substring(0, form.end())
+                + "<input type=\"hidden\" name=\"upload_context\" value=\"chat\">"
+                + template.substring(form.end());
     }
 
     @Override

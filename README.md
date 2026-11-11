@@ -15,7 +15,7 @@ Web-based community chat (Jakarta EE / WebSocket) for Apache Tomcat.
 - Moderation (kick, ban, gag, …)
 - Admin console, communities / napping rooms
 - Skins and templates under `~/.homewebcom` (`native` German, `native_en` English)
-- MySQL / MariaDB storage
+- MySQL / MariaDB, PostgreSQL, or SQLite storage
 
 ---
 
@@ -26,7 +26,7 @@ Web-based community chat (Jakarta EE / WebSocket) for Apache Tomcat.
 | **JDK** | **21** (source/target in `pom.xml`) |
 | **Maven** | 3.8+ |
 | **Apache Tomcat** | 10.1+ (Jakarta EE 9+, Servlet 6 / WebSocket) |
-| **MySQL or MariaDB** | 10.6+ recommended |
+| **Database** | MySQL/MariaDB 10.6+, PostgreSQL, or SQLite |
 | **Config home** | `~/.homewebcom` (user home of the Tomcat process user) |
 
 ---
@@ -133,13 +133,19 @@ Templates/config under `~/.homewebcom` are **not** inside the WAR — edit them 
 | Path | Purpose |
 |------|---------|
 | `~/.homewebcom/config/config.json` | Main settings (SQL, timeouts, status levels, …) |
-| `~/.homewebcom/config/hosts.json` | Virtual host → skin |
+| `~/.homewebcom/config/hosts.json` | Virtual Host → skin |
 | `~/.homewebcom/config/commands.json` | Chat command texts |
 | `~/.homewebcom/config/paths.json` | URL path names |
 | `~/.homewebcom/templates/native/` | German skin (HTML, JS, CSS) |
 | `~/.homewebcom/templates/native_en/` | English skin (HTML, JS, CSS) |
 
+The setup wizard supports all three database backends. SQLite is the default. For manual configuration, set `sql.type` to `sqlite`, `mysql`, or `postgresql`. PostgreSQL uses `sql.host` (`host:port`), `sql.db`, `sql.user`, and `sql.pw`; `pgcrypto` must be installed in the database (the setup wizard attempts to install it). SQLite uses `sql.path`, defaulting to `~/.homewebcom/data/hwebchat.sqlite`; `sql.user` and `sql.pw` are ignored.
+
 The repo copy `web/default-homewebcom/` is a template; on first start the app creates `~/.homewebcom` automatically and copies all files from there.
+
+Pages embedded in a chat tab hide their own navigation bar; it remains visible outside the chat tab. This also applies to previously copied page designs with a `nav.navbar` directly inside `body`.
+
+Public and community pages select their navigation according to the active community session: registered user, guest, or signed out. Expired sessions receive the public navigation.
 
 ---
 

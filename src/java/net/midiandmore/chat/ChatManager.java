@@ -2057,18 +2057,8 @@ public final class ChatManager {
         db.eraseExpiredBans();
         for (var u : getUsers().values()) {
             try {
-                var timer = u.getTimer();
                 var timeoutTimer = u.getTimeoutTimer();
-                if (timer == 60) {
-                    if (db.isRegistered(u.getName())) {
-                        db.updateNick(u.getName(), "points", String.valueOf(Integer.parseInt(db.getData(u.getName(), "points")) + 1));
-                        db.updateLoginTime(u.getName());
-                    }
-                    timer = 0;
-                } else {
-                    timer = timer + 1;
-                }
-                u.setTimer(timer);
+                updateUserPoints(db, u);
                 if (u.getSession() != null && u.getSession().isOpen()) {
                     if (timeoutTimer == conf.getLong("timeout")) {
                         timeout(u);
@@ -2080,11 +2070,12 @@ public final class ChatManager {
                     }
                     timeoutTimer = timeoutTimer + 1;
                     u.setTimeoutTimer(timeoutTimer);
-                    getUsersCommunity().get(u.getNewName()).setTimeoutTimer(0);
+                    resetCommunityTimeout(u);
                 } else {
                     quit(u.getName());
                 }
             } catch (IOException | IllegalArgumentException ex) {
+                logError(ex);
             }
         }
         for (UsersPrivchat u : getUsersPrivchat().values()) {
@@ -2126,6 +2117,31 @@ public final class ChatManager {
             }
         }
         gc();
+    }
+
+    static void updateUserPoints(Database db, Users user) {
+        var timer = user.getTimer();
+        if (timer == 60) {
+            if (db.isRegistered(user.getName().toLowerCase())) {
+                db.updateNick(user.getName(), "points", String.valueOf(Integer.parseInt(db.getData(user.getName(), "points")) + 1));
+                db.updateLoginTime(user.getName());
+            }
+            timer = 0;
+        } else {
+            timer++;
+        }
+        user.setTimer(timer);
+    }
+
+    void resetCommunityTimeout(Users user) {
+        var newName = user.getNewName();
+        var community = newName == null ? null : getUsersCommunity().get(newName);
+        if (community == null) {
+            community = getUsersCommunity().get(user.getName());
+        }
+        if (community != null) {
+            community.setTimeoutTimer(0);
+        }
     }
 
     /**

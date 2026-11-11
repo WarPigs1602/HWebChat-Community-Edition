@@ -26,14 +26,6 @@ import static java.sql.DriverManager.getConnection;
 
 public class SetupServlet extends HttpServlet {
 
-    static {
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-        } catch (ClassNotFoundException cnfe) {
-            logError(cnfe);
-        }
-    }
-
     private String getHomeWebCom() {
         return getProperty("user.home") + getProperty("file.separator") + ".homewebcom";
     }
@@ -175,7 +167,7 @@ public class SetupServlet extends HttpServlet {
         pw.print("</div></body></html>");
     }
 
-    private String renderSetupForm(String error,
+    private String renderSetupForm(String error, String dbType, String sqlitePath,
                                    String dbHost, String dbPort, String dbName, String dbUser, String dbPassword, String dbPrefix,
                                    String smtpHost, String smtpPort, String smtpUser, String smtpPassword, String smtpFrom,
                                    String smtpAuth, String smtpStarttls, String smtpSslFactory,
@@ -188,11 +180,13 @@ public class SetupServlet extends HttpServlet {
         }
         sb.append("<form method=\"POST\" action=\"\">");
         sb.append("<div class=\"section\"><div class=\"section-title\"><span class=\"icon\">🗄️</span> Database</div><div class=\"form-grid\">");
-        sb.append("<div class=\"form-group\"><label for=\"db_host\">Database host *</label><input type=\"text\" id=\"db_host\" name=\"db_host\" value=\"").append(escape(dbHost)).append("\" required></div>");
-        sb.append("<div class=\"form-group\"><label for=\"db_port\">Database port *</label><input type=\"text\" id=\"db_port\" name=\"db_port\" value=\"").append(escape(dbPort)).append("\" required></div>");
-        sb.append("<div class=\"form-group\"><label for=\"db_name\">Database name *</label><input type=\"text\" id=\"db_name\" name=\"db_name\" value=\"").append(escape(dbName)).append("\" required></div>");
-        sb.append("<div class=\"form-group\"><label for=\"db_user\">Database user *</label><input type=\"text\" id=\"db_user\" name=\"db_user\" value=\"").append(escape(dbUser)).append("\" required></div>");
-        sb.append("<div class=\"form-group\"><label for=\"db_password\">Database password *</label><input type=\"password\" id=\"db_password\" name=\"db_password\" value=\"").append(escape(dbPassword)).append("\" required></div>");
+        sb.append("<div class=\"form-group\"><label for=\"db_type\">Database type *</label><select id=\"db_type\" name=\"db_type\"><option value=\"mysql\"").append("mysql".equals(dbType) ? " selected" : "").append(">MySQL</option><option value=\"postgresql\"").append("postgresql".equals(dbType) ? " selected" : "").append(">PostgreSQL</option><option value=\"sqlite\"").append("sqlite".equals(dbType) ? " selected" : "").append(">SQLite</option></select></div>");
+        sb.append("<div class=\"form-group db-server\"><label for=\"db_host\">Database host *</label><input type=\"text\" id=\"db_host\" name=\"db_host\" value=\"").append(escape(dbHost)).append("\"></div>");
+        sb.append("<div class=\"form-group db-server\"><label for=\"db_port\">Database port *</label><input type=\"text\" id=\"db_port\" name=\"db_port\" value=\"").append(escape(dbPort)).append("\"></div>");
+        sb.append("<div class=\"form-group db-server\"><label for=\"db_name\">Database name *</label><input type=\"text\" id=\"db_name\" name=\"db_name\" value=\"").append(escape(dbName)).append("\"></div>");
+        sb.append("<div class=\"form-group db-server\"><label for=\"db_user\">Database user *</label><input type=\"text\" id=\"db_user\" name=\"db_user\" value=\"").append(escape(dbUser)).append("\"></div>");
+        sb.append("<div class=\"form-group db-server\"><label for=\"db_password\">Database password *</label><input type=\"password\" id=\"db_password\" name=\"db_password\" value=\"").append(escape(dbPassword)).append("\"></div>");
+        sb.append("<div class=\"form-group db-sqlite\"><label for=\"sqlite_path\">SQLite database file</label><input type=\"text\" id=\"sqlite_path\" name=\"sqlite_path\" value=\"").append(escape(sqlitePath)).append("\"><div class=\"hint\">Leave blank to use ~/.homewebcom/data/hwebchat.sqlite</div></div>");
         sb.append("<div class=\"form-group\"><label for=\"db_prefix\">Table prefix</label><input type=\"text\" id=\"db_prefix\" name=\"db_prefix\" value=\"").append(escape(dbPrefix)).append("\"></div>");
         sb.append("</div></div>");
         sb.append("<div class=\"section\"><div class=\"section-title\"><span class=\"icon\">📧</span> E-Mail / SMTP</div><div class=\"form-grid\">");
@@ -231,22 +225,46 @@ public class SetupServlet extends HttpServlet {
         sb.append("</div></div>");
         sb.append("<button type=\"submit\" class=\"btn-submit\">🚀 Complete setup and start chat</button>");
         sb.append("</form>");
+        sb.append("<script>(function(){var type=document.getElementById('db_type');function update(){var sqlite=type.value==='sqlite';document.querySelectorAll('.db-server').forEach(function(e){e.hidden=sqlite;e.querySelector('input').required=!sqlite;});document.querySelectorAll('.db-sqlite').forEach(function(e){e.hidden=!sqlite;});}type.addEventListener('change',update);update();})();</script>");
         return sb.toString();
     }
 
-    private boolean testDatabaseConnection(String dbHost, String dbPort, String dbName, String dbUser, String dbPassword) {
-        var url = "jdbc:mysql://" + dbHost + ":" + dbPort + "/" + dbName + "?user=" + dbUser + "&password=" + dbPassword + "&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC";
-        try (var con = getConnection(url)) {
+    private Connection openDatabaseConnection(SqlDialect.Type type, String dbHost, String dbPort, String dbName,
+                                               String dbUser, String dbPassword, String sqlitePath) throws SQLException, ClassNotFoundException, IOException {
+        Class.forName(type.driverClass());
+        var url = switch (type) {
+            case MYSQL -> "jdbc:mysql://" + dbHost + ":" + dbPort + "/" + dbName + "?useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC";
+            case POSTGRESQL -> "jdbc:postgresql://" + dbHost + ":" + dbPort + "/" + dbName;
+            case SQLITE -> "jdbc:sqlite:" + sqlitePath;
+        };
+        if (type == SqlDialect.Type.SQLITE) {
+            var parent = new File(sqlitePath).toPath().toAbsolutePath().getParent();
+            if (parent != null) {
+                java.nio.file.Files.createDirectories(parent);
+            }
+            var connection = getConnection(url);
+            SqlDialect.initialize(connection, type);
+            return SqlDialect.wrap(connection, type);
+        }
+        var connection = getConnection(url, dbUser, dbPassword);
+        SqlDialect.ensurePostgresqlExtensions(connection, type);
+        SqlDialect.initialize(connection, type);
+        return SqlDialect.wrap(connection, type);
+    }
+
+    private boolean testDatabaseConnection(SqlDialect.Type type, String dbHost, String dbPort, String dbName,
+                                            String dbUser, String dbPassword, String sqlitePath) {
+        try (var con = openDatabaseConnection(type, dbHost, dbPort, dbName, dbUser, dbPassword, sqlitePath)) {
             return con.isValid(1000);
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException | IOException e) {
             logError(e);
             return false;
         }
     }
 
-    private void createDatabaseTables(String dbHost, String dbPort, String dbName, String dbUser, String dbPassword, String dbPrefix) {
-        var url = "jdbc:mysql://" + dbHost + ":" + dbPort + "/" + dbName + "?user=" + dbUser + "&password=" + dbPassword + "&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC";
-        try (var con = getConnection(url)) {
+    private void createDatabaseTables(SqlDialect.Type type, String dbHost, String dbPort, String dbName, String dbUser,
+                                      String dbPassword, String sqlitePath, String dbPrefix) {
+        try (var con = openDatabaseConnection(type, dbHost, dbPort, dbName, dbUser, dbPassword, sqlitePath)) {
             var stmt = con.createStatement();
              stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "users` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `nick` varchar(255) DEFAULT NULL, `nick2` varchar(255) DEFAULT NULL, `pwd` varchar(255) DEFAULT NULL, `pwd2` varchar(255) NOT NULL DEFAULT '', `mail` varchar(255) DEFAULT NULL, `sex` char(1) NOT NULL DEFAULT '-', `reminder` varchar(255) DEFAULT NULL, `answer` varchar(255) DEFAULT NULL, `homepage` varchar(255) DEFAULT NULL, `image_url` varchar(255) DEFAULT NULL, `image_upload` longblob DEFAULT NULL, `city` varchar(255) DEFAULT NULL, `hobby` varchar(255) DEFAULT NULL, `status` int(11) NOT NULL DEFAULT 1, `points` int(11) NOT NULL DEFAULT 0, `timestamp_reg` bigint(20) NOT NULL DEFAULT 0, `timestamp_login` bigint(20) NOT NULL DEFAULT 0, `bday_day` tinyint(4) NOT NULL DEFAULT 1, `bday_month` tinyint(4) NOT NULL DEFAULT 1, `bday_year` int(11) NOT NULL DEFAULT 1970, `login_room` varchar(255) NOT NULL DEFAULT 'Lounge', `description` varchar(255) DEFAULT NULL, `slogan` varchar(255) DEFAULT NULL, `signature` text DEFAULT NULL, `ignore` text DEFAULT NULL, `sv` int(11) NOT NULL DEFAULT 0, `icq` varchar(255) DEFAULT NULL, `live` varchar(255) DEFAULT NULL, `yahoo` varchar(255) DEFAULT NULL, `facebook` varchar(255) DEFAULT NULL, `twitter` varchar(255) DEFAULT NULL, `irc` varchar(255) DEFAULT NULL, `youtube` varchar(255) DEFAULT NULL, `visitors` text DEFAULT NULL, `color` varchar(7) DEFAULT '000000', `fam_status` varchar(255) DEFAULT NULL, `moderator` tinyint(1) NOT NULL DEFAULT 0, `instagram` varchar(255) DEFAULT '', `linkedin` varchar(255) DEFAULT '', `tiktok` varchar(255) DEFAULT '', `discord` varchar(255) DEFAULT '', `twitch` varchar(255) DEFAULT '', `github` varchar(255) DEFAULT '', `reddit` varchar(255) DEFAULT '', `snapchat` varchar(255) DEFAULT '', `pinterest` varchar(255) DEFAULT '', `whatsapp` varchar(255) DEFAULT '', `telegram` varchar(255) DEFAULT '', PRIMARY KEY (`id`), UNIQUE KEY `nick` (`nick`), UNIQUE KEY `nick2` (`nick2`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "session` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `nick` varchar(255) NOT NULL, `session` varchar(255) NOT NULL, `room` varchar(255) NOT NULL, `color` varchar(255) NOT NULL, `away_status` varchar(255) NOT NULL, `away_reason` varchar(255) NOT NULL, `gag` varchar(255) NOT NULL, `status` varchar(255) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
@@ -261,21 +279,21 @@ public class SetupServlet extends HttpServlet {
              stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "guestbook` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `owner` varchar(255) NOT NULL, `sender` varchar(255) NOT NULL, `text` text NOT NULL, `time` bigint(20) NOT NULL, PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
              stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "chat_history` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `room` varchar(255) NOT NULL, `sender` varchar(255) NOT NULL, `target` varchar(255) DEFAULT NULL, `text` text NOT NULL, `timestamp` bigint(20) NOT NULL, `type` varchar(20) NOT NULL DEFAULT 'public', PRIMARY KEY (`id`), KEY `idx_room` (`room`), KEY `idx_sender` (`sender`), KEY `idx_timestamp` (`timestamp`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
              stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "stats_peaks` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `date` date NOT NULL, `peak_users` int(11) NOT NULL DEFAULT 0, `peak_room` varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (`id`), UNIQUE KEY `date` (`date`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "stats_hourly` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `hour_bucket` datetime NOT NULL, `room` varchar(255) NOT NULL, `avg_users` int(11) NOT NULL DEFAULT 0, `peak_users` int(11) NOT NULL DEFAULT 0, `messages` int(11) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `hour_room` (`hour_bucket`(6), `room`(100))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "stats_daily` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `day_bucket` date NOT NULL, `room` varchar(255) NOT NULL, `avg_users` int(11) NOT NULL DEFAULT 0, `peak_users` int(11) NOT NULL DEFAULT 0, `messages` int(11) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `day_room` (`day_bucket`, `room`(100))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "stats_monthly` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `month_bucket` varchar(7) NOT NULL, `room` varchar(255) NOT NULL, `avg_users` int(11) NOT NULL DEFAULT 0, `peak_users` int(11) NOT NULL DEFAULT 0, `messages` int(11) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `month_room` (`month_bucket`, `room`(100))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "stats_hourly` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `hour_bucket` datetime NOT NULL, `room` varchar(255) NOT NULL, `avg_users` int(11) NOT NULL DEFAULT 0, `peak_users` int(11) NOT NULL DEFAULT 0, `messages` int(11) NOT NULL DEFAULT 0, `sample_count` bigint(20) NOT NULL DEFAULT 0, `user_count_total` bigint(20) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `hour_room` (`hour_bucket`, `room`(100))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "stats_daily` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `day_bucket` date NOT NULL, `room` varchar(255) NOT NULL, `avg_users` int(11) NOT NULL DEFAULT 0, `peak_users` int(11) NOT NULL DEFAULT 0, `messages` int(11) NOT NULL DEFAULT 0, `sample_count` bigint(20) NOT NULL DEFAULT 0, `user_count_total` bigint(20) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `day_room` (`day_bucket`, `room`(100))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "stats_monthly` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `month_bucket` varchar(7) NOT NULL, `room` varchar(255) NOT NULL, `avg_users` int(11) NOT NULL DEFAULT 0, `peak_users` int(11) NOT NULL DEFAULT 0, `messages` int(11) NOT NULL DEFAULT 0, `sample_count` bigint(20) NOT NULL DEFAULT 0, `user_count_total` bigint(20) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `month_room` (`month_bucket`, `room`(100))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
              stmt.executeUpdate("CREATE TABLE IF NOT EXISTS `" + dbPrefix + "user_relationships` (`id` bigint(20) NOT NULL AUTO_INCREMENT, `user1` varchar(255) NOT NULL, `user2` varchar(255) NOT NULL, `interaction_count` int(11) NOT NULL DEFAULT 0, `last_interaction` bigint(20) NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `user_pair` (`user1`(100), `user2`(100))) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
              stmt.close();
             out.printf("* Database tables created successfully.\r\n");
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException | IOException e) {
             fatalError(e);
         }
     }
 
-    private void createFirstUser(String dbHost, String dbPort, String dbName, String dbUser, String dbPassword, String dbPrefix,
+    private void createFirstUser(SqlDialect.Type type, String dbHost, String dbPort, String dbName, String dbUser,
+                                 String dbPassword, String sqlitePath, String dbPrefix,
                                  String nick, String password, String mail) {
-        var url = "jdbc:mysql://" + dbHost + ":" + dbPort + "/" + dbName + "?user=" + dbUser + "&password=" + dbPassword + "&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC";
-        try (var con = getConnection(url)) {
+        try (var con = openDatabaseConnection(type, dbHost, dbPort, dbName, dbUser, dbPassword, sqlitePath)) {
             var timestamp = System.currentTimeMillis();
             var salt = password + "$" + timestamp;
             var sql = "INSERT INTO `" + dbPrefix + "users` (`sex`, `nick`, `nick2`, `mail`, `color`, `pwd`, `pwd2`, `reminder`, `answer`, `timestamp_reg`, `timestamp_login`, `bday_day`, `bday_month`, `bday_year`, `status`, `moderator`) VALUES (?, ?, ?, ?, ?, SHA2(?,512), SHA2(?,512), ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -299,15 +317,15 @@ public class SetupServlet extends HttpServlet {
                 statement.executeUpdate();
             }
             out.printf("* First user created successfully.\r\n");
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException | IOException e) {
             fatalError(e);
         }
     }
 
-    private void createDefaultRoom(String dbHost, String dbPort, String dbName, String dbUser, String dbPassword, String dbPrefix,
+    private void createDefaultRoom(SqlDialect.Type type, String dbHost, String dbPort, String dbName, String dbUser,
+                                   String dbPassword, String sqlitePath, String dbPrefix,
                                    String roomName, String topic, int locked, String lockReason, int standard, int allowSmilies, int chatNapping) {
-        var url = "jdbc:mysql://" + dbHost + ":" + dbPort + "/" + dbName + "?user=" + dbUser + "&password=" + dbPassword + "&useUnicode=yes&characterEncoding=UTF-8&serverTimezone=UTC";
-        try (var con = getConnection(url)) {
+        try (var con = openDatabaseConnection(type, dbHost, dbPort, dbName, dbUser, dbPassword, sqlitePath)) {
             var sql = "INSERT INTO `" + dbPrefix + "roomcfg` (`room`, `topic`, `tar`, `locked`, `lock_reason`, `standard`, `allow_smilies`, `chat_napping`, `first_bgcolor`, `second_bgcolor`, `bordercolor`, `textcolor`, `linkcolor`, `page_title`, `mail`, `owner`, `su`) VALUES (?, ?, 0, ?, ?, ?, ?, ?, NULL, NULL, NULL, NULL, NULL, '', NULL, NULL, '')";
             try (var statement = con.prepareStatement(sql)) {
                 statement.setString(1, roomName);
@@ -320,16 +338,17 @@ public class SetupServlet extends HttpServlet {
                 statement.executeUpdate();
             }
             out.printf("* Default room '%s' created successfully.\r\n", roomName);
-        } catch (SQLException e) {
+        } catch (SQLException | ClassNotFoundException | IOException e) {
             logError(e);
         }
     }
 
-    private void createDefaultRooms(String dbHost, String dbPort, String dbName, String dbUser, String dbPassword, String dbPrefix) {
-        createDefaultRoom(dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix, "Development", "", 0, "", 1, 1, 0);
-        createDefaultRoom(dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix, "Exil", "Hier landet der Müll des Chats ;)", 0, "", 1, 0, 0);
-        createDefaultRoom(dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix, "Lounge", "❤️❤️❤️ Herzlich Willkommen im Chat ❤️❤️❤️", 0, "", 1, 1, 0);
-        createDefaultRoom(dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix, "Staff-Lounge", "Nur für Staff-Mitglieder!", 1, "Nur Staff-Mitglieder können diesen Raum betreten...", 1, 1, 0);
+    private void createDefaultRooms(SqlDialect.Type type, String dbHost, String dbPort, String dbName, String dbUser,
+                                    String dbPassword, String sqlitePath, String dbPrefix) {
+        createDefaultRoom(type, dbHost, dbPort, dbName, dbUser, dbPassword, sqlitePath, dbPrefix, "Development", "", 0, "", 1, 1, 0);
+        createDefaultRoom(type, dbHost, dbPort, dbName, dbUser, dbPassword, sqlitePath, dbPrefix, "Exil", "Hier landet der Müll des Chats ;)", 0, "", 1, 0, 0);
+        createDefaultRoom(type, dbHost, dbPort, dbName, dbUser, dbPassword, sqlitePath, dbPrefix, "Lounge", "❤️❤️❤️ Herzlich Willkommen im Chat ❤️❤️❤️", 0, "", 1, 1, 0);
+        createDefaultRoom(type, dbHost, dbPort, dbName, dbUser, dbPassword, sqlitePath, dbPrefix, "Staff-Lounge", "Nur Staff-Mitglieder!", 1, "Nur Staff-Mitglieder können diesen Raum betreten...", 1, 1, 0);
     }
 
     private void saveConfigFile(List<String> lines) {
@@ -374,17 +393,20 @@ public class SetupServlet extends HttpServlet {
         }
     }
 
-    private List<String> buildConfigJson(String dbHost, String dbPort, String dbName, String dbUser, String dbPassword, String dbPrefix,
+    private List<String> buildConfigJson(SqlDialect.Type dbType, String sqlitePath,
+                                         String dbHost, String dbPort, String dbName, String dbUser, String dbPassword, String dbPrefix,
                                          String smtpHost, String smtpPort, String smtpUser, String smtpPassword, String smtpFrom,
                                          String smtpAuth, String smtpStarttls, String smtpSslFactory,
                                          String adminUser, String adminPassword, String adminRealm,
                                          String charset, String timeZone, String skin, String room) {
         var lines = new ArrayList<String>();
         lines.add("[");
-        lines.add("{\"name\":\"sql.host\",\"value\":\"" + escapeJson(dbHost + ":" + dbPort) + "\",\"description\":\"MySQL host\"},");
-        lines.add("{\"name\":\"sql.db\",\"value\":\"" + escapeJson(dbName) + "\",\"description\":\"MySQL database\"},");
-        lines.add("{\"name\":\"sql.user\",\"value\":\"" + escapeJson(dbUser) + "\",\"description\":\"MySQL user\"},");
-        lines.add("{\"name\":\"sql.pw\",\"value\":\"" + escapeJson(dbPassword) + "\",\"description\":\"MySQL password\"},");
+        lines.add("{\"name\":\"sql.type\",\"value\":\"" + dbType.name().toLowerCase(java.util.Locale.ROOT) + "\",\"description\":\"Database type\"},");
+        lines.add("{\"name\":\"sql.path\",\"value\":\"" + escapeJson(sqlitePath) + "\",\"description\":\"SQLite database file\"},");
+        lines.add("{\"name\":\"sql.host\",\"value\":\"" + escapeJson(dbHost + ":" + dbPort) + "\",\"description\":\"Database host\"},");
+        lines.add("{\"name\":\"sql.db\",\"value\":\"" + escapeJson(dbName) + "\",\"description\":\"Database name\"},");
+        lines.add("{\"name\":\"sql.user\",\"value\":\"" + escapeJson(dbUser) + "\",\"description\":\"Database user\"},");
+        lines.add("{\"name\":\"sql.pw\",\"value\":\"" + escapeJson(dbPassword) + "\",\"description\":\"Database password\"},");
         lines.add("{\"name\":\"sql.prefix\",\"value\":\"" + escapeJson(dbPrefix) + "\",\"description\":\"SQL table prefix\"},");
         lines.add("{\"name\":\"time_zone\",\"value\":\"" + escapeJson(timeZone) + "\",\"description\":\"Timezone\"},");
         lines.add("{\"name\":\"charset\",\"value\":\"" + escapeJson(charset) + "\",\"description\":\"Default charset\"},");
@@ -526,12 +548,32 @@ public class SetupServlet extends HttpServlet {
     }
 
     private void doSetup(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        var dbTypeValue = request.getParameter("db_type");
+        SqlDialect.Type dbType;
+        try {
+            dbType = SqlDialect.Type.fromConfig(dbTypeValue);
+        } catch (IllegalArgumentException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unsupported database type.");
+            return;
+        }
+        var sqlitePath = request.getParameter("sqlite_path");
+        if (sqlitePath == null || sqlitePath.isBlank()) {
+            sqlitePath = getHomeWebCom() + getProperty("file.separator") + "data"
+                    + getProperty("file.separator") + "hwebchat.sqlite";
+        }
         var dbHost = request.getParameter("db_host");
         var dbPort = request.getParameter("db_port");
         var dbName = request.getParameter("db_name");
         var dbUser = request.getParameter("db_user");
         var dbPassword = request.getParameter("db_password");
         var dbPrefix = request.getParameter("db_prefix");
+        if (dbPrefix == null) {
+            dbPrefix = "";
+        }
+        if (!dbPrefix.matches("[A-Za-z0-9_]{0,20}")) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "The database prefix may contain only letters, numbers, and underscores (up to 20 characters).");
+            return;
+        }
         var smtpHost = request.getParameter("smtp_host");
         var smtpPort = request.getParameter("smtp_port");
         var smtpUser = request.getParameter("smtp_user");
@@ -551,12 +593,12 @@ public class SetupServlet extends HttpServlet {
         var skin = request.getParameter("skin");
         var room = request.getParameter("room");
 
-        if (dbHost == null || dbHost.isEmpty() || dbPort == null || dbPort.isEmpty() || dbName == null || dbName.isEmpty() ||
-            dbUser == null || dbUser.isEmpty() || dbPassword == null || dbPassword.isEmpty() ||
+        if ((dbType != SqlDialect.Type.SQLITE && (dbHost == null || dbHost.isEmpty() || dbPort == null || dbPort.isEmpty() || dbName == null || dbName.isEmpty() ||
+            dbUser == null || dbUser.isEmpty() || dbPassword == null || dbPassword.isEmpty())) ||
             smtpHost == null || smtpHost.isEmpty() || smtpPort == null || smtpPort.isEmpty() || smtpFrom == null || smtpFrom.isEmpty() ||
             adminUser == null || adminUser.isEmpty() || adminPassword == null || adminPassword.isEmpty() ||
             firstUserNick == null || firstUserNick.isEmpty() || firstUserPassword == null || firstUserPassword.isEmpty() || firstUserEmail == null || firstUserEmail.isEmpty()) {
-            render(request, response, "Setup", renderSetupForm("Please fill in all required fields.",
+            render(request, response, "Setup", renderSetupForm("Please fill in all required fields.", dbType.name().toLowerCase(java.util.Locale.ROOT), sqlitePath,
                 dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix,
                 smtpHost, smtpPort, smtpUser, smtpPassword, smtpFrom,
                 smtpAuth != null ? smtpAuth : "true", smtpStarttls != null ? smtpStarttls : "true", smtpSslFactory != null ? smtpSslFactory : "javax.net.ssl.SSLSocketFactory",
@@ -566,8 +608,8 @@ public class SetupServlet extends HttpServlet {
             return;
         }
 
-        if (!testDatabaseConnection(dbHost, dbPort, dbName, dbUser, dbPassword)) {
-            render(request, response, "Setup", renderSetupForm("Database connection failed. Please check your credentials.",
+        if (!testDatabaseConnection(dbType, dbHost, dbPort, dbName, dbUser, dbPassword, sqlitePath)) {
+            render(request, response, "Setup", renderSetupForm("Database connection failed. Please check your credentials.", dbType.name().toLowerCase(java.util.Locale.ROOT), sqlitePath,
                 dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix,
                 smtpHost, smtpPort, smtpUser, smtpPassword, smtpFrom,
                 smtpAuth != null ? smtpAuth : "true", smtpStarttls != null ? smtpStarttls : "true", smtpSslFactory != null ? smtpSslFactory : "javax.net.ssl.SSLSocketFactory",
@@ -584,12 +626,12 @@ public class SetupServlet extends HttpServlet {
         }
         copyServletResources("/default-homewebcom", baseDir);
 
-        createDatabaseTables(dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix);
-        createFirstUser(dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix, firstUserNick, firstUserPassword, firstUserEmail);
-        createDefaultRooms(dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix);
+        createDatabaseTables(dbType, dbHost, dbPort, dbName, dbUser, dbPassword, sqlitePath, dbPrefix);
+        createFirstUser(dbType, dbHost, dbPort, dbName, dbUser, dbPassword, sqlitePath, dbPrefix, firstUserNick, firstUserPassword, firstUserEmail);
+        createDefaultRooms(dbType, dbHost, dbPort, dbName, dbUser, dbPassword, sqlitePath, dbPrefix);
 
         var configJson = buildConfigJson(
-            dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix.isEmpty() ? "hwc_" : dbPrefix,
+            dbType, sqlitePath, dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix.isEmpty() ? "hwc_" : dbPrefix,
             smtpHost, smtpPort, smtpUser, smtpPassword, smtpFrom,
             smtpAuth != null ? smtpAuth : "true", smtpStarttls != null ? smtpStarttls : "true", smtpSslFactory != null ? smtpSslFactory : "javax.net.ssl.SSLSocketFactory",
             adminUser, adminPassword, adminRealm != null ? adminRealm : "Console",
@@ -606,7 +648,7 @@ public class SetupServlet extends HttpServlet {
                                    smtpAuth != null ? smtpAuth : "true", smtpStarttls != null ? smtpStarttls : "true", smtpSslFactory != null ? smtpSslFactory : "javax.net.ssl.SSLSocketFactory",
                                    firstUserEmail);
         } catch (MessagingException e) {
-            render(request, response, "Setup", renderSetupForm("SMTP test failed: " + e.getMessage(),
+            render(request, response, "Setup", renderSetupForm("SMTP test failed: " + e.getMessage(), dbType.name().toLowerCase(java.util.Locale.ROOT), sqlitePath,
                 dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix,
                 smtpHost, smtpPort, smtpUser, smtpPassword, smtpFrom,
                 smtpAuth != null ? smtpAuth : "true", smtpStarttls != null ? smtpStarttls : "true", smtpSslFactory != null ? smtpSslFactory : "javax.net.ssl.SSLSocketFactory",
@@ -646,7 +688,7 @@ public class SetupServlet extends HttpServlet {
             render(request, response, "Setup already completed", "<h1>Setup already completed</h1><p>Configuration has already been performed. The chat is available at <a href=\"" + request.getContextPath() + "/Start\">" + request.getContextPath() + "/Start</a>.</p>");
             return;
         }
-        render(request, response, "Setup", renderSetupForm(null,
+        render(request, response, "Setup", renderSetupForm(null, "sqlite", "",
             "localhost", "3306", "hwebchat", "user", "password", "hwc_",
             "smtp.example.org", "465", "foo@bar", "password", "foo@bar",
             "true", "true", "javax.net.ssl.SSLSocketFactory",

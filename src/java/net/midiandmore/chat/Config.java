@@ -71,13 +71,13 @@ public final class Config {
             setFs(getProperty("file.separator"));
             setUh(getProperty("user.home"));
             setP(new Properties());
-            out.printf("Done.\r\n* Loading MySQL driver: ");
+            out.printf("Done.\r\n* Loading SQL driver: ");
             setDb(new Database(getMaster()));
             out.printf("Done.\r\n* Loading system configuration ");
             setP(loadDataFromJSONasProperties("config.json", "name", "value"));
             out.printf("Done.\r\n* Merging missing default configuration ");
             mergeMissingDefaults();
-            out.printf("Done.\r\n* Loading MySQL configuration: ");
+            out.printf("Done.\r\n* Loading database configuration: ");
             getDb().loadConfig(getP());
             out.printf("Done.\r\n* Loading permanent bans: ");
             getDb().loadBans(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());

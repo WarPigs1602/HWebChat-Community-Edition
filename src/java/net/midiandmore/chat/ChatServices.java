@@ -1214,7 +1214,7 @@ public class ChatServices {
         var db = co.getDb();
         byte[] picture = null;
         String contentType = "image/png";
-        if (!nick.isEmpty() && db.isRegistered(nick)) {
+        if (!nick.isEmpty() && db.isRegistered(nick.toLowerCase())) {
             picture = db.getPicture(nick);
             if (picture != null && picture.length > 0) {
                 var dbContentType = db.getData(nick, "image_url");
@@ -1241,6 +1241,7 @@ public class ChatServices {
                 picture = new byte[0];
             }
         }
+        response.setHeader("Cache-Control", "no-cache");
         response.setContentType(contentType);
         response.setContentLength(picture.length);
         try (OutputStream out = response.getOutputStream()) {
@@ -2659,10 +2660,10 @@ public class ChatServices {
                 text = getTemplate("boards_locked", request, map);
             } else {
                 ref = db.getBoard(Long.valueOf(pid), "ref");
-                db.addThread(map.getOrDefault("topic", ""), map.getOrDefault("thread", ""), Long.valueOf(ref), Long.valueOf(db.getData(nick, "id")), 0, ip, Long.valueOf(bid));
+                var newPostId = db.addThread(map.getOrDefault("topic", ""), map.getOrDefault("thread", ""), Long.valueOf(ref), Long.valueOf(db.getData(nick, "id")), 0, ip, Long.valueOf(bid));
                 text = getTemplate("boards_added", request, map);
                 text = text.replace("%id%", bid);
-                pid = String.valueOf(db.getBoardId());
+                pid = String.valueOf(newPostId);
                 text = text.replace("%pid%", pid);
             }
         } else if (!editBoards.isBlank()) {
@@ -3051,9 +3052,9 @@ public class ChatServices {
                     text = getTemplate("boards_add", request, map);
                     text = text.replace("%id%", bid);
                 } else {
-                    db.addThread(map.getOrDefault("topic", ""), map.getOrDefault("thread", ""), 0, Long.valueOf(db.getData(nick, "id")), 0, ip, Long.valueOf(bid));
+                    var newPostId = db.addThread(map.getOrDefault("topic", ""), map.getOrDefault("thread", ""), 0, Long.valueOf(db.getData(nick, "id")), 0, ip, Long.valueOf(bid));
                     text = getTemplate("boards_added", request, map);
-                    pid = String.valueOf(db.getBoardId());
+                    pid = String.valueOf(newPostId);
                     db.updateThread(Long.valueOf(pid), "ref", pid);
                     text = text.replace("%id%", bid);
                     text = text.replace("%pid%", pid);
@@ -3202,7 +3203,7 @@ public class ChatServices {
             }
             if (category.isBlank()) {
                 if (moderator) {
-                    text = text.replace("%boards%", getTemplate("board_cats_empty_moderated", request, map));
+                    text = text.replace("%boards%", emptyCategoriesForModerator(getTemplate("board_cats_empty_moderated", request, map)));
                 } else {
                     text = text.replace("%boards%", getTemplate("board_cats_empty", request, map));
 
@@ -3326,6 +3327,14 @@ public class ChatServices {
         }
         text = text.replace("%board_error_if_one%", "");
         ut.submitContent(text, response);
+    }
+
+    static String emptyCategoriesForModerator(String template) {
+        return template.replace("&add_cat=true&cat=%cat%", "&add_board=true")
+                .replace("Es sind noch keine Foren eingerichtet.", "Es sind noch keine Kategorien eingerichtet.")
+                .replace("Neues Forum anlegen", "Neue Kategorie anlegen")
+                .replace("There are no forums yet.", "There are no categories yet.")
+                .replace("Creating a new forum", "Create a new category");
     }
 
     /**
@@ -3999,13 +4008,11 @@ public class ChatServices {
                 printPage(map.getOrDefault("doc", ""), request, response, map);
             }
             case "page_com" -> {
-                HttpSession session = null;
-                // Zeigt individuelle Templates an
-                if ((session = request.getSession(false)) != null) {
+                var community = activeCommunitySession(request.getSession(false), cm);
+                if (community != null) {
                     response.setContentType("text/html; charset=" + conf.getString("charset"));
+                    community.setTimeoutTimer(0);
                     printPage(map.getOrDefault("doc", ""), request, response, map);
-                    cm.getUsersCommunity().get((String) session.getAttribute("nick")).setTimeoutTimer(0);
-
                 } else {
                     response.setContentType("text/html; charset=" + conf.getString("charset"));
                     printTemplate("timeout", request, response, map);
@@ -5117,6 +5124,8 @@ protected String getTemplate(String template, HttpServletRequest request, Map<St
             var temp = data;
             data = "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>%missing_template%</b></p><hr><address>%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS%</address></body><html>";
             data = data.replace("%missing_template%", temp);
+        } else if (template.equals("picture") || template.equals("picture_napping")) {
+            data = UploadFile.markChatUploadForm(data);
         }
         data = parseHeader(data, template, request, map);
         data = ut.replacePaths(data);
@@ -5260,13 +5269,56 @@ var skin = map.getOrDefault("skin", "");
          var ut = Bootstrap.boot.getUtil();
          var lang = readLang(request, map);
          skin = ut.parseHost(skin, request)[1];
-         var data = db.getPageDesign(template, skin, lang);
+         var selectedDesign = selectCommunityDesign(template, request.getSession(false), Bootstrap.boot.getChatManager(), db);
+         var data = db.getPageDesign(selectedDesign, skin, lang);
         if (data.toLowerCase().startsWith("error")) {
             var temp = data;
             data = "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>%missing_template%</b></p><hr><address>%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS%</address></body><html>";
             data = data.replace("%missing_template%", temp);
         }
-        return data;
+        return addChatPanelNavigationRules(data);
+    }
+
+    static UsersCommunity activeCommunitySession(HttpSession session, ChatManager manager) {
+        if (session == null || !"true".equals(session.getAttribute("community"))) {
+            return null;
+        }
+        var nick = session.getAttribute("nick");
+        if (!(nick instanceof String name) || name.isBlank()) {
+            return null;
+        }
+        var community = manager.getUsersCommunity().get(name);
+        if (community == null || community.getHttpSession() == null
+                || !session.getId().equals(community.getHttpSession().getId())) {
+            return null;
+        }
+        return community;
+    }
+
+    static String selectCommunityDesign(String design, HttpSession session, ChatManager manager, Database db) {
+        if (!design.equals("start") && !design.equals("frameset_community")
+                && !design.equals("frameset_community_reg")) {
+            return design;
+        }
+        var community = activeCommunitySession(session, manager);
+        if (community == null) {
+            return "start";
+        }
+        return db.isRegistered(community.getName().toLowerCase())
+                ? "frameset_community_reg" : "frameset_community";
+    }
+
+    static String addChatPanelNavigationRules(String design) {
+        var head = java.util.regex.Pattern.compile("<head\\b[^>]*>", java.util.regex.Pattern.CASE_INSENSITIVE)
+                .matcher(design);
+        var doctype = java.util.regex.Pattern.compile("^\\s*<!doctype\\s+[^>]*>", java.util.regex.Pattern.CASE_INSENSITIVE)
+                .matcher(design);
+        var position = head.find() ? head.end() : doctype.find() ? doctype.end() : 0;
+        var panelRules = "<script>if(window.frameElement && window.frameElement.classList.contains('chat-panel-iframe'))"
+                + "{document.documentElement.classList.add('chat-panel-embedded');}</script>"
+                + "<style>html.chat-panel-embedded body > nav.navbar{display:none!important;}"
+                + "html.chat-panel-embedded body{padding-top:0!important;}</style>";
+        return design.substring(0, position) + panelRules + design.substring(position);
     }
 
     /**
