@@ -268,3 +268,41 @@ cw {
   display: block;
   width: 100%;
 }
+
+#pagecontent > h1:first-child,
+#profilecontent > h1:first-child {
+  margin-top: 0;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--hwc-border);
+}
+
+#pagecontent .card,
+#profilecontent .card {
+  overflow: hidden;
+  border: 1px solid var(--hwc-border);
+  border-radius: var(--hwc-radius);
+  box-shadow: 0 2px 8px rgba(33, 37, 41, 0.05);
+}
+
+#pagecontent .card-header,
+#profilecontent .card-header {
+  padding: 0.85rem 1rem;
+  background: #f7f9fc;
+  border-bottom-color: var(--hwc-border);
+}
+
+#pagecontent .btn,
+#profilecontent .btn {
+  border-radius: 0.5rem;
+  font-weight: 600;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+#pagecontent a:focus-visible,
+#profilecontent a:focus-visible,
+#pagecontent .btn:focus-visible,
+#profilecontent .btn:focus-visible {
+  outline: 2px solid var(--hwc-primary);
+  outline-offset: 2px;
+}

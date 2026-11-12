@@ -8,9 +8,9 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.StringTokenizer;
+import java.security.MessageDigest;
 
 
 public class BasicAuthenticationFilter {
@@ -42,32 +42,22 @@ public class BasicAuthenticationFilter {
         HttpServletResponse response = (HttpServletResponse) servletResponse;
 
         String authHeader = request.getHeader("Authorization");
-        if (authHeader != null) {
-            StringTokenizer st = new StringTokenizer(authHeader);
-            if (st.hasMoreTokens()) {
-                String basic = st.nextToken();
-
-                if (basic.equalsIgnoreCase("Basic")) {
-                    try {
-                        String credentials = new String(Base64.getDecoder().decode(st.nextToken()));
-                        int p = credentials.indexOf(":");
-                        if (p != -1) {
-                            String _username = credentials.substring(0, p).trim();
-                            String _password = credentials.substring(p + 1).trim();
-
-                            if (!username.equals(_username) || !password.equals(_password)) {
-                                unauthorized(response, "Bad credentials");
-                            }
-                        } else {
-                            unauthorized(response, "Invalid authentication token");
-                        }
-                    } catch (UnsupportedEncodingException e) {
-                        throw new Error("Couldn't retrieve authentication", e);
-                    }
-                }
-            }
-        } else {
+        if (authHeader == null || !authHeader.regionMatches(true, 0, "Basic ", 0, 6)
+                || username == null || username.isBlank() || password == null || password.isEmpty()) {
             unauthorized(response);
+            return;
+        }
+        try {
+            var credentials = new String(Base64.getDecoder().decode(authHeader.substring(6).trim()), StandardCharsets.UTF_8);
+            var separator = credentials.indexOf(':');
+            if (separator < 0 || !MessageDigest.isEqual(username.getBytes(StandardCharsets.UTF_8),
+                    credentials.substring(0, separator).getBytes(StandardCharsets.UTF_8))
+                    || !MessageDigest.isEqual(password.getBytes(StandardCharsets.UTF_8),
+                    credentials.substring(separator + 1).getBytes(StandardCharsets.UTF_8))) {
+                unauthorized(response, "Bad credentials");
+            }
+        } catch (IllegalArgumentException ex) {
+            unauthorized(response, "Invalid authentication token");
         }
 
     }
@@ -76,8 +66,8 @@ public class BasicAuthenticationFilter {
     }
 
     private void unauthorized(HttpServletResponse response, String message) throws IOException {
-        response.setHeader("WWW-Authenticate", "Basic realm=\"" + realm + "\"");
-        message = message;
+        response.setHeader("WWW-Authenticate", "Basic realm=\"" + realm + "\", charset=\"UTF-8\"");
+        this.message = message;
         error = true;
     }
 

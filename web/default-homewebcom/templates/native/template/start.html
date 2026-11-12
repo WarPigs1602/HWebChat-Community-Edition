@@ -1,16 +1,36 @@
 <!-- design=start -->
-<h1>Herzlich Willkommen im %SERVER_SOFTWARE%</h1>
-<p>
-Diese Communitysoftware ist ein Communtiyprojekt und enth&auml;lt einen ein Nachbau historischer Webchats.
-</p>
-<p>
-Vorerst ist diese Community werbefrei und wird durch Spenden unterstützt.
-<p>
-Die Communitysoftware ist in einem fr&uuml;hen Status und wird demnächst zum Download angeboten!
-<p>
-Unser Team freut sich auf Dich, werde ein Teil des HWebChats und dessen Community.
-</p>
-  Es sind <span style="font-weight: bold;">%reg_count%</span> Benutzer registriert, <span style="font-weight: bold;">%user_count_community%</span> in der Community eingeloggt und <span style="font-weight: bold;">%user_count%</span> Chatter im Chat!
-<p>
-Viel spa&szlig; in der Community!
-</p>
+<main class="start-page">
+  <section class="start-overview">
+    <div class="start-intro">
+      <h1>Herzlich willkommen im %SERVER_SOFTWARE%</h1>
+    </div>
+
+    <aside class="start-login" aria-labelledby="start-login-title">
+      <div class="start-login-heading">
+        <span class="start-login-icon"><i class="fa fa-sign-in" aria-hidden="true"></i></span>
+        <div>
+          <h2 id="start-login-title">Einloggen</h2>
+          <p>Schön, dass du wieder da bist.</p>
+        </div>
+      </div>
+      <form method="POST" name="login" action="%PATH_[login]%" target="_top" accept-charset="utf-8">
+        <input type="hidden" name="skin" value="%skin%">
+        <div class="form-group">
+          <label for="start-nick">Nickname</label>
+          <input class="form-control" id="start-nick" maxlength="20" name="nick" type="text" autocomplete="username" required>
+        </div>
+        <div class="form-group">
+          <label for="start-pwd">Passwort</label>
+          <input class="form-control" id="start-pwd" maxlength="20" name="pwd" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn btn-primary btn-block" type="submit"><i class="fa fa-sign-in" aria-hidden="true"></i> Jetzt einloggen</button>
+      </form>
+      <div class="start-login-links">
+        <a href="%PATH_[register]%"><i class="fa fa-user-plus" aria-hidden="true"></i> Konto erstellen</a>
+        <a href="%PATH_[password]%"><i class="fa fa-key" aria-hidden="true"></i> Passwort vergessen?</a>
+      </div>
+      <a class="start-guest-link" href="%PATH_[login]%&amp;skin=%skin%"><i class="fa fa-user-o" aria-hidden="true"></i> Als Gast ohne Passwort einloggen</a>
+    </aside>
+  </section>
+  %homepage_extra%
+</main>

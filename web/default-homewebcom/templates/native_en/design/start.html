@@ -32,6 +32,9 @@
             <a class="nav-link" href="%PATH_[index]%"><i class="fa fa-home"></i> %com[design_nav_start]%</a>
           </li>
           <li class="nav-item">
+            <a class="nav-link" href="%PATH_[news]%"><i class="fa fa-bullhorn" aria-hidden="true"></i> %com[design_nav_news]%</a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" href="%PATH_[rules]%"><i class="fa fa-info-circle"></i> %com[design_nav_chattiquette]%</a>
           </li>
           <li class="nav-item">
@@ -49,16 +52,25 @@
             <a class="nav-link dropdown-toggle" href="#" id="loginDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
               <i class="fa fa-user"></i> %com[design_nav_login]%
             </a>
-            <div class="dropdown-menu dropdown-menu-right p-2" aria-labelledby="loginDropdown">
-              <form method="POST" name="login" action="%PATH_[login]%" target="_top" accept-charset="utf-8" class="form-inline">
-                <input class="form-control form-control-sm mr-2 mb-2" maxlength="20" name="nick" placeholder="%com[design_placeholder_nick]%" style="width: 120px;">
-                <input class="form-control form-control-sm mr-2 mb-2" maxlength="20" name="pwd" type="password" placeholder="%com[design_placeholder_pwd]%" style="width: 120px;">
+            <div class="dropdown-menu dropdown-menu-right p-3 login-menu" aria-labelledby="loginDropdown">
+              <h2 class="h6 login-menu-title"><i class="fa fa-sign-in" aria-hidden="true"></i> %com[design_nav_login]%</h2>
+              <p class="login-menu-hint">Log in to your account.</p>
+              <form method="POST" name="login" action="%PATH_[login]%" target="_top" accept-charset="utf-8" class="login-menu-form">
                 <input name="skin" value="%skin%" type="hidden">
-                <input class="btn btn-sm btn-primary mb-2" value="%com[design_btn_login_submit]%" type="submit">
+                <div class="form-group">
+                  <label for="navbar-login-nick">%com[design_placeholder_nick]%</label>
+                  <input class="form-control form-control-sm" id="navbar-login-nick" maxlength="20" name="nick" type="text" autocomplete="username" required>
+                </div>
+                <div class="form-group">
+                  <label for="navbar-login-pwd">%com[design_placeholder_pwd]%</label>
+                  <input class="form-control form-control-sm" id="navbar-login-pwd" maxlength="20" name="pwd" type="password" autocomplete="current-password" required>
+                </div>
+                <button class="btn btn-primary btn-block" type="submit">%com[design_btn_login_submit]%</button>
               </form>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="%PATH_[register]%"><i class="fa fa-user-plus"></i> %com[design_link_register]%</a>
-              <a class="dropdown-item" href="%PATH_[password]%"><i class="fa fa-key"></i> %com[design_link_password_forgot]%</a>
+              <div class="login-menu-links">
+                <a class="dropdown-item" href="%PATH_[register]%"><i class="fa fa-user-plus" aria-hidden="true"></i> %com[design_link_register]%</a>
+                <a class="dropdown-item" href="%PATH_[password]%"><i class="fa fa-key" aria-hidden="true"></i> %com[design_link_password_forgot]%</a>
+              </div>
             </div>
           </li>
             <li class="nav-item dropdown">

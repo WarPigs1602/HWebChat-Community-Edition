@@ -10,6 +10,7 @@ Webbasierter Community-Chat (Jakarta EE / WebSocket) für Apache Tomcat.
 ## Features
 
 - Öffentliche und private Chaträume (Echtzeit per WebSocket)
+- Öffentliche Newsseite mit Verwaltung in der Adminkonsole
 - Schreibanzeige mit Nickfarben für Räume und Privatchats (bis zu fünf Namen)
 - Nick-Vervollständigung mit Tab in der Eingabezeile; mehrfaches Tab wechselt zwischen Treffern
 - Gast-Login und registrierte Benutzer
@@ -23,6 +24,14 @@ Webbasierter Community-Chat (Jakarta EE / WebSocket) für Apache Tomcat.
 Die Statistik verwendet wie der Chat die Einstellung `time_zone` aus der Konfiguration.
 Bereits gespeicherte Statistikintervalle werden bei einer Änderung der Zeitzone nicht umgerechnet.
 Bei der Zeitumstellung im Herbst werden die beiden gleich benannten Stunden zusammengefasst.
+
+Die Newsseite ist über `Start?page=news` erreichbar. In der Adminkonsole können
+Administratoren Beiträge erstellen, bearbeiten und löschen; Veröffentlichungsdatum
+und ursprünglicher Autor bleiben beim Bearbeiten erhalten.
+Die Startseite und die Community-Seite nach dem Login zeigen Kennzahlen, hilfreiche
+Links und, falls vorhanden, die neueste News. In eigenen Templates kann
+`%homepage_extra%` die Position dieser Bereiche festlegen; fehlt der Platzhalter,
+werden sie am Ende eingefügt.
 
 ---
 

@@ -133,7 +133,7 @@ public class ChatServices {
         if (map2.getOrDefault("page", "").isBlank()) {
             // Die Startseite
             response.setContentType("text/html; charset=" + conf.getString("charset"));
-            printTemplate("start", request, response, map2);
+            startPage("start", request, response, map2);
         } else if (map2.getOrDefault("page", "").equals(conf.getString("path_output"))) {
             // Chat-Services und Seiten abrufen
             out(request, response, map2);
@@ -192,6 +192,9 @@ public class ChatServices {
         } else if (map2.getOrDefault("page", "").equals(conf.getString("path_stats"))) {
             response.setContentType("text/html; charset=" + conf.getString("charset"));
             statistics(request, response, map2);
+        } else if (map2.getOrDefault("page", "").equals("news")) {
+            response.setContentType("text/html; charset=" + conf.getString("charset"));
+            news(request, response, map2, false);
         } else if (map2.getOrDefault("page", "").equals(conf.getString("path_password"))) {
             // Passwortwiederherstellungsformular
             response.setContentType("text/html; charset=" + conf.getString("charset"));
@@ -247,13 +250,19 @@ public class ChatServices {
             filter.init(Bootstrap.boot);
         } catch (ServletException ex) {
             logError(ex);
+            response.setStatus(500);
+            return;
         }
         try {
             filter.doFilter(request, response);
         } catch (IOException ex) {
             logError(ex);
+            response.setStatus(500);
+            return;
         } catch (ServletException ex) {
             logError(ex);
+            response.setStatus(500);
+            return;
         }
         if (!filter.error) {
             var service = map.getOrDefault("service", "");
@@ -262,6 +271,8 @@ public class ChatServices {
             if (service.isBlank()) {
                 text = getConsole("index", request, map);
                 ut.submitContent(text, response);
+            } else if (service.equals("news")) {
+                news(request, response, map, true);
             } else if (service.equals("room")) {
                 Database db = conf.getDb();
                 var room = map.getOrDefault("room", "");
@@ -4242,9 +4253,9 @@ public class ChatServices {
                 cm.getUsersCommunity().get((String) session.getAttribute("nick")).setTimeoutTimer(0);
             }
             if (reg) {
-                printTemplate("frameset_community_reg", request, response, map);
+                startPage("frameset_community_reg", request, response, map);
             } else {
-                printTemplate("frameset_community", request, response, map);
+                startPage("frameset_community", request, response, map);
             }
         }
     }
@@ -5280,6 +5291,18 @@ var skin = map.getOrDefault("skin", "");
                 || template.equals("frameset_privchat") || template.equals("frameset_privchat_napping")) {
             data = addTypingIndicatorScript(data);
         }
+        if (selectedDesign.equals("console")) {
+            var navEnd = data.indexOf("</ul>");
+            if (navEnd >= 0) {
+                var url = conf.getString("path_hwebchat") + "?page="
+                        + conf.getString("path_console") + "&service=news";
+                var label = readLang(request, map).equalsIgnoreCase("de") ? "News verwalten" : "Manage news";
+                var link = "<li class=\"nav-item\"><a class=\"nav-link\" href=\""
+                        + org.owasp.encoder.Encode.forHtmlAttribute(url)
+                        + "\"><i class=\"fa fa-newspaper-o\" aria-hidden=\"true\"></i> " + label + "</a></li>";
+                data = data.substring(0, navEnd) + link + data.substring(navEnd);
+            }
+        }
         return addChatPanelNavigationRules(data);
     }
 
@@ -5481,6 +5504,174 @@ pwd = map.getOrDefault("pwd", "");
             text = text.replace("%color%", db.getData(nick, "color"));
         }
         ut.submitContent(text, response);
+    }
+
+    private void startPage(String template, HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
+        var boot = Bootstrap.boot;
+        var db = boot.getConfig().getDb();
+        var util = boot.getUtil();
+        var cm = boot.getChatManager();
+        var community = activeCommunitySession(request.getSession(false), cm);
+        var pageTemplate = template.equals("start") && community != null ? "start_logged_in" : template;
+        try {
+            var counts = db.getHomepageCounts();
+            var latest = new NewsRepository(db, boot.getConfig().getP().getProperty("sql.prefix", "")).latest();
+            var homepageExtra = getTemplate("homepage_extra", request, map)
+                    .replace("%homepage_chatters%", org.owasp.encoder.Encode.forHtmlContent(cm.getUserSizeInChat()))
+                    .replace("%homepage_rooms%", org.owasp.encoder.Encode.forHtmlContent(String.valueOf(cm.getRooms().size())))
+                    .replace("%homepage_registered%", org.owasp.encoder.Encode.forHtmlContent(String.valueOf(counts.registered())))
+                    .replace("%homepage_messages%", org.owasp.encoder.Encode.forHtmlContent(String.valueOf(counts.messages())));
+            var homepageNews = "";
+            if (latest.isPresent()) {
+                var article = latest.get();
+                homepageNews = getTemplate("homepage_news", request, map)
+                        .replace("%homepage_news_title%", org.owasp.encoder.Encode.forHtmlContent(article.title()))
+                        .replace("%homepage_news_author%", org.owasp.encoder.Encode.forHtmlContent(article.author()))
+                        .replace("%homepage_news_published%", org.owasp.encoder.Encode.forHtmlContent(util.getTime(article.published())))
+                        .replace("%homepage_news_body%", org.owasp.encoder.Encode.forHtmlContent(article.body()))
+                        .replace("%homepage_news_url%", org.owasp.encoder.Encode.forHtmlAttribute(
+                                request.getContextPath() + "/Start?page=news"));
+            }
+            homepageExtra = homepageExtra.replace("%homepage_news%", homepageNews);
+            var homepageNick = community == null ? "" : org.owasp.encoder.Encode.forHtmlContent(community.getName());
+            var page = getTemplate(pageTemplate, request, map)
+                    .replace("%homepage_extra%", homepageExtra)
+                    .replace("%homepage_nick%", homepageNick);
+            util.submitContent(page, response);
+        } catch (java.sql.SQLException ex) {
+            logError(ex);
+            response.setStatus(503);
+            util.submitContent(getTemplate("homepage_unavailable", request, map), response);
+        }
+    }
+
+    private void news(HttpServletRequest request, HttpServletResponse response, Map<String, String> map, boolean admin) {
+        var conf = Bootstrap.boot.getConfig();
+        var util = Bootstrap.boot.getUtil();
+        boolean de = readLang(request, map).equalsIgnoreCase("de");
+        var consoleUrl = request.getContextPath() + "/Start?page=" + util.encodeHtml(conf.getString("path_console"))
+                + "&service=news";
+        try {
+            var repository = new NewsRepository(conf.getDb(), conf.getP().getProperty("sql.prefix", ""));
+            if (admin && "POST".equalsIgnoreCase(request.getMethod())) {
+                var session = request.getSession(false);
+                var token = session == null ? null : (String) session.getAttribute("newsCsrf");
+                var submitted = map.getOrDefault("csrf", "");
+                if (token == null || !java.security.MessageDigest.isEqual(
+                        token.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                        submitted.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
+                    response.sendError(403);
+                    return;
+                }
+                var action = map.getOrDefault("action", "");
+                var title = map.getOrDefault("title", "").strip();
+                var body = map.getOrDefault("body", "").strip();
+                if ((action.equals("create") || action.equals("update"))
+                        && (title.isBlank() || title.length() > 200 || body.isBlank() || body.length() > 20000)) {
+                    response.sendError(400, de ? "Titel oder Text ungültig." : "Invalid title or text.");
+                    return;
+                }
+                if (action.equals("create")) {
+                    repository.create(title, body, conf.getString("admin_username"));
+                } else if (action.equals("update") || action.equals("delete")) {
+                    long id;
+                    try {
+                        id = Long.parseLong(map.getOrDefault("id", ""));
+                        if (id <= 0) throw new NumberFormatException();
+                    } catch (NumberFormatException ex) {
+                        response.sendError(400, "Invalid news ID");
+                        return;
+                    }
+                    boolean changed = action.equals("update") ? repository.update(id, title, body) : repository.delete(id);
+                    if (!changed) {
+                        response.sendError(404, "News not found");
+                        return;
+                    }
+                } else {
+                    response.sendError(400, "Invalid news action");
+                    return;
+                }
+                response.sendRedirect(response.encodeRedirectURL(consoleUrl));
+                return;
+            }
+            if (!"GET".equalsIgnoreCase(request.getMethod())) {
+                response.setHeader("Allow", admin ? "GET, POST" : "GET");
+                response.sendError(405);
+                return;
+            }
+            String token = "";
+            if (admin) {
+                var session = request.getSession(true);
+                synchronized (session) {
+                    token = (String) session.getAttribute("newsCsrf");
+                    if (token == null) {
+                        var bytes = new byte[32];
+                        new java.security.SecureRandom().nextBytes(bytes);
+                        token = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+                        session.setAttribute("newsCsrf", token);
+                    }
+                }
+                response.setHeader("Cache-Control", "no-store");
+            }
+            var content = new StringBuilder("<h1>").append(admin && de ? "News verwalten" : admin ? "Manage news" : "News").append("</h1>");
+            if (admin) {
+                content.append(newsForm(consoleUrl, token, null, de));
+            }
+            var articles = repository.list();
+            if (articles.isEmpty()) {
+                content.append("<p>").append(de ? "Noch keine News vorhanden." : "No news yet.").append("</p>");
+            }
+            for (var article : articles) {
+                content.append("<article class=\"card mb-3\"><div class=\"card-body\"><h2 class=\"h4\">")
+                        .append(org.owasp.encoder.Encode.forHtmlContent(article.title())).append("</h2><p class=\"text-muted\">")
+                        .append(org.owasp.encoder.Encode.forHtmlContent(article.author())).append(" · ")
+                        .append(org.owasp.encoder.Encode.forHtmlContent(util.getTime(article.published())))
+                        .append("</p><div style=\"white-space:pre-wrap\">")
+                        .append(org.owasp.encoder.Encode.forHtmlContent(article.body())).append("</div>");
+                if (admin) {
+                    content.append("<details class=\"mt-3\"><summary>").append(de ? "Bearbeiten" : "Edit")
+                            .append("</summary>").append(newsForm(consoleUrl, token, article, de)).append("</details>");
+                    content.append("<form method=\"post\" action=\"").append(org.owasp.encoder.Encode.forHtmlAttribute(consoleUrl))
+                            .append("\" class=\"mt-2\"><input type=\"hidden\" name=\"csrf\" value=\"").append(token)
+                            .append("\"><input type=\"hidden\" name=\"action\" value=\"delete\"><input type=\"hidden\" name=\"id\" value=\"")
+                            .append(article.id()).append("\"><button class=\"btn btn-danger btn-sm\" type=\"submit\">")
+                            .append(de ? "Löschen" : "Delete").append("</button></form>");
+                }
+                content.append("</div></article>");
+            }
+            var design = getPageDesign(admin ? "console" : "start", request, map);
+            design = util.replacePaths(design);
+            design = util.replaceFilePaths(design);
+            design = util.replaceCommands(design, readLang(request, map));
+            design = util.replaceServerInfo(design);
+            var skin = util.parseHost(map.getOrDefault("skin", ""), request)[1];
+            var sid = request.getAttribute("sid");
+            design = design.replace("%skin%", org.owasp.encoder.Encode.forHtmlAttribute(skin));
+            design = design.replace("%sid%", org.owasp.encoder.Encode.forHtmlAttribute(sid instanceof String ? (String) sid : ""));
+            util.submitContent(design.replace("%content%", content.toString()), response);
+        } catch (java.sql.SQLException | IOException ex) {
+            logError(ex);
+            response.setStatus(500);
+            util.submitContent(de ? "News konnten nicht geladen oder gespeichert werden." : "Unable to load or save news.", response);
+        }
+    }
+
+    private String newsForm(String url, String token, NewsRepository.Article article, boolean de) {
+        boolean edit = article != null;
+        var html = new StringBuilder("<form method=\"post\" class=\"mb-4\" action=\"")
+                .append(org.owasp.encoder.Encode.forHtmlAttribute(url))
+                .append("\"><input type=\"hidden\" name=\"csrf\" value=\"").append(token)
+                .append("\"><input type=\"hidden\" name=\"action\" value=\"").append(edit ? "update" : "create").append("\">");
+        if (edit) html.append("<input type=\"hidden\" name=\"id\" value=\"").append(article.id()).append("\">");
+        html.append("<label>").append(de ? "Titel" : "Title").append("<input class=\"form-control\" name=\"title\" maxlength=\"200\" required value=\"")
+                .append(org.owasp.encoder.Encode.forHtmlAttribute(edit ? article.title() : "")).append("\"></label>")
+                .append("<label class=\"d-block\">").append(de ? "Text" : "Text")
+                .append("<textarea class=\"form-control\" name=\"body\" maxlength=\"20000\" rows=\"5\" required>")
+                .append(org.owasp.encoder.Encode.forHtmlContent(edit ? article.body() : ""))
+                .append("</textarea></label><button class=\"btn btn-primary\" type=\"submit\">")
+                .append(edit ? (de ? "Speichern" : "Save") : (de ? "Veröffentlichen" : "Publish"))
+                .append("</button></form>");
+        return html.toString();
     }
 
     private void statistics(HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {

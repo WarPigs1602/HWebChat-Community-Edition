@@ -1299,6 +1299,18 @@ public class Database {
         return count;
     }
 
+    record HomepageCounts(long registered, long messages) {}
+
+    protected HomepageCounts getHomepageCounts() throws SQLException {
+        var connection = getNewsConnection();
+        try (var statement = connection.prepareStatement("SELECT (SELECT COUNT(*) FROM `" + getPrefix()
+                + "users`), (SELECT COUNT(*) FROM `" + getPrefix() + "chat_history` WHERE type = 'public')");
+                var result = statement.executeQuery()) {
+            if (!result.next()) throw new SQLException("Homepage counts query returned no result");
+            return new HomepageCounts(result.getLong(1), result.getLong(2));
+        }
+    }
+
     protected int countPublicMessages() {
         var count = 0;
         try {
@@ -3608,6 +3620,16 @@ public class Database {
      */
     public Connection getCon() {
         return con;
+    }
+
+    protected synchronized Connection getNewsConnection() throws SQLException {
+        if (getCon() == null || !getCon().isValid(2)) {
+            connectDatabase();
+        }
+        if (getCon() == null || !getCon().isValid(2)) {
+            throw new SQLException("News database connection is unavailable");
+        }
+        return getCon();
     }
 
     /**

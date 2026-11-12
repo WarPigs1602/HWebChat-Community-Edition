@@ -1,19 +1,15 @@
 <!-- design=frameset_community -->
-<h1>Herzlich Willkommen im %SERVER_SOFTWARE%</h1>
-<p>
-Dieser Chat ist ein Communtiyprojekt und ist ein Nachbau historischer Webchats.
-</p>
-<p>
-Vorerst ist dieser Chat werbefrei und wird durch Spenden unterstützt.
-<p>
-Der Chat ist featurekomplett und wird demnächst zum Download angeboten!
-<p>
-Unser Team freut sich auf Dich, werde ein Teil des HWebChats und dessen Community.
-</p>
-  Es sind <span style="font-weight: bold;">%reg_count%</span> Benutzer registriert, <span style="font-weight: bold;">%user_count_community%</span> in der Community eingeloggt!
-<p class="users">
-<script type="text/javascript" src="%PATH_[script_room]%"></script>
-</p>
-<p>
-Viel spa&szlig; im Chat!
-</p>
+<main class="start-page">
+  <section class="start-intro community-welcome">
+    <p class="start-eyebrow">Community</p>
+    <h1>Willkommen, %homepage_nick%!</h1>
+    <p class="start-lead">Du bist in der Community angemeldet. Wähle im Navigationsmenü „Chat“, um einen Raum zu betreten.</p>
+  </section>
+  <section class="card my-4">
+    <div class="card-body">
+      <h2 class="h5">Mitglieder online</h2>
+      <div class="users"><script type="text/javascript" src="%PATH_[script_room]%"></script></div>
+    </div>
+  </section>
+  %homepage_extra%
+</main>

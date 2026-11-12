@@ -58,6 +58,7 @@
 {"name":"lorem_ipsum","path":"%path_hwebchat%?page=%path_output%&service=page&skin=%skin%&doc=lorem_ipsum"},
 {"name":"memory","path":"%path_hwebchat%?page=%path_memory%&skin=%skin%"},
 {"name":"msg_privchat","path":"%path_hwebchat%?page=%path_msg_privchat%"},
+{"name":"news","path":"%path_hwebchat%?page=news"},
 {"name":"napping","path":"%path_hwebchat%?page=%path_napping%&skin=%skin%"},
 {"name":"napping_form","path":"%path_hwebchat%?page=%path_napping_form%&skin=%skin%"},
 {"name":"password","path":"%path_hwebchat%?page=%path_password%&skin=%skin%"},

@@ -10,6 +10,7 @@ Web-based community chat (Jakarta EE / WebSocket) for Apache Tomcat.
 ## Features
 
 - Public and private chat rooms (WebSocket real-time)
+- Public news page managed through the admin console
 - Typing indicators with nickname colors in rooms and private chats (up to five names)
 - Nickname completion with Tab in the message field; press Tab again to cycle through matches
 - Guest login and registered users
@@ -23,6 +24,13 @@ Web-based community chat (Jakarta EE / WebSocket) for Apache Tomcat.
 Statistics use the configured `time_zone`, just like the chat. Previously stored
 statistics buckets are not converted when the time zone changes. The repeated
 hour at the end of daylight saving time is combined into one bucket.
+
+The news page is available at `Start?page=news`. Administrators can create,
+edit and delete articles in the admin console; editing preserves the original
+author and publication date.
+The home page and the community page after login show chat counts, useful links
+and, when available, the latest news article. Custom templates can position these sections with
+`%homepage_extra%`; otherwise they are appended to the template.
 
 ---
 

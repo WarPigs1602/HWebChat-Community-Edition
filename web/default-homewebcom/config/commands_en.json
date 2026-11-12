@@ -264,6 +264,7 @@
 {"name":"whisper_to","command":"<span style=\"font-style: italic\">You whisper to <span style=\"color: #%color%\">%nick%</span>: %message%</span><br>"},
 {"name":"design_toggle_navigation","command":"Toggle navigation"},
 {"name":"design_nav_start","command":"Home"},
+{"name":"design_nav_news","command":"News"},
 {"name":"design_nav_chattiquette","command":"Chattiquette"},
 {"name":"design_nav_toplist","command":"Top list"},
 {"name":"design_nav_forum","command":"Forum"},
