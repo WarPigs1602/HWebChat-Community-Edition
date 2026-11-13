@@ -1,0 +1,1 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><fmt:message key="page.account_error_message_pass_wrong.your_password_is_wrong"/>

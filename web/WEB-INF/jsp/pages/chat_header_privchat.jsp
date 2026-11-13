@@ -1,0 +1,1 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><p style="font-weight: bold;"><fmt:message key="page.chat_header_privchat.you_are_in_a_private"/></p>

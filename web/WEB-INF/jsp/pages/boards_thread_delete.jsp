@@ -1,0 +1,1 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><a class="btn btn-outline-danger btn-sm" href="${paths.board}&pid=${id}&id=${cat}&del=true" title="<fmt:message key="page.boards_thread_delete.delete_the_thread"/>"><i class="fa fa-trash"></i></a>

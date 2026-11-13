@@ -1,0 +1,204 @@
+<%@ page contentType="text/css; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>:root {
+  --hwc-primary: #${link_color};
+  --hwc-primary-dark: #${link_color};
+  --hwc-dark: #${color};
+  --hwc-muted: #${color};
+  --hwc-border: #${border_color};
+  --hwc-bg: #${bg_color_1};
+  --hwc-surface: #${bg_color_1};
+  --hwc-radius: 0.75rem;
+}
+
+html, body {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  color: #${color};
+  background-color: #${bg_color_1};
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+  font-size: 0.925rem;
+  overflow: hidden;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-privchat-shell,
+body > .container-fluid.p-0.d-flex.flex-column {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column !important;
+  background: #${bg_color_1};
+}
+
+.chat_frame {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: var(--hwc-surface);
+  border: none;
+  border-radius: 0;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  box-shadow: none;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  text-align: left;
+  font-size: 0.925rem;
+  line-height: 1.45;
+}
+
+.chat_frame p {
+  margin: 0.2rem 0;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+
+.chat_frame a {
+  color: var(--hwc-primary);
+  text-decoration: none;
+}
+
+.chat_frame a:hover {
+  color: var(--hwc-primary-dark);
+  text-decoration: underline;
+}
+
+.post_frame {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: auto !important;
+  min-height: 64px;
+  margin: 0 !important;
+  padding: 0.65rem 0.85rem !important;
+  background: var(--hwc-surface);
+  border-top: 1px solid var(--hwc-border);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+}
+
+.post_frame .form-control {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 38px;
+  border-radius: 0.5rem;
+  border: 1px solid var(--hwc-border);
+  background: var(--hwc-surface);
+}
+
+.post_frame .form-control:focus {
+  background: var(--hwc-surface);
+  border-color: var(--hwc-primary);
+  box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.15);
+}
+
+.post_frame .btn {
+  border-radius: 0.5rem;
+  min-width: 4.5rem;
+}
+
+.post_frame .input-group-append,
+.post_frame .input-group-prepend {
+  display: flex;
+  align-items: center;
+}
+
+cw {
+  display: block;
+  width: 100%;
+}
+
+html,
+body {
+  background-color: #${bg_color_1};
+}
+
+body > .navbar {
+  background: linear-gradient(90deg, #1a1f25 0%, #2b3035 100%) !important;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+body > .navbar .nav-link {
+  border-radius: 0.55rem;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+body > .navbar .nav-link:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.chat-shell,
+.chat-privchat-shell,
+body > .container-fluid.p-0.d-flex.flex-column {
+  background: #${bg_color_1};
+}
+
+.chat_frame {
+  scrollbar-color: #c4cfdd transparent;
+  scrollbar-width: thin;
+}
+
+.chat_frame::-webkit-scrollbar,
+.right_frame::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chat_frame::-webkit-scrollbar-thumb,
+.right_frame::-webkit-scrollbar-thumb {
+  background: #${border_color};
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background-clip: padding-box;
+}
+
+.right_frame {
+  background: #${bg_color_1};
+  border-left-color: #${border_color};
+}
+
+.post_frame {
+  gap: 0.65rem;
+  padding: 0.75rem 1rem !important;
+  background: var(--hwc-surface);
+  border-top-color: #${border_color};
+  box-shadow: 0 -4px 14px rgba(27, 39, 55, 0.06);
+}
+
+.post_frame .form-control {
+  background: var(--hwc-surface);
+}
+
+.post_frame .btn {
+  min-height: 2.4rem;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post_frame .btn {
+    transition: none;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .chat_frame {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .post_frame {
+    padding: 0.5rem !important;
+  }
+}

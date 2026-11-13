@@ -798,6 +798,7 @@
   margin-bottom: 0.75rem;
 }
 
+/* theme:dark - everything below applies to the dark theme only */
 .user-list-container,
 .user-list-dropdown {
   color: #e5e7eb;

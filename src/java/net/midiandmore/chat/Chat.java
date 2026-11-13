@@ -26,6 +26,9 @@ import static java.lang.String.valueOf;
 import static java.net.InetAddress.getByName;
 import java.util.Enumeration;
 import static jakarta.json.Json.createReader;
+import static jakarta.json.Json.createObjectBuilder;
+import jakarta.json.JsonObject;
+import jakarta.json.JsonString;
 import java.util.List;
 import java.util.Map;
 import static net.midiandmore.chat.Bootstrap.boot;
@@ -310,10 +313,10 @@ public class Chat {
                     }
                     if (reg && ut.hasBirthday(db.getData(oldNick, "bday_day"), db.getData(oldNick, "bday_month"),
                             db.getData(oldNick, "bday_year"))) {
-                        var wr = getTemplate("bday_greeting");
-                        wr = wr.replace("%age%", Integer.toString(ut.getAge(db.getData(oldNick, "bday_day"),
+                        var wr = getView("bday_greeting");
+                        wr.set("age", Integer.toString(ut.getAge(db.getData(oldNick, "bday_day"),
                                 db.getData(oldNick, "bday_month"), db.getData(oldNick, "bday_year"))));
-                        ut.sendText(wr, getSession(), "chat", "");
+                        ut.sendText(wr.toString(), getSession(), "chat", "");
                     }
                     getHttpSession().setMaxInactiveInterval(-1);
                     var referer = (String) config.getUserProperties().get("referer");
@@ -518,6 +521,10 @@ public class Chat {
             boot.getChatManager().sendTyping(getSession(), active);
             return;
         }
+        if (category.equals("lang")) {
+            changeLanguage(json);
+            return;
+        }
         var target = json.getString("target");
         var text = json.getString("message");
         var sid = getMap().containsKey("sid") ? getMap().get("sid").get(0)
@@ -531,6 +538,61 @@ public class Chat {
             com.parseCommandPrivchat(text, sid, target2);
 
         }
+    }
+
+    /**
+     * Switches the language of the running chat. From now on the messages of
+     * the server use the new language. The client gets the translations of the
+     * user interface texts it asked for (<code>keys</code>), so it can update
+     * the page without reloading it.
+     */
+    private void changeLanguage(JsonObject json) {
+        var lang = "de".equalsIgnoreCase(json.getString("lang", "")) ? "de" : "en";
+        getSession().getUserProperties().put("lang", lang);
+        if (getHttpSession() != null) {
+            try {
+                getHttpSession().setAttribute("lang", lang);
+            } catch (IllegalStateException expired) {
+                // the chat keeps working with the language of the web socket
+            }
+        }
+        var cm = boot.getChatManager();
+        var sid = getMap().containsKey("sid") ? getMap().get("sid").get(0)
+                : getHttpSession() != null ? (String) getHttpSession().getAttribute("sid") : null;
+        if (sid != null && cm.isValidConnectionId(sid)) {
+            var user = cm.getUser(cm.getNameFromId(sid));
+            if (user != null) {
+                user.setLang(lang);
+            }
+        }
+        var texts = createObjectBuilder();
+        var keys = json.getJsonArray("keys");
+        if (keys != null) {
+            for (var item : keys) {
+                if (item instanceof JsonString key) {
+                    var value = translate(lang, key.getString());
+                    if (value != null) {
+                        texts.add(key.getString(), value);
+                    }
+                }
+            }
+        }
+        boot.getUtil().sendText(createObjectBuilder().add("lang", lang).add("texts", texts).build().toString(),
+                getSession(), "lang", "");
+    }
+
+    /**
+     * Text of the user interface: <code>design_*</code> are commands, the
+     * prefix <code>msg:</code> selects an entry of the resource bundle.
+     */
+    private static String translate(String lang, String key) {
+        if (key.startsWith("msg:")) {
+            var name = key.substring(4);
+            var value = I18n.get(lang, name);
+            return value.equals(name) ? null : value;
+        }
+        var db = boot.getConfig().getDb();
+        return key.startsWith("design_") && db.getCom().containsKey(key) ? db.getCommand(key, lang) : null;
     }
 
     /**
@@ -659,6 +721,13 @@ public class Chat {
      * @return
      */
     protected String getTemplate(String template) {
+        return getView(template).toString();
+    }
+
+    /**
+     * Creates the view of a template for the user of this connection.
+     */
+    protected View getView(String template) {
         var conf = boot.getConfig();
         var db = conf.getDb();
         var ut = boot.getUtil();
@@ -704,20 +773,8 @@ public class Chat {
         pwd = pwd != null ? pwd : "";
         sid = sid != null ? sid : "";
         var lang = getLang(nick);
-        var data = db.getTemplate(template, skin, lang);
-        if (data.toLowerCase().startsWith("error")) {
-            var temp = data;
-            data = "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>%missing_template%</b></p><hr><address>%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS% Build: #%SERVER_BUILD_NUMBER%</address></body><html>";
-            data = data.replace("%missing_template%", temp);
-        }
-        data = ut.replacePaths(data);
-        data = ut.replaceFilePaths(data);
-        data = ut.replaceCommands(data, getLang(nick));
-        data = ut.replaceDefaultReplacements(data, ut.preReplace(nick), sid, ut.preReplace(skin), ut.preReplace(room),
-                "", "");
-        data = data.replace("%user%", ut.preReplace(nick));
-        data = ut.replaceServerInfo(data);
-        return data;
+        return ViewFactory.create("template", template, lang, new ViewFactory.Request(ut.preReplace(nick), sid,
+                ut.preReplace(skin), ut.preReplace(room), "", "", "", "", ut.preReplace(nick), "", "", ""));
     }
 
     /**

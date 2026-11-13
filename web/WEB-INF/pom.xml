@@ -15,6 +15,11 @@
         <directory>../../target</directory>
         <sourceDirectory>../../src/java</sourceDirectory>
         <testSourceDirectory>../../src/test/java</testSourceDirectory>
+        <resources>
+            <resource>
+                <directory>../../src/resources</directory>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -141,6 +146,22 @@
             <artifactId>jakarta.el-api</artifactId>
             <version>6.0.1</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.servlet.jsp.jstl</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.web</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl</artifactId>
+            <version>3.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-jasper</artifactId>
+            <version>11.0.29</version>
+            <scope>test</scope>
         </dependency>
         <!-- https://mvnrepository.com/artifact/jakarta.websocket/jakarta.websocket-api -->
         <dependency>

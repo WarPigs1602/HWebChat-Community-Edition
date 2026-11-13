@@ -35,6 +35,9 @@ import java.util.logging.Logger;
  */
 public class ChatServices {
 
+    // Style sheets: everything behind this comment belongs to the dark theme only
+    static final String DARK_THEME_MARKER = "/* theme:dark";
+
     /**
      *
      * @param master
@@ -88,6 +91,23 @@ public class ChatServices {
         }
     }
 
+    /**
+     * Language for pages shown before the chat is configured (no utilities
+     * available yet).
+     */
+    private String setupLang(HttpServletRequest request) {
+        var cookies = request.getCookies();
+        if (cookies != null) {
+            for (var cookie : cookies) {
+                if (cookie.getName().equals("lang") && !cookie.getValue().isBlank()) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        var acceptLang = request.getHeader("Accept-Language");
+        return acceptLang != null && acceptLang.toLowerCase().startsWith("de") ? "de" : "en";
+    }
+
     private String detectScheme(HttpServletRequest request) {
         var xForwardedProto = request.getHeader("X-Forwarded-Proto");
         if (xForwardedProto != null && !xForwardedProto.isBlank()) {
@@ -108,16 +128,12 @@ public class ChatServices {
         if (Bootstrap.boot.isSetupNeeded()) {
             response.setContentType("text/html; charset=UTF-8");
             response.setCharacterEncoding("UTF-8");
-            var contextPath = request.getContextPath();
-            var setupUrl = contextPath + "/Setup";
-            var pw = response.getWriter();
-            pw.print("<!DOCTYPE html><html><head><title>Setup required</title></head><body style=\"font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f0f9ff;\">");
-            pw.print("<div style=\"background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto;\">");
-            pw.print("<h1 style=\"color: #e94560;\">⚙️ Setup required</h1>");
-            pw.print("<p style=\"margin: 20px 0; color: #666;\">The chat server has been started for the first time. Please complete the setup.</p>");
-            pw.print("<p style=\"margin: 20px 0;\"><a href=\"" + setupUrl + "\" style=\"background: #e94560; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;\">Start setup →</a></p>");
-            pw.print("<p style=\"font-size: 0.8em; color: #888; margin-top: 20px;\">HWebChat Community Edition | (c) 2005-2026 by Andreas Pschorn</p>");
-            pw.print("</div></body></html>");
+            var view = new View("system", "setup_required", setupLang(request), new java.util.HashMap<>());
+            view.set("setup_url", request.getContextPath() + "/Setup")
+                    .set("SERVER_SOFTWARE", Software.SERVER_SOFTWARE)
+                    .set("SERVER_YEAR", Software.SERVER_YEAR)
+                    .set("SERVER_VENDOR", Software.SERVER_VENDOR);
+            response.getWriter().print(view);
             return;
         }
         var conf = Bootstrap.boot.getConfig();
@@ -169,7 +185,7 @@ public class ChatServices {
             } else {
                 response.setStatus(500);
                 response.setContentType("text/html; charset=" + conf.getString("charset"));
-                ut.submitContent("<html><head><title>500 Internal Server Error</title></head><body><h1>500 Internal Server Error</h1><p>Captcha service is not initialized.</p></body></html>", response);
+                ut.submitContent(new View("system", "captcha_unavailable", readLang(request, map2), null), response);
             }
         } else if (map2.getOrDefault("page", "").equals(conf.getString("path_reg_form"))) {
             // Registrierungsformular
@@ -267,7 +283,7 @@ public class ChatServices {
         if (!filter.error) {
             var service = map.getOrDefault("service", "");
             var change = map.getOrDefault("change", "");
-            var text = "";
+            View text = null;
             if (service.isBlank()) {
                 text = getConsole("index", request, map);
                 ut.submitContent(text, response);
@@ -287,7 +303,7 @@ public class ChatServices {
                 } else if (change.equals("search")) {
                     if (!exists) {
                         text = getConsole("rooms_fail", request, map);
-                        text = text.replace("%room%", room);
+                        text = text.set("room", room);
                     } else {
                         text = getConsole("rooms_config", request, map);
                         topic = db.getRoomData(room, "topic");
@@ -295,17 +311,17 @@ public class ChatServices {
                         lockReason = db.getRoomData(room, "lock_reason");
                         standard = db.getRoomData(room, "standard");
                         allowSmilies = db.getRoomData(room, "allow_smilies");
-                        text = text.replace("%room%", room);
-                        text = text.replace("%topic%", topic);
-                        text = text.replace("%lock%", lock);
-                        text = text.replace("%lock_reason%", lockReason);
-                        text = text.replace("%standard%", standard);
-                        text = text.replace("%allow_smilies%", allowSmilies);
+                        text = text.set("room", room);
+                        text = text.set("topic", topic);
+                        text = text.set("lock", lock);
+                        text = text.set("lock_reason", lockReason);
+                        text = text.set("standard", standard);
+                        text = text.set("allow_smilies", allowSmilies);
                     }
                 } else if (change.equals("modify")) {
                     if (!exists) {
                         text = getConsole("rooms_fail", request, map);
-                        text = text.replace("%room%", room);
+                        text = text.set("room", room);
                     } else {
                         text = getConsole("rooms_modify", request, map);
                         db.updateRoomData(room, "topic", topic);
@@ -313,52 +329,52 @@ public class ChatServices {
                         db.updateRoomData(room, "lock_reason", lockReason);
                         db.updateRoomData(room, "standard", standard);
                         db.updateRoomData(room, "allow_smilies", allowSmilies);
-                        text = text.replace("%room%", room);
-                        text = text.replace("%topic%", topic);
-                        text = text.replace("%lock%", lock);
-                        text = text.replace("%lock_reason%", lockReason);
-                        text = text.replace("%standard%", standard);
-                        text = text.replace("%allow_smilies%", allowSmilies);
+                        text = text.set("room", room);
+                        text = text.set("topic", topic);
+                        text = text.set("lock", lock);
+                        text = text.set("lock_reason", lockReason);
+                        text = text.set("standard", standard);
+                        text = text.set("allow_smilies", allowSmilies);
                     }
                 } else if (change.equals("add_room")) {
                     if (exists) {
                         text = getConsole("rooms_exist", request, map);
-                        text = text.replace("%room%", room);
+                        text = text.set("room", room);
                     } else {
                         text = getConsole("rooms_add", request, map);
-                        text = text.replace("%room%", room);
-                        text = text.replace("%topic%", topic);
-                        text = text.replace("%lock%", "0");
-                        text = text.replace("%lock_reason%", lockReason);
-                        text = text.replace("%standard%", "0");
-                        text = text.replace("%allow_smilies%", "1");
+                        text = text.set("room", room);
+                        text = text.set("topic", topic);
+                        text = text.set("lock", "0");
+                        text = text.set("lock_reason", lockReason);
+                        text = text.set("standard", "0");
+                        text = text.set("allow_smilies", "1");
                     }
                 } else if (change.equals("set_room")) {
                     if (exists) {
                         text = getConsole("rooms_exist", request, map);
-                        text = text.replace("%room%", room);
+                        text = text.set("room", room);
                     } else {
                         text = getConsole("rooms_set", request, map);
-                        text = text.replace("%room%", room);
-                        text = text.replace("%topic%", topic);
-                        text = text.replace("%lock%", lock);
-                        text = text.replace("%lock_reason%", lockReason);
-                        text = text.replace("%standard%", standard);
-                        text = text.replace("%allow_smilies%", allowSmilies);
+                        text = text.set("room", room);
+                        text = text.set("topic", topic);
+                        text = text.set("lock", lock);
+                        text = text.set("lock_reason", lockReason);
+                        text = text.set("standard", standard);
+                        text = text.set("allow_smilies", allowSmilies);
                         db.addRoom(room, topic, Integer.valueOf(lock), lockReason, Integer.valueOf(standard), Integer.valueOf(allowSmilies));
                     }
                 } else if (change.equals("delete")) {
                     if (!exists) {
                         text = getConsole("rooms_fail", request, map);
-                        text = text.replace("%room%", room);
+                        text = text.set("room", room);
                     } else {
                         text = getConsole("rooms_delete", request, map);
-                        text = text.replace("%room%", room);
+                        text = text.set("room", room);
                         db.delRoom(room);
                     }
                 } else {
                     text = getConsole("rooms_404", request, map);
-                    text = text.replace("%room%", room);
+                    text = text.set("room", room);
                 }
                 ut.submitContent(text, response);
             } else if (service.equals("chat")) {
@@ -383,10 +399,10 @@ public class ChatServices {
                     conf.saveDataToJSON("config.json", p1, "name", "value", "description");
                     conf.hash();
                     text = getConsole("chat", request, map);
-                    text = text.replace("%success%", getConsole("success", request, map));
+                    text = text.set("success", getConsole("success", request, map));
 
                 } else {
-                    text = text.replace("%success%", "");
+                    text = text.set("success", "");
                 }
                 p = conf.loadDataFromJSON("config.json", "name", "value", "description");
                 for (var key : p.keySet()) {
@@ -394,12 +410,12 @@ public class ChatServices {
                     var value = arr[0];
                     var description = arr[1];
                     var table = getConsole("chat_table", request, map);
-                    table = table.replace("%description%", description);
-                    table = table.replace("%name%", ut.parseHtml(key));
-                    table = table.replace("%value%", ut.parseHtml(value));
+                    table = table.set("description", description);
+                    table = table.set("name", ut.parseHtml(key));
+                    table = table.set("value", ut.parseHtml(value));
                     sb.append(table);
                 }
-                text = text.replace("%config%", sb.toString());
+                text = text.set("config", sb.toString());
                 ut.submitContent(text, response);
             } else if (service.equals("fun")) {
                 var update = map.getOrDefault("update", "");
@@ -437,10 +453,10 @@ public class ChatServices {
                         p1.remove("description");
                     }
                     conf.saveDataToJSON("fun.json", p1, "command", "content", "description");
-                    text = text.replace("%success%", getConsole("success", request, map));
+                    text = text.set("success", getConsole("success", request, map));
                     conf.hash();
                 } else {
-                    text = text.replace("%success%", "");
+                    text = text.set("success", "");
                 }
                 p = conf.loadDataFromJSON("fun.json", "command", "content", "description");
                 for (var key : p.keySet()) {
@@ -448,12 +464,12 @@ public class ChatServices {
                     var value = arr[0];
                     var description = arr[1];
                     var table = getConsole("fun_table", request, map);
-                    table = table.replace("%description%", description);
-                    table = table.replace("%name%", ut.parseHtml(key));
-                    table = table.replace("%value%", ut.parseHtml(value));
+                    table = table.set("description", description);
+                    table = table.set("name", ut.parseHtml(key));
+                    table = table.set("value", ut.parseHtml(value));
                     sb.append(table);
                 }
-                text = text.replace("%config%", sb.toString());
+                text = text.set("config", sb.toString());
                 ut.submitContent(text, response);
             } else if (service.equals("cmdrights")) {
                 var update = map.getOrDefault("update", "");
@@ -472,21 +488,21 @@ public class ChatServices {
                         }
                     }
                     conf.saveDataToJSON("cmdcfg.json", p1, "name", "status");
-                    text = text.replace("%success%", getConsole("success", request, map));
+                    text = text.set("success", getConsole("success", request, map));
                     conf.hash();
                 } else {
-                    text = text.replace("%success%", "");
+                    text = text.set("success", "");
                 }
                 p = conf.loadDataFromJSON("cmdcfg.json", "name", "status");
                 for (var key : p.keySet()) {
                     var arr = p.get(key);
                     var value = arr;
                     var table = getConsole("cmdcfg_table", request, map);
-                    table = table.replace("%name%", ut.parseHtml(key));
-                    table = table.replace("%value%", ut.parseHtml(value));
+                    table = table.set("name", ut.parseHtml(key));
+                    table = table.set("value", ut.parseHtml(value));
                     sb.append(table);
                 }
-                text = text.replace("%config%", sb.toString());
+                text = text.set("config", sb.toString());
                 ut.submitContent(text, response);
             } else if (service.equals("cmd")) {
                 var update = map.getOrDefault("update", "");
@@ -505,21 +521,21 @@ public class ChatServices {
                         }
                     }
                     conf.saveDataToJSON("commands.json", p1, "name", "command");
-                    text = text.replace("%success%", getConsole("success", request, map));
+                    text = text.set("success", getConsole("success", request, map));
                     conf.hash();
                 } else {
-                    text = text.replace("%success%", "");
+                    text = text.set("success", "");
                 }
                 p = conf.loadDataFromJSON("commands.json", "name", "command");
                 for (var key : p.keySet()) {
                     var arr = p.get(key);
                     var value = arr;
                     var table = getConsole("commands_table", request, map);
-                    table = table.replace("%name%", ut.parseHtml(key));
-                    table = table.replace("%value%", ut.parseHtml(value));
+                    table = table.set("name", ut.parseHtml(key));
+                    table = table.set("value", ut.parseHtml(value));
                     sb.append(table);
                 }
-                text = text.replace("%config%", sb.toString());
+                text = text.set("config", sb.toString());
                 ut.submitContent(text, response);
             } else if (service.equals("host")) {
                 var update = map.getOrDefault("update", "");
@@ -550,21 +566,21 @@ public class ChatServices {
                         p1.remove("value");
                     }
                     conf.saveDataToJSON("hosts.json", p1, "host", "skin");
-                    text = text.replace("%success%", getConsole("success", request, map));
+                    text = text.set("success", getConsole("success", request, map));
                     conf.hash();
                 } else {
-                    text = text.replace("%success%", "");
+                    text = text.set("success", "");
                 }
                 p = conf.loadDataFromJSON("hosts.json", "host", "skin");
                 for (var key : p.keySet()) {
                     var arr = p.get(key);
                     var value = arr;
                     var table = getConsole("host_table", request, map);
-                    table = table.replace("%name%", ut.parseHtml(key));
-                    table = table.replace("%value%", ut.parseHtml(value));
+                    table = table.set("name", ut.parseHtml(key));
+                    table = table.set("value", ut.parseHtml(value));
                     sb.append(table);
                 }
-                text = text.replace("%config%", sb.toString());
+                text = text.set("config", sb.toString());
                 ut.submitContent(text, response);
             } else if (service.equals("emot")) {
                 var update = map.getOrDefault("update", "");
@@ -595,21 +611,21 @@ public class ChatServices {
                         p1.remove("value");
                     }
                     conf.saveDataToJSON("emot.json", p1, "name", "emot");
-                    text = text.replace("%success%", getConsole("success", request, map));
+                    text = text.set("success", getConsole("success", request, map));
                     conf.hash();
                 } else {
-                    text = text.replace("%success%", "");
+                    text = text.set("success", "");
                 }
                 p = conf.loadDataFromJSON("emot.json", "name", "emot");
                 for (var key : p.keySet()) {
                     var arr = p.get(key);
                     var value = arr;
                     var table = getConsole("emot_table", request, map);
-                    table = table.replace("%name%", ut.parseHtml(key));
-                    table = table.replace("%value%", ut.parseHtml(value));
+                    table = table.set("name", ut.parseHtml(key));
+                    table = table.set("value", ut.parseHtml(value));
                     sb.append(table);
                 }
-                text = text.replace("%config%", sb.toString());
+                text = text.set("config", sb.toString());
                 ut.submitContent(text, response);
             } else if (service.equals("mime")) {
                 var update = map.getOrDefault("update", "");
@@ -640,21 +656,21 @@ public class ChatServices {
                         p1.remove("value");
                     }
                     conf.saveDataToJSON("mime-types.json", p1, "suffix", "type");
-                    text = text.replace("%success%", getConsole("success", request, map));
+                    text = text.set("success", getConsole("success", request, map));
                     conf.hash();
                 } else {
-                    text = text.replace("%success%", "");
+                    text = text.set("success", "");
                 }
                 p = conf.loadDataFromJSON("mime-types.json", "suffix", "type");
                 for (var key : p.keySet()) {
                     var arr = p.get(key);
                     var value = arr;
                     var table = getConsole("mime_table", request, map);
-                    table = table.replace("%name%", ut.parseHtml(key));
-                    table = table.replace("%value%", ut.parseHtml(value));
+                    table = table.set("name", ut.parseHtml(key));
+                    table = table.set("value", ut.parseHtml(value));
                     sb.append(table);
                 }
-                text = text.replace("%config%", sb.toString());
+                text = text.set("config", sb.toString());
                 ut.submitContent(text, response);
             } else if (service.equals("mail")) {
                 var update = map.getOrDefault("update", "");
@@ -673,21 +689,21 @@ public class ChatServices {
                         }
                     }
                     conf.saveDataToJSON("mail.json", p1, "name", "value");
-                    text = text.replace("%success%", getConsole("success", request, map));
+                    text = text.set("success", getConsole("success", request, map));
                     conf.hash();
                 } else {
-                    text = text.replace("%success%", "");
+                    text = text.set("success", "");
                 }
                 p = conf.loadDataFromJSON("mail.json", "name", "value");
                 for (var key : p.keySet()) {
                     var arr = p.get(key);
                     var value = arr;
                     var table = getConsole("mail_table", request, map);
-                    table = table.replace("%name%", ut.parseHtml(key));
-                    table = table.replace("%value%", ut.parseHtml(value));
+                    table = table.set("name", ut.parseHtml(key));
+                    table = table.set("value", ut.parseHtml(value));
                     sb.append(table);
                 }
-                text = text.replace("%config%", sb.toString());
+                text = text.set("config", sb.toString());
                 ut.submitContent(text, response);
             } else if (service.equals("path")) {
                 var update = map.getOrDefault("update", "");
@@ -706,21 +722,21 @@ public class ChatServices {
                         }
                     }
                     conf.saveDataToJSON("paths.json", p1, "name", "path");
-                    text = text.replace("%success%", getConsole("success", request, map));
+                    text = text.set("success", getConsole("success", request, map));
                     conf.hash();
                 } else {
-                    text = text.replace("%success%", "");
+                    text = text.set("success", "");
                 }
                 p = conf.loadDataFromJSON("paths.json", "name", "path");
                 for (var key : p.keySet()) {
                     var arr = p.get(key);
                     var value = arr;
                     var table = getConsole("path_table", request, map);
-                    table = table.replace("%name%", ut.parseHtml(key));
-                    table = table.replace("%value%", ut.parseHtml(value));
+                    table = table.set("name", ut.parseHtml(key));
+                    table = table.set("value", ut.parseHtml(value));
                     sb.append(table);
                 }
-                text = text.replace("%config%", sb.toString());
+                text = text.set("config", sb.toString());
                 ut.submitContent(text, response);
             } else if (service.equals("help")) {
                 var update = map.getOrDefault("update", "");
@@ -739,21 +755,21 @@ public class ChatServices {
                         }
                     }
                     conf.saveDataToJSON("help.json", p1, "name", "html");
-                    text = text.replace("%success%", getConsole("success", request, map));
+                    text = text.set("success", getConsole("success", request, map));
                     conf.hash();
                 } else {
-                    text = text.replace("%success%", "");
+                    text = text.set("success", "");
                 }
                 p = conf.loadDataFromJSON("help.json", "name", "html");
                 for (var key : p.keySet()) {
                     var arr = p.get(key);
                     var value = arr;
                     var table = getConsole("help_table", request, map);
-                    table = table.replace("%name%", ut.parseHtml(key));
-                    table = table.replace("%value%", ut.parseHtml(value));
+                    table = table.set("name", ut.parseHtml(key));
+                    table = table.set("value", ut.parseHtml(value));
                     sb.append(table);
                 }
-                text = text.replace("%config%", sb.toString());
+                text = text.set("config", sb.toString());
                 ut.submitContent(text, response);
             } else if (service.equals("users")) {
                 var update = map.getOrDefault("update", "");
@@ -764,12 +780,12 @@ public class ChatServices {
                     if (db.isRegistered(nick)) {
                         if (change.isBlank()) {
                             text = getConsole("users_page", request, map);
-                            text = text.replace("%nick%", nick);
+                            text = text.set("nick", nick);
 
                         } else if (change.equals("password")) {
                             var newPwd = map.getOrDefault("new_pwd", "");
                             var newPwd2 = map.getOrDefault("new_pwd2", "");
-                            String errorMessage = null;
+                            View errorMessage = null;
                             if (!newPwd.isBlank()) {
                                 if (newPwd.length() < conf.getInt("min_pwd_length")) {
                                     errorMessage = getTemplate("account_error_message_pass_short", request, map);
@@ -780,23 +796,23 @@ public class ChatServices {
                                 }
                                 if (errorMessage == null) {
                                     text = getConsole("users_pwd_success", request, map);
-                                    text = text.replace("%nick%", nick);
+                                    text = text.set("nick", nick);
                                     db.updatePassword(nick, newPwd);
                                 } else {
                                     text = getConsole("users_pwd", request, map);
-                                    text = text.replace("%account_error_if_one%", getTemplate("account_failed", request, map));
-                                    text = text.replace("%error_message%", errorMessage);
-                                    text = text.replace("%nick%", nick);
+                                    text = text.set("account_error_if_one", getTemplate("account_failed", request, map));
+                                    text = text.set("error_message", errorMessage);
+                                    text = text.set("nick", nick);
                                 }
                             } else {
                                 text = getConsole("users_pwd", request, map);
-                                text = text.replace("%account_error_if_one%", "");
-                                text = text.replace("%error_message%", "");
-                                text = text.replace("%nick%", nick);
+                                text = text.set("account_error_if_one", "");
+                                text = text.set("error_message", "");
+                                text = text.set("nick", nick);
                             }
                         } else if (change.equals("delete")) {
                             text = getConsole("users_delete", request, map);
-                            text = text.replace("%nick%", nick);
+                            text = text.set("nick", nick);
                             if (cm.isOnline(nick)) {
                                 cm.quit(nick);
                                 cm.removeFriend(nick);
@@ -810,7 +826,7 @@ public class ChatServices {
                             var month = map.getOrDefault("month", "");
                             var year = map.getOrDefault("year", "");
                             var status = map.getOrDefault("status", "");
-                            String errorMessage = null;
+                            View errorMessage = null;
                             if (!gender.equals("-") && !gender.equals("m") && !gender.equals("f")) {
                                 errorMessage = getTemplate("account_error_message_gender_invalid", request, map);
                             } else if (!ut.isValidDate(day, month, year)) {
@@ -845,16 +861,16 @@ public class ChatServices {
                             year = year == null ? "" : year;
                             text = getConsole("users_account", request, map);
                             text = ut.parseGender(text, gender);
-                            text = text.replace("%mail%", mail);
-                            text = text.replace("%day%", day);
-                            text = text.replace("%month%", month);
-                            text = text.replace("%year%", year);
-                            text = text.replace("%status%", status);
-                            text = text.replace("%nick%", nick);
+                            text = text.set("mail", mail);
+                            text = text.set("day", day);
+                            text = text.set("month", month);
+                            text = text.set("year", year);
+                            text = text.set("status", status);
+                            text = text.set("nick", nick);
                             if (errorMessage == null) {
-                                text = text.replace("%account_error_if_one%", "");
+                                text = text.set("account_error_if_one", "");
                             } else {
-                                text = text.replace("%account_error_if_one%", errorMessage);
+                                text = text.set("account_error_if_one", errorMessage);
                             }
                         } else if (change.equals("profile")) {
                             var homepage = db.getData(nick, "homepage");
@@ -883,36 +899,36 @@ public class ChatServices {
                             var telegram = db.getData(nick, "telegram");
                             var fam = db.getData(nick, "fam_status");
                             text = getConsole("users_reg", request, map);
-                            text = text.replace("%nick%", db.getData(nick, "nick2"));
-                            text = text.replace("%homepage%", homepage);
-                            text = text.replace("%city%", city);
-                            text = text.replace("%hobby%", hobby);
-                            text = text.replace("%description%", description);
-                            text = text.replace("%slogan%", slogan);
-                            text = text.replace("%signature%", signature);
-                            text = text.replace("%icq%", icq);
-                            text = text.replace("%live%", live);
-                            text = text.replace("%yahoo%", yahoo);
-                            text = text.replace("%facebook%", facebook);
-                            text = text.replace("%twitter%", twitter);
-                            text = text.replace("%irc%", irc);
-                            text = text.replace("%youtube%", youtube);
-                            text = text.replace("%instagram%", instagram);
-                            text = text.replace("%linkedin%", linkedin);
-                            text = text.replace("%tiktok%", tiktok);
-                            text = text.replace("%discord%", discord);
-                            text = text.replace("%twitch%", twitch);
-                            text = text.replace("%github%", github);
-                            text = text.replace("%reddit%", reddit);
-                            text = text.replace("%snapchat%", snapchat);
-                            text = text.replace("%pinterest%", pinterest);
-                            text = text.replace("%whatsapp%", whatsapp);
-                            text = text.replace("%telegram%", telegram);
-                            text = text.replace("%fam_status%", fam);
-                            text = text.replace("%success%", "");
+                            text = text.set("nick", db.getData(nick, "nick2"));
+                            text = text.set("homepage", homepage);
+                            text = text.set("city", city);
+                            text = text.set("hobby", hobby);
+                            text = text.set("description", description);
+                            text = text.set("slogan", slogan);
+                            text = text.set("signature", signature);
+                            text = text.set("icq", icq);
+                            text = text.set("live", live);
+                            text = text.set("yahoo", yahoo);
+                            text = text.set("facebook", facebook);
+                            text = text.set("twitter", twitter);
+                            text = text.set("irc", irc);
+                            text = text.set("youtube", youtube);
+                            text = text.set("instagram", instagram);
+                            text = text.set("linkedin", linkedin);
+                            text = text.set("tiktok", tiktok);
+                            text = text.set("discord", discord);
+                            text = text.set("twitch", twitch);
+                            text = text.set("github", github);
+                            text = text.set("reddit", reddit);
+                            text = text.set("snapchat", snapchat);
+                            text = text.set("pinterest", pinterest);
+                            text = text.set("whatsapp", whatsapp);
+                            text = text.set("telegram", telegram);
+                            text = text.set("fam_status", fam);
+                            text = text.set("success", "");
                         } else if (change.equals("profile_change")) {
                             text = getConsole("users_reg", request, map);
-                            text = text.replace("%success%", getConsole("success", request, map));
+                            text = text.set("success", getConsole("success", request, map));
                             var homepage = map.getOrDefault("homepage", "");
                             var city = map.getOrDefault("city", "");
                             var hobby = map.getOrDefault("hobby", "");
@@ -938,32 +954,32 @@ public class ChatServices {
                             var whatsapp = map.getOrDefault("whatsapp", "");
                             var telegram = map.getOrDefault("telegram", "");
                             var fam = map.getOrDefault("fam_status", "");
-                            text = text.replace("%nick%", db.getData(nick, "nick2"));
-                            text = text.replace("%homepage%", homepage);
-                            text = text.replace("%city%", city);
-                            text = text.replace("%hobby%", hobby);
-                            text = text.replace("%description%", description);
-                            text = text.replace("%slogan%", slogan);
-                            text = text.replace("%signature%", signature);
-                            text = text.replace("%icq%", icq);
-                            text = text.replace("%live%", live);
-                            text = text.replace("%yahoo%", yahoo);
-                            text = text.replace("%facebook%", facebook);
-                            text = text.replace("%twitter%", twitter);
-                            text = text.replace("%irc%", irc);
-                            text = text.replace("%youtube%", youtube);
-                            text = text.replace("%instagram%", instagram);
-                            text = text.replace("%linkedin%", linkedin);
-                            text = text.replace("%tiktok%", tiktok);
-                            text = text.replace("%discord%", discord);
-                            text = text.replace("%twitch%", twitch);
-                            text = text.replace("%github%", github);
-                            text = text.replace("%reddit%", reddit);
-                            text = text.replace("%snapchat%", snapchat);
-                            text = text.replace("%pinterest%", pinterest);
-                            text = text.replace("%whatsapp%", whatsapp);
-                            text = text.replace("%telegram%", telegram);
-                            text = text.replace("%fam_status%", fam);
+                            text = text.set("nick", db.getData(nick, "nick2"));
+                            text = text.set("homepage", homepage);
+                            text = text.set("city", city);
+                            text = text.set("hobby", hobby);
+                            text = text.set("description", description);
+                            text = text.set("slogan", slogan);
+                            text = text.set("signature", signature);
+                            text = text.set("icq", icq);
+                            text = text.set("live", live);
+                            text = text.set("yahoo", yahoo);
+                            text = text.set("facebook", facebook);
+                            text = text.set("twitter", twitter);
+                            text = text.set("irc", irc);
+                            text = text.set("youtube", youtube);
+                            text = text.set("instagram", instagram);
+                            text = text.set("linkedin", linkedin);
+                            text = text.set("tiktok", tiktok);
+                            text = text.set("discord", discord);
+                            text = text.set("twitch", twitch);
+                            text = text.set("github", github);
+                            text = text.set("reddit", reddit);
+                            text = text.set("snapchat", snapchat);
+                            text = text.set("pinterest", pinterest);
+                            text = text.set("whatsapp", whatsapp);
+                            text = text.set("telegram", telegram);
+                            text = text.set("fam_status", fam);
                             db.updateNick(nick, "homepage", homepage);
                             db.updateNick(nick, "city", city);
                             db.updateNick(nick, "hobby", hobby);
@@ -1005,7 +1021,7 @@ public class ChatServices {
                         var owner = map.getOrDefault("owner", "");
                         var pwd = map.getOrDefault("pwd", "");
                         var pwd2 = map.getOrDefault("pwd2", "");
-                        var errorMessage = "";
+                        View errorMessage = null;
                         var regSuccess = false;
                         var skin = map.getOrDefault("skin", "");
                         var ip = request.getLocalAddr();
@@ -1053,15 +1069,15 @@ public class ChatServices {
                         } else {
                             regSuccess = true;
                         }
-                        String rf = null;
+                        View rf = null;
 
                         if (!regSuccess) {
                             rf = getConsole("reg_form", request, map);
                             if (service.equals("reg_done")) {
-                                rf = rf.replace("%reg_error_if_one%", getTemplate("reg_failed", request, map));
-                                rf = rf.replace("%error_message%", errorMessage);
+                                rf = rf.set("reg_error_if_one", getTemplate("reg_failed", request, map));
+                                rf = rf.set("error_message", errorMessage);
                             } else {
-                                rf = rf.replace("%reg_error_if_one%", "");
+                                rf = rf.set("reg_error_if_one", "");
                             }
                             cid = generateSid();
                         } else {
@@ -1069,21 +1085,21 @@ public class ChatServices {
                             db.addNick(gender, nick, mail, color, pwd, question, answer, day, month, year);
                             rf = getConsole("reg_form_success", request, map);
                         }
-                        rf = rf.replace("%reg_nick%", nick);
-                        rf = rf.replace("%reg_mail%", mail);
-                        rf = rf.replace("%reg_cid%", cid);
-                        rf = rf.replace("%reg_captcha%", captcha);
-                        rf = rf.replace("%reg_reminder_question%", question);
-                        rf = rf.replace("%reg_reminder_answer%", answer);
-                        rf = rf.replace("%reg_day%", day);
-                        rf = rf.replace("%reg_month%", month);
-                        rf = rf.replace("%reg_year%", year);
-                        rf = rf.replace("%skin%", skin);
+                        rf = rf.set("reg_nick", nick);
+                        rf = rf.set("reg_mail", mail);
+                        rf = rf.set("reg_cid", cid);
+                        rf = rf.set("reg_captcha", captcha);
+                        rf = rf.set("reg_reminder_question", question);
+                        rf = rf.set("reg_reminder_answer", answer);
+                        rf = rf.set("reg_day", day);
+                        rf = rf.set("reg_month", month);
+                        rf = rf.set("reg_year", year);
+                        rf = rf.set("skin", skin);
                         rf = ut.parseGender(rf, gender);
                         ut.submitContent(rf, response);
                     } else {
                         text = getConsole("users_fail", request, map);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("nick", nick);
                     }
                 } else {
                     text = getConsole("users", request, map);
@@ -1095,9 +1111,9 @@ public class ChatServices {
             }
         } else {
             response.setStatus(401);
-            var text = "";
+            View text = null;
             text = getConsole("401", request, map);
-            text = text.replace("%message%", filter.message);
+            text = text.set("message", filter.message);
             ut.submitContent(text, response);
         }
     }
@@ -1128,7 +1144,7 @@ public class ChatServices {
         if (!owner.isBlank()) {
             roomName = db.getRoomNameByOwner(owner.toLowerCase());
         }
-        var errorMessage = "";
+        View errorMessage = null;
         var regSuccess = false;
         if (!db.isRegistered(nick)) {
             errorMessage = getTemplate("reg_error_message_nick_not_registered", request, map);
@@ -1143,18 +1159,18 @@ public class ChatServices {
         } else {
             regSuccess = true;
         }
-        String rf = null;
+        View rf = null;
         var pwd = ut.createRandomPassword();
         if (regSuccess) {
             try {
                 var text = getMail("password", request, map);
-                text = text.replace("%pwd%", pwd);
-                text = text.replace("%nick%", nick);
+                text = text.set("pwd", pwd);
+                text = text.set("nick", nick);
                 if (mailer != null) {
                     mailer.sendEmail(text, db.getCommand("password_subject", lang), mail);
                 }
             } catch (MessagingException me) {
-                errorMessage = me.getLocalizedMessage();
+                errorMessage = View.of(me.getLocalizedMessage());
                 regSuccess = false;
             }
         }
@@ -1165,10 +1181,10 @@ public class ChatServices {
                 rf = getTemplate("pass_form_napping", request, map);
             }
             if (service.equals("pass_done")) {
-                rf = rf.replace("%reg_error_if_one%", getTemplate("pass_failed", request, map));
-                rf = rf.replace("%error_message%", errorMessage);
+                rf = rf.set("reg_error_if_one", getTemplate("pass_failed", request, map));
+                rf = rf.set("error_message", errorMessage);
             } else {
-                rf = rf.replace("%reg_error_if_one%", "");
+                rf = rf.set("reg_error_if_one", "");
             }
             cid = generateSid();
         } else {
@@ -1177,16 +1193,16 @@ public class ChatServices {
             } else {
                 rf = getTemplate("pass_form_success_napping", request, map);
             }
-            rf = rf.replace("%reg_error_if_one%", "");
+            rf = rf.set("reg_error_if_one", "");
             db.updatePassword2(nick, pwd);
         }
-        rf = rf.replace("%reg_nick%", nick);
-        rf = rf.replace("%reg_mail%", mail);
-        rf = rf.replace("%reg_cid%", cid);
-        rf = rf.replace("%reg_captcha%", captcha);
-        rf = rf.replace("%reg_day%", day);
-        rf = rf.replace("%reg_month%", month);
-        rf = rf.replace("%reg_year%", year);
+        rf = rf.set("reg_nick", nick);
+        rf = rf.set("reg_mail", mail);
+        rf = rf.set("reg_cid", cid);
+        rf = rf.set("reg_captcha", captcha);
+        rf = rf.set("reg_day", day);
+        rf = rf.set("reg_month", month);
+        rf = rf.set("reg_year", year);
         ut.submitContent(rf, response);
     }
 
@@ -1205,7 +1221,7 @@ public class ChatServices {
         url = ut.decodeHtml(url);
         skin = ut.parseHost(skin, request)[1];
         var text = getTemplate("link", request, map);
-        text = text.replace("%link%", ut.parseHtml(url));
+        text = text.set("link", ut.parseHtml(url));
         ut.submitContent(text, response);
     }
 
@@ -1267,7 +1283,7 @@ public class ChatServices {
         var conf = Bootstrap.boot.getConfig();
         var ut = Bootstrap.boot.getUtil();
         var db = conf.getDb();
-        String text;
+        View text;
         var session = request.getSession(false);
         if (session != null && !session.isNew() && "true".equals(session.getAttribute("community"))) {
             var nick = (String) session.getAttribute("nick");
@@ -1280,7 +1296,7 @@ public class ChatServices {
         } else {
             text = getTemplate("toplist", request, map);
         }
-        text = text.replace("%toplist%", db.getToplist(request, response, map));
+        text = text.set("toplist", db.getToplist(request, response, map));
         ut.submitContent(text, response);
     }
 
@@ -1347,7 +1363,7 @@ public class ChatServices {
         if (!owner.isBlank()) {
             roomName = db.getRoomNameByOwner(owner.toLowerCase());
         }
-        String text = null;
+        View text = null;
         if (roomName == null) {
             text = getTemplate("help", request, map);
         } else {
@@ -1364,7 +1380,7 @@ public class ChatServices {
         var ut = Bootstrap.boot.getUtil();
         skin = ut.parseHost(skin, request)[1];
         var db = conf.getDb();
-        String text = null;
+        View text = null;
         try {
             var row = conf.getInt("emots_per_row");
             var cnt = 0;
@@ -1403,13 +1419,13 @@ public class ChatServices {
                 }
             }
             sb.append("\r\n</table>\r\n");
-            text = text.replace("%emot%", sb.toString());
+            text = text.set("emot", sb.toString());
 
         } catch (NullPointerException npe) {
-            text = ut.getStackTrace(npe);
+            text = View.of(ut.getStackTrace(npe));
         }
 
-        text = text.replace("%path_file%", conf.getString("path_file"));
+        text = text.set("path_file", conf.getString("path_file"));
         ut.submitContent(text, response);
     }
 
@@ -1429,7 +1445,7 @@ public class ChatServices {
         skin = ut.parseHost(skin, request)[1];
         var db = conf.getDb();
         var reg = db.isRegistered(user);
-        String text = null;
+        View text = null;
         var session = request.getSession(false);
         sid = (String) session.getAttribute("sid");
         sid = sid != null ? sid : map.getOrDefault("sid", "");
@@ -1459,7 +1475,7 @@ public class ChatServices {
                 text = getTemplate("profile_invalid_session_id_napping", request, map);
             }
 
-            text = text.replace("%user%", user);
+            text = text.set("user", user);
         } else if (!reg) {
             if (roomName.isBlank()) {
                 text = getTemplate("profile_nick_not_registered", request, map);
@@ -1467,7 +1483,7 @@ public class ChatServices {
                 text = getTemplate("profile_nick_not_registered_napping", request, map);
             }
 
-            text = text.replace("%user%", user);
+            text = text.set("user", user);
         } else {
             try {
                 var lang = readLang(request, map);
@@ -1479,34 +1495,31 @@ public class ChatServices {
                 } else {
                     text = getTemplate("profile_user_napping", request, map);
                 }
+                var labels = new java.util.HashMap<String, String>();
                 var buf = db.getData(user, "homepage");
                 var prof = profile.getOrDefault("homepage", "");
-                var replacement = "%PROFILE_[homepage]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%homepage%", buf);
+                    labels.put("homepage", prof);
+                    text = text.set("homepage", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("homepage", "");
                 }
                 buf = db.getData(user, "city");
-                replacement = "%city%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, buf);
+                    text.set("city", buf);
                 } else {
-                    text = text.replace(replacement, profile.getOrDefault("unknown", ""));
+                    text.set("city", profile.getOrDefault("unknown", ""));
                 }
                 buf = db.getData(user, "hobby");
                 prof = profile.getOrDefault("hobby", "");
-                replacement = "%PROFILE_[hobby]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%hobby%", buf);
+                    labels.put("hobby", prof);
+                    text = text.set("hobby", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("hobby", "");
                 }
                 buf = db.getData(user, "status");
                 prof = profile.getOrDefault("status", "");
-                replacement = "%PROFILE_[status]%";
                 var stat = db.getLongData(user, "status").intValue();
                 if (stat >= 10) {
                     buf = Bootstrap.boot.getChatManager().getCommand(nick, "status_10");
@@ -1530,226 +1543,202 @@ public class ChatServices {
                     buf = Bootstrap.boot.getChatManager().getCommand(nick, "status_1");
                 }
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%status%", buf);
+                    labels.put("status", prof);
+                    text = text.set("status", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("status", "");
                 }
                 buf = db.getData(user, "description");
                 prof = profile.getOrDefault("description", "");
-                replacement = "%PROFILE_[description]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%description%", buf);
+                    labels.put("description", prof);
+                    text = text.set("description", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("description", "");
                 }
                 buf = db.getData(user, "slogan");
                 prof = profile.getOrDefault("slogan", "");
-                replacement = "%PROFILE_[slogan]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%slogan%", buf);
+                    labels.put("slogan", prof);
+                    text = text.set("slogan", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("slogan", "");
                 }
                 buf = db.getData(user, "signature");
                 prof = profile.getOrDefault("signature", "");
-                replacement = "%PROFILE_[signature]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%signature%", buf);
+                    labels.put("signature", prof);
+                    text = text.set("signature", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("signature", "");
                 }
                 buf = db.getLongData(user, "icq") != 0 ? db.getData(user, "icq") : null;
                 prof = profile.getOrDefault("icq", "");
-                replacement = "%PROFILE_[icq]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%icq%", buf);
+                    labels.put("icq", prof);
+                    text = text.set("icq", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("icq", "");
                 }
                 buf = db.getData(user, "live");
                 prof = profile.getOrDefault("skype", "");
-                replacement = "%PROFILE_[skype]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%live%", buf);
+                    labels.put("skype", prof);
+                    text = text.set("live", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("skype", "");
                 }
                 buf = db.getData(user, "yahoo");
                 prof = profile.getOrDefault("yahoo", "");
-                replacement = "%PROFILE_[yahoo]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%yahoo%", buf);
+                    labels.put("yahoo", prof);
+                    text = text.set("yahoo", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("yahoo", "");
                 }
                 buf = db.getData(user, "facebook");
                 prof = profile.getOrDefault("facebook", "");
-                replacement = "%PROFILE_[facebook]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%facebook%", buf);
+                    labels.put("facebook", prof);
+                    text = text.set("facebook", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("facebook", "");
                 }
                 buf = db.getData(user, "twitter");
                 prof = profile.getOrDefault("twitter", "");
-                replacement = "%PROFILE_[twitter]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%twitter%", buf);
+                    labels.put("twitter", prof);
+                    text = text.set("twitter", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("twitter", "");
                 }
                 buf = db.getData(user, "irc");
                 prof = profile.getOrDefault("irc", "");
-                replacement = "%PROFILE_[irc]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%irc%", buf);
+                    labels.put("irc", prof);
+                    text = text.set("irc", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("irc", "");
                 }
                 buf = db.getData(user, "youtube");
                 prof = profile.getOrDefault("youtube", "");
-                replacement = "%PROFILE_[youtube]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%youtube%", buf);
+                    labels.put("youtube", prof);
+                    text = text.set("youtube", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("youtube", "");
                 }
                 buf = db.getData(user, "instagram");
                 prof = profile.getOrDefault("instagram", "");
-                replacement = "%PROFILE_[instagram]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%instagram%", buf);
+                    labels.put("instagram", prof);
+                    text = text.set("instagram", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("instagram", "");
                 }
                 buf = db.getData(user, "linkedin");
                 prof = profile.getOrDefault("linkedin", "");
-                replacement = "%PROFILE_[linkedin]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%linkedin%", buf);
+                    labels.put("linkedin", prof);
+                    text = text.set("linkedin", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("linkedin", "");
                 }
                 buf = db.getData(user, "tiktok");
                 prof = profile.getOrDefault("tiktok", "");
-                replacement = "%PROFILE_[tiktok]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%tiktok%", buf);
+                    labels.put("tiktok", prof);
+                    text = text.set("tiktok", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("tiktok", "");
                 }
                 buf = db.getData(user, "discord");
                 prof = profile.getOrDefault("discord", "");
-                replacement = "%PROFILE_[discord]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%discord%", buf);
+                    labels.put("discord", prof);
+                    text = text.set("discord", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("discord", "");
                 }
                 buf = db.getData(user, "twitch");
                 prof = profile.getOrDefault("twitch", "");
-                replacement = "%PROFILE_[twitch]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%twitch%", buf);
+                    labels.put("twitch", prof);
+                    text = text.set("twitch", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("twitch", "");
                 }
                 buf = db.getData(user, "github");
                 prof = profile.getOrDefault("github", "");
-                replacement = "%PROFILE_[github]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%github%", buf);
+                    labels.put("github", prof);
+                    text = text.set("github", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("github", "");
                 }
                 buf = db.getData(user, "reddit");
                 prof = profile.getOrDefault("reddit", "");
-                replacement = "%PROFILE_[reddit]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%reddit%", buf);
+                    labels.put("reddit", prof);
+                    text = text.set("reddit", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("reddit", "");
                 }
                 buf = db.getData(user, "snapchat");
                 prof = profile.getOrDefault("snapchat", "");
-                replacement = "%PROFILE_[snapchat]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%snapchat%", buf);
+                    labels.put("snapchat", prof);
+                    text = text.set("snapchat", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("snapchat", "");
                 }
                 buf = db.getData(user, "pinterest");
                 prof = profile.getOrDefault("pinterest", "");
-                replacement = "%PROFILE_[pinterest]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%pinterest%", buf);
+                    labels.put("pinterest", prof);
+                    text = text.set("pinterest", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("pinterest", "");
                 }
                 buf = db.getData(user, "whatsapp");
                 prof = profile.getOrDefault("whatsapp", "");
-                replacement = "%PROFILE_[whatsapp]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%whatsapp%", buf);
+                    labels.put("whatsapp", prof);
+                    text = text.set("whatsapp", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("whatsapp", "");
                 }
                 buf = db.getData(user, "telegram");
                 prof = profile.getOrDefault("telegram", "");
-                replacement = "%PROFILE_[telegram]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%telegram%", buf);
+                    labels.put("telegram", prof);
+                    text = text.set("telegram", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("telegram", "");
                 }
                 buf = db.getData(user, "visitors");
                 prof = profile.getOrDefault("last_visitor", "");
-                replacement = "%PROFILE_[last_visitor]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%visitors%", buf);
+                    labels.put("last_visitor", prof);
+                    text = text.set("visitors", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("last_visitor", "");
                 }
                 buf = db.getData(user, "fam_status");
                 prof = profile.getOrDefault("fam_status", "");
-                replacement = "%PROFILE_[fam_status]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%fam_status%", buf);
+                    labels.put("fam_status", prof);
+                    text = text.set("fam_status", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("fam_status", "");
                 }
                 buf = db.getData(user, "image_url");
                 prof = profile.getOrDefault("image", "");
-                replacement = "%PROFILE_[image]%";
                 if (buf != null && !buf.equals("")) {
-                    text = text.replace(replacement, prof);
-                    text = text.replace("%image_url%", buf);
+                    labels.put("image", prof);
+                    text = text.set("image_url", buf);
                 } else {
-                    text = text.replace(replacement, "");
+                    labels.put("image", "");
                 }
                 buf = db.getData(user, "sex");
                 buf = switch (buf) {
@@ -1760,33 +1749,34 @@ public class ChatServices {
                     default ->
                         profile.getOrDefault("gender_n", "");
                 };
-                text = text.replace("%sex%", buf);
-                text = text.replace("%user%", db.getData(user, "nick2"));
-                text = text.replace("%homepage%", db.getData(user, "homepage") == null ? "" : db.getData(user, "homepage"));
-                text = text.replace("%points%", db.getData(user, "points"));
-                text = text.replace("%timestamp_login%", ut.getTime(db.getLongData(user, "timestamp_login")));
-                text = text.replace("%timestamp_reg%", ut.getTime(db.getLongData(user, "timestamp_reg")));
-                text = text.replace("%bday_day%", db.getData(user, "bday_day") == null ? "" : db.getData(user, "bday_day"));
-                text = text.replace("%bday_month%", db.getData(user, "bday_month") == null ? "" : db.getData(user, "bday_month"));
-                text = text.replace("%bday_year%", db.getData(user, "bday_year") == null ? "" : db.getData(user, "bday_year"));
-                text = text.replace("%login_room%", db.getData(user, "login_room") == null ? "" : db.getData(user, "login_room"));
-                text = text.replace("%color%", db.getData(user, "color") == null ? "" : db.getData(user, "color"));
+                text.set("profile", labels);
+                text = text.set("sex", buf);
+                text = text.set("user", db.getData(user, "nick2"));
+                text = text.set("homepage", db.getData(user, "homepage") == null ? "" : db.getData(user, "homepage"));
+                text = text.set("points", db.getData(user, "points"));
+                text = text.set("timestamp_login", ut.getTime(db.getLongData(user, "timestamp_login")));
+                text = text.set("timestamp_reg", ut.getTime(db.getLongData(user, "timestamp_reg")));
+                text = text.set("bday_day", db.getData(user, "bday_day") == null ? "" : db.getData(user, "bday_day"));
+                text = text.set("bday_month", db.getData(user, "bday_month") == null ? "" : db.getData(user, "bday_month"));
+                text = text.set("bday_year", db.getData(user, "bday_year") == null ? "" : db.getData(user, "bday_year"));
+                text = text.set("login_room", db.getData(user, "login_room") == null ? "" : db.getData(user, "login_room"));
+                text = text.set("color", db.getData(user, "color") == null ? "" : db.getData(user, "color"));
                 var gbSb = new StringBuilder();
                 var gbEntries = db.getGuestbook(user);
                 var isOwner = nick.equalsIgnoreCase(user);
                 String pathProfile = "";
                 String pathProfileFile = "";
                 if (isOwner) {
-                    pathProfile = ut.replacePaths("%PATH_[profile]%");
-                    pathProfileFile = ut.replaceFilePaths("%path_profile%");
+                    pathProfile = text.expand("%PATH_[profile]%");
+                    pathProfileFile = text.expand("%path_profile%");
                 }
                 for (var entry : gbEntries) {
                     var eText = getTemplate("guestbook_entry", request, map);
-                    eText = eText.replace("%gbk_id%", entry[0]);
-                    eText = eText.replace("%gbk_nick%", entry[1]);
-                    eText = eText.replace("%gbk_color%", entry[2]);
-                    eText = eText.replace("%gbk_text%", entry[3]);
-                    eText = eText.replace("%gbk_time%", entry[4]);
+                    eText = eText.set("gbk_id", entry[0]);
+                    eText = eText.set("gbk_nick", entry[1]);
+                    eText = eText.set("gbk_color", entry[2]);
+                    eText = eText.set("gbk_text", entry[3]);
+                    eText = eText.set("gbk_time", entry[4]);
                     if (isOwner) {
                         var deleteForm = "<form action=\"" + pathProfile + "\" method=\"get\" accept-charset=\"utf-8\" style=\"display:inline;margin-left:8px;\">" +
                                 "<input type=\"hidden\" name=\"page\" value=\"" + pathProfileFile + "\">" +
@@ -1795,30 +1785,23 @@ public class ChatServices {
                                 "<input type=\"hidden\" name=\"skin\" value=\"" + skin + "\">" +
                                 "<input type=\"hidden\" name=\"guestbook_delete\" value=\"" + entry[0] + "\">" +
                                 "<button class=\"btn btn-sm btn-outline-danger\" type=\"submit\">Löschen</button></form>";
-                        eText = eText.replace("%gbk_delete_form%", deleteForm);
+                        eText = eText.set("gbk_delete_form", deleteForm);
                     } else {
-                        eText = eText.replace("%gbk_delete_form%", "");
+                        eText = eText.set("gbk_delete_form", "");
                     }
                     gbSb.append(eText);
                 }
                 if (db.isRegistered(nick) && sid != null && cm.isValidConnectionId(sid)) {
                     var form = getTemplate("guestbook_form", request, map);
-                    form = form.replace("%user%", user);
-                    form = form.replace("%nick%", nick);
+                    form = form.set("user", user);
+                    form = form.set("nick", nick);
                     gbSb.append(form);
                 }
-                text = text.replace("%GUESTBOOK%", gbSb.toString());
+                text = text.set("GUESTBOOK", gbSb.toString());
             } catch (NullPointerException npe) {
-                text = ut.getStackTrace(npe);
+                text = View.of(ut.getStackTrace(npe));
             }
         }
-        text = ut.replacePaths(text);
-        text = ut.replaceFilePaths(text);
-        text = ut.replaceServerInfo(text);
-        String scheme = detectScheme(request);
-        text = text.replace("%host_ws%", (scheme.equals("https") ? "wss" : "ws") + "://" + request.getHeader("host"));
-        text = text.replace("%host_http%", scheme + "://" + request.getHeader("host"));
-        text = text.replace("%owner%", owner);
         db.updateNick(user, "visitors", nick);
         ut.submitContent(text, response);
     }
@@ -1829,7 +1812,7 @@ public class ChatServices {
      * @param out Die Output-Klasse
      */
     private void accountForm(HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
-        String text = null;
+        View text = null;
         var service = map.getOrDefault("service", "");
         var data = map.getOrDefault("data", "");
         var sid = map.getOrDefault("sid", "");
@@ -1928,31 +1911,31 @@ public class ChatServices {
                     } else {
                         text = getTemplate("account_form_profile_napping", request, map);
                     }
-                    text = text.replace("%homepage%", homepage);
-                    text = text.replace("%city%", city);
-                    text = text.replace("%hobby%", hobby);
-                    text = text.replace("%description%", description);
-                    text = text.replace("%slogan%", slogan);
-                    text = text.replace("%signature%", signature);
-                    text = text.replace("%icq%", icq);
-                    text = text.replace("%live%", live);
-                    text = text.replace("%yahoo%", yahoo);
-                    text = text.replace("%facebook%", facebook);
-                    text = text.replace("%twitter%", twitter);
-                    text = text.replace("%irc%", irc);
-                    text = text.replace("%youtube%", youtube);
-                    text = text.replace("%instagram%", instagram);
-                    text = text.replace("%linkedin%", linkedin);
-                    text = text.replace("%tiktok%", tiktok);
-                    text = text.replace("%discord%", discord);
-                    text = text.replace("%twitch%", twitch);
-                    text = text.replace("%github%", github);
-                    text = text.replace("%reddit%", reddit);
-                    text = text.replace("%snapchat%", snapchat);
-                    text = text.replace("%pinterest%", pinterest);
-                    text = text.replace("%whatsapp%", whatsapp);
-                    text = text.replace("%telegram%", telegram);
-                    text = text.replace("%fam_status%", fam);
+                    text = text.set("homepage", homepage);
+                    text = text.set("city", city);
+                    text = text.set("hobby", hobby);
+                    text = text.set("description", description);
+                    text = text.set("slogan", slogan);
+                    text = text.set("signature", signature);
+                    text = text.set("icq", icq);
+                    text = text.set("live", live);
+                    text = text.set("yahoo", yahoo);
+                    text = text.set("facebook", facebook);
+                    text = text.set("twitter", twitter);
+                    text = text.set("irc", irc);
+                    text = text.set("youtube", youtube);
+                    text = text.set("instagram", instagram);
+                    text = text.set("linkedin", linkedin);
+                    text = text.set("tiktok", tiktok);
+                    text = text.set("discord", discord);
+                    text = text.set("twitch", twitch);
+                    text = text.set("github", github);
+                    text = text.set("reddit", reddit);
+                    text = text.set("snapchat", snapchat);
+                    text = text.set("pinterest", pinterest);
+                    text = text.set("whatsapp", whatsapp);
+                    text = text.set("telegram", telegram);
+                    text = text.set("fam_status", fam);
                 }
                 case "change" -> {
                     homepage = map.getOrDefault("homepage", "");
@@ -1985,31 +1968,31 @@ public class ChatServices {
                     } else {
                         text = getTemplate("account_form_profile_success_napping", request, map);
                     }
-                    text = text.replace("%homepage%", homepage);
-                    text = text.replace("%city%", city);
-                    text = text.replace("%hobby%", hobby);
-                    text = text.replace("%description%", description);
-                    text = text.replace("%slogan%", slogan);
-                    text = text.replace("%signature%", signature);
-                    text = text.replace("%icq%", icq);
-                    text = text.replace("%live%", live);
-                    text = text.replace("%yahoo%", yahoo);
-                    text = text.replace("%facebook%", facebook);
-                    text = text.replace("%twitter%", twitter);
-                    text = text.replace("%irc%", irc);
-                    text = text.replace("%youtube%", youtube);
-                    text = text.replace("%instagram%", instagram);
-                    text = text.replace("%linkedin%", linkedin);
-                    text = text.replace("%tiktok%", tiktok);
-                    text = text.replace("%discord%", discord);
-                    text = text.replace("%twitch%", twitch);
-                    text = text.replace("%github%", github);
-                    text = text.replace("%reddit%", reddit);
-                    text = text.replace("%snapchat%", snapchat);
-                    text = text.replace("%pinterest%", pinterest);
-                    text = text.replace("%whatsapp%", whatsapp);
-                    text = text.replace("%telegram%", telegram);
-                    text = text.replace("%fam_status%", fam);
+                    text = text.set("homepage", homepage);
+                    text = text.set("city", city);
+                    text = text.set("hobby", hobby);
+                    text = text.set("description", description);
+                    text = text.set("slogan", slogan);
+                    text = text.set("signature", signature);
+                    text = text.set("icq", icq);
+                    text = text.set("live", live);
+                    text = text.set("yahoo", yahoo);
+                    text = text.set("facebook", facebook);
+                    text = text.set("twitter", twitter);
+                    text = text.set("irc", irc);
+                    text = text.set("youtube", youtube);
+                    text = text.set("instagram", instagram);
+                    text = text.set("linkedin", linkedin);
+                    text = text.set("tiktok", tiktok);
+                    text = text.set("discord", discord);
+                    text = text.set("twitch", twitch);
+                    text = text.set("github", github);
+                    text = text.set("reddit", reddit);
+                    text = text.set("snapchat", snapchat);
+                    text = text.set("pinterest", pinterest);
+                    text = text.set("whatsapp", whatsapp);
+                    text = text.set("telegram", telegram);
+                    text = text.set("fam_status", fam);
                     db.updateNick(nick, "homepage", homepage);
                     db.updateNick(nick, "city", city);
                     db.updateNick(nick, "hobby", hobby);
@@ -2050,7 +2033,7 @@ public class ChatServices {
                     var oldPwd = map.getOrDefault("old_pwd", "");
                     var newPwd = map.getOrDefault("new_pwd", "");
                     var newPwd2 = map.getOrDefault("new_pwd2", "");
-                    String errorMessage = null;
+                    View errorMessage = null;
                     if (!db.checkPassword(nick, oldPwd)) {
                         errorMessage = getTemplate("account_error_message_pass_wrong", request, map);
                     } else if (newPwd.length() < conf.getInt("min_pwd_length")) {
@@ -2074,8 +2057,8 @@ public class ChatServices {
                         } else {
                             text = getTemplate("account_form_password_napping", request, map);
                         }
-                        text = text.replace("%account_error_if_one%", getTemplate("account_failed", request, map));
-                        text = text.replace("%error_message%", errorMessage);
+                        text = text.set("account_error_if_one", getTemplate("account_failed", request, map));
+                        text = text.set("error_message", errorMessage);
                     }
                 }
                 case "" -> {
@@ -2098,7 +2081,7 @@ public class ChatServices {
                 case "delete" -> {
                     var pwd = map.getOrDefault("pwd", "");
                     var pwd2 = map.getOrDefault("pwd2", "");
-                    String errorMessage = null;
+                    View errorMessage = null;
                     if (!pwd.equals(pwd2)) {
                         errorMessage = getTemplate("account_error_message_pass_same", request, map);
                     } else if (!db.checkPassword(nick, pwd)) {
@@ -2121,8 +2104,8 @@ public class ChatServices {
                             text = getTemplate("account_form_delete_napping", request, map);
                         }
 
-                        text = text.replace("%account_error_if_one%", getTemplate("account_failed", request, map));
-                        text = text.replace("%error_message%", errorMessage);
+                        text = text.set("account_error_if_one", getTemplate("account_failed", request, map));
+                        text = text.set("error_message", errorMessage);
                     }
                 }
                 case "" -> {
@@ -2163,84 +2146,84 @@ public class ChatServices {
                         } else {
                             text = getTemplate("account_form_napping_color_napping", request, map);
                         }
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     } else if (bg_color_2.length() != 6 || !bg_color_2.matches("[a-fA-F0-9]*")) {
                         if (roomName.isBlank()) {
                             text = getTemplate("account_form_napping_color", request, map);
                         } else {
                             text = getTemplate("account_form_napping_color_napping", request, map);
                         }
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     } else if (border_color.length() != 6 || !border_color.matches("[a-fA-F0-9]*")) {
                         if (roomName.isBlank()) {
                             text = getTemplate("account_form_napping_color", request, map);
                         } else {
                             text = getTemplate("account_form_napping_color_napping", request, map);
                         }
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     } else if (color.length() != 6 || !color.matches("[a-fA-F0-9]*")) {
                         if (roomName.isBlank()) {
                             text = getTemplate("account_form_napping_color", request, map);
                         } else {
                             text = getTemplate("account_form_napping_color_napping", request, map);
                         }
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     } else if (link_color.length() != 6 || !link_color.matches("[a-fA-F0-9]*")) {
                         if (roomName.isBlank()) {
                             text = getTemplate("account_form_napping_color", request, map);
                         } else {
                             text = getTemplate("account_form_napping_color_napping", request, map);
                         }
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     } else if (db.ownerExists(nick) && !db.getRoomNameByOwner(nick).equals(room)) {
                         if (roomName.isBlank()) {
                             text = getTemplate("account_form_napping_used", request, map);
                         } else {
                             text = getTemplate("account_form_napping_used_napping", request, map);
                         }
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     } else if (db.roomExists(room) && db.getRoomData(room, "owner").equalsIgnoreCase(nick)) {
                         db.updateRoomData(room, "owner", nick);
                         db.updateRoomData(room, "first_bgcolor", bg_color_1);
@@ -2254,14 +2237,14 @@ public class ChatServices {
                         } else {
                             text = getTemplate("account_form_napping_change_napping", request, map);
                         }
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     } else if (!db.roomExists(room)) {
                         db.addRoomData(nick, room, title, bg_color_1, bg_color_2, color, border_color, link_color);
                         db.updateRoomData(room, "su", nick);
@@ -2270,24 +2253,24 @@ public class ChatServices {
                         } else {
                             text = getTemplate("account_form_napping_add_napping", request, map);
                         }
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     } else {
                         text = getTemplate("account_form_napping_error", request, map);
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     }
                 }
                 case "" -> {
@@ -2309,14 +2292,14 @@ public class ChatServices {
                     } else {
                         text = getTemplate("account_form_napping_napping", request, map);
                     }
-                    text = text.replace("%title%", title);
-                    text = text.replace("%bg_color_1%", bg_color_1);
-                    text = text.replace("%bg_color_2%", bg_color_2);
-                    text = text.replace("%color%", color);
-                    text = text.replace("%link_color%", link_color);
-                    text = text.replace("%border_color%", border_color);
-                    text = text.replace("%room2%", room);
-                    text = text.replace("%nick%", nick);
+                    text = text.set("title", title);
+                    text = text.set("bg_color_1", bg_color_1);
+                    text = text.set("bg_color_2", bg_color_2);
+                    text = text.set("color", color);
+                    text = text.set("link_color", link_color);
+                    text = text.set("border_color", border_color);
+                    text = text.set("room2", room);
+                    text = text.set("nick", nick);
                 }
                 default -> {
                     if (roomName.isBlank()) {
@@ -2327,7 +2310,7 @@ public class ChatServices {
                 }
             }
         } else if (service.equals("data")) {
-            String errorMessage = null;
+            View errorMessage = null;
             String mail = null;
             String gender = null;
             String day = null;
@@ -2371,12 +2354,12 @@ public class ChatServices {
                             text = getTemplate("account_form_default_napping", request, map);
                         }
                         text = ut.parseGender(text, gender);
-                        text = text.replace("%account_error_if_one%", getTemplate("account_failed", request, map));
-                        text = text.replace("%error_message%", errorMessage);
-                        text = text.replace("%mail%", mail);
-                        text = text.replace("%day%", day);
-                        text = text.replace("%month%", month);
-                        text = text.replace("%year%", year);
+                        text = text.set("account_error_if_one", getTemplate("account_failed", request, map));
+                        text = text.set("error_message", errorMessage);
+                        text = text.set("mail", mail);
+                        text = text.set("day", day);
+                        text = text.set("month", month);
+                        text = text.set("year", year);
                     }
                 }
                 case "" -> {
@@ -2396,10 +2379,10 @@ public class ChatServices {
                         text = getTemplate("account_form_default_napping", request, map);
                     }
                     text = ut.parseGender(text, gender);
-                    text = text.replace("%mail%", mail);
-                    text = text.replace("%day%", day);
-                    text = text.replace("%month%", month);
-                    text = text.replace("%year%", year);
+                    text = text.set("mail", mail);
+                    text = text.set("day", day);
+                    text = text.set("month", month);
+                    text = text.set("year", year);
                 }
                 default -> {
                     if (roomName.isBlank()) {
@@ -2455,7 +2438,7 @@ public class ChatServices {
                 text = getTemplate("account_form_napping2", request, map);
             }
         }
-        text = text.replace("%account_error_if_one%", "");
+        text = text.set("account_error_if_one", "");
         ut.submitContent(text, response);
     }
 
@@ -2478,7 +2461,7 @@ public class ChatServices {
         var nick = (String) session.getAttribute("nick");
         var moderator = db.getData(nick, "moderator").equals("1");
         com.get((String) session.getAttribute("nick")).setTimeoutTimer(0);
-        String text = null;
+        View text = null;
         var service = map.getOrDefault("service", "");
         var data = map.getOrDefault("data", "");
         var skin = (String) session.getAttribute("skin");
@@ -2617,9 +2600,9 @@ public class ChatServices {
                 }
                 text = getTemplate("boards_ban", request, map);
             }
-            text = text.replace("%color%", color);
-            text = text.replace("%nick%", nick);
-            text = text.replace("%user%", db.getData(target, "nick2"));
+            text = text.set("color", color);
+            text = text.set("nick", nick);
+            text = text.set("user", db.getData(target, "nick2"));
         } else if (!undel.isBlank()) {
             var locked = db.getBoards(Long.valueOf(bid), "readonly").equals("1");
             if (locked && !moderator) {
@@ -2668,9 +2651,9 @@ public class ChatServices {
                 ref = db.getBoard(Long.valueOf(pid), "ref");
                 var newPostId = db.addThread(map.getOrDefault("topic", ""), map.getOrDefault("thread", ""), Long.valueOf(ref), Long.valueOf(db.getData(nick, "id")), 0, ip, Long.valueOf(bid));
                 text = getTemplate("boards_added", request, map);
-                text = text.replace("%id%", bid);
+                text = text.set("id", bid);
                 pid = String.valueOf(newPostId);
-                text = text.replace("%pid%", pid);
+                text = text.set("pid", pid);
             }
         } else if (!editBoards.isBlank()) {
             var edited = map.getOrDefault("edited", "").equalsIgnoreCase("true");
@@ -2688,9 +2671,9 @@ public class ChatServices {
                     var topic = db.getBoards(Long.valueOf(bid), "topic");
                     var description = db.getBoards(Long.valueOf(bid), "description");
                     text = getTemplate("boards_edit", request, map);
-                    text = text.replace("%id%", bid);
-                    text = text.replace("%topic%", ut.parseHtml(topic));
-                    text = text.replace("%description%", ut.parseHtml(description));
+                    text = text.set("id", bid);
+                    text = text.set("topic", ut.parseHtml(topic));
+                    text = text.set("description", ut.parseHtml(description));
                 }
             }
         } else if (!edit.isBlank()) {
@@ -2708,14 +2691,14 @@ public class ChatServices {
                     db.updateThread(threadId, "topic", topic);
                     db.updateThread(threadId, "content", content);
                     text = getTemplate("boards_thread_edited", request, map);
-                    text = text.replace("%id%", bid);
-                    text = text.replace("%pid%", pid);
+                    text = text.set("id", bid);
+                    text = text.set("pid", pid);
                 } else {
                     text = getTemplate("boards_thread_edit_form", request, map);
-                    text = text.replace("%id%", bid);
-                    text = text.replace("%pid%", pid);
-                    text = text.replace("%topic%", ut.parseHtml(String.valueOf(thread[0])));
-                    text = text.replace("%content%", ut.parseHtml(String.valueOf(thread[1])));
+                    text = text.set("id", bid);
+                    text = text.set("pid", pid);
+                    text = text.set("topic", ut.parseHtml(String.valueOf(thread[0])));
+                    text = text.set("content", ut.parseHtml(String.valueOf(thread[1])));
                 }
             }
         } else if (!delBoards.isBlank()) {
@@ -2726,13 +2709,13 @@ public class ChatServices {
                 if (deleted) {
                     db.updateBoards(Long.valueOf(bid), "deleted", "0");
                     text = getTemplate("boards_undel", request, map);
-                    text = text.replace("%id%", bid);
-                    text = text.replace("%pid%", pid);
+                    text = text.set("id", bid);
+                    text = text.set("pid", pid);
                 } else {
                     db.updateBoards(Long.valueOf(bid), "deleted", "1");
                     text = getTemplate("boards_deleted", request, map);
-                    text = text.replace("%id%", bid);;
-                    text = text.replace("%pid%", pid);
+                    text = text.set("id", bid);;
+                    text = text.set("pid", pid);
                 }
             }
         } else if (!closeBoards.isBlank()) {
@@ -2743,13 +2726,13 @@ public class ChatServices {
                 if (closed) {
                     db.updateBoards(Long.valueOf(bid), "readonly", "0");
                     text = getTemplate("boards_open", request, map);
-                    text = text.replace("%id%", bid);
-                    text = text.replace("%pid%", pid);
+                    text = text.set("id", bid);
+                    text = text.set("pid", pid);
                 } else {
                     db.updateBoards(Long.valueOf(bid), "readonly", "1");
                     text = getTemplate("boards_close", request, map);
-                    text = text.replace("%id%", bid);;
-                    text = text.replace("%pid%", pid);
+                    text = text.set("id", bid);;
+                    text = text.set("pid", pid);
                 }
             }
         } else if (!pid.equals("0")) {
@@ -2782,134 +2765,134 @@ public class ChatServices {
                 for (long l = 1; l <= pages; l++) {
                     if (l != Long.valueOf(page)) {
                         var content = getTemplate("boards_page", request, map);
-                        content = content.replace("%page%", String.valueOf(l));
-                        content = content.replace("%pid%", pid);
-                        content = content.replace("%id%", bid);
+                        content = content.set("page", String.valueOf(l));
+                        content = content.set("pid", pid);
+                        content = content.set("id", bid);
                         pageContent.append(content);
                         pageContent.append(" ");
                     } else {
                         var content = getTemplate("boards_page_active", request, map);
-                        content = content.replace("%page%", String.valueOf(l));
-                        content = content.replace("%pid%", pid);
-                        content = content.replace("%id%", bid);
+                        content = content.set("page", String.valueOf(l));
+                        content = content.set("pid", pid);
+                        content = content.set("id", bid);
                         pageContent.append(content);
                         pageContent.append(" ");
                     }
                 }
                 if (page.equals("1")) {
-                    text = text.replace("%prev%", getTemplate("boards_page_prev_disabled", request, map));
+                    text = text.set("prev", getTemplate("boards_page_prev_disabled", request, map));
                 } else {
                     var content = getTemplate("boards_page_prev_enabled", request, map);
-                    content = content.replace("%page%", String.valueOf(Long.valueOf(page) - 1));
-                    content = content.replace("%pid%", pid);
-                    content = content.replace("%id%", bid);
-                    text = text.replace("%prev%", content);
+                    content = content.set("page", String.valueOf(Long.valueOf(page) - 1));
+                    content = content.set("pid", pid);
+                    content = content.set("id", bid);
+                    text = text.set("prev", content);
                 }
                 if (Long.valueOf(page) == pages) {
-                    text = text.replace("%next%", getTemplate("boards_page_next_disabled", request, map));
+                    text = text.set("next", getTemplate("boards_page_next_disabled", request, map));
                 } else {
                     var content = getTemplate("boards_page_next_enabled", request, map);
-                    content = content.replace("%page%", String.valueOf(Long.valueOf(page) + 1));
-                    content = content.replace("%pid%", pid);
-                    content = content.replace("%id%", bid);
-                    text = text.replace("%next%", content);
+                    content = content.set("page", String.valueOf(Long.valueOf(page) + 1));
+                    content = content.set("pid", pid);
+                    content = content.set("id", bid);
+                    text = text.set("next", content);
                 }
-                text = text.replace("%pages%", pageContent.toString());
-                text = text.replace("%count%", String.valueOf(count));
+                text = text.set("pages", pageContent.toString());
+                text = text.set("count", String.valueOf(count));
                 topic[0] = "";
                 board.forEach((boards) -> {
                     if ((Long) boards[10] == 0) {
                         var brd = getTemplate("boards_thread", request, map);
                         topic[0] = String.valueOf(boards[0]);
-                        brd = brd.replace("%topic%", ut.parseHtml(String.valueOf(boards[0])));
+                        brd = brd.set("topic", ut.parseHtml(String.valueOf(boards[0])));
                         var content = String.valueOf(boards[1]);
-                        brd = brd.replace("%content%", ut.parseBb(ut.parseHtml(content)));
-                        brd = brd.replace("%ref%", String.valueOf(boards[2]));
+                        brd = brd.set("content", ut.parseBb(ut.parseHtml(content)));
+                        brd = brd.set("ref", String.valueOf(boards[2]));
                         var user = db.getData((Long) boards[3], "nick2");
                         var signature = ut.parseBb(ut.parseHtml(db.getData((Long) boards[3], "signature")));
                         if (moderator) {
-                            brd = brd.replace("%delete%", getTemplate("boards_thread_delete", request, map));
+                            brd = brd.set("delete", getTemplate("boards_thread_delete", request, map));
                             if (boards[2].equals(boards[8]) && String.valueOf(boards[9]).equals("0")) {
-                                brd = brd.replace("%close%", getTemplate("boards_thread_close", request, map));
+                                brd = brd.set("close", getTemplate("boards_thread_close", request, map));
                             } else if (String.valueOf(boards[9]).equals("1")) {
-                                brd = brd.replace("%close%", getTemplate("boards_thread_open", request, map));
+                                brd = brd.set("close", getTemplate("boards_thread_open", request, map));
                             } else {
-                                brd = brd.replace("%close%", "");
+                                brd = brd.set("close", "");
                             }
                             if (db.isBanned(user)) {
-                                brd = brd.replace("%ban%", getTemplate("boards_thread_unban", request, map));
+                                brd = brd.set("ban", getTemplate("boards_thread_unban", request, map));
                             } else {
-                                brd = brd.replace("%ban%", getTemplate("boards_thread_ban", request, map));
+                                brd = brd.set("ban", getTemplate("boards_thread_ban", request, map));
                             }
                         } else {
-                            brd = brd.replace("%delete%", "");
-                            brd = brd.replace("%close%", "");
-                            brd = brd.replace("%ban%", "");
+                            brd = brd.set("delete", "");
+                            brd = brd.set("close", "");
+                            brd = brd.set("ban", "");
                         }
                         if (user.equalsIgnoreCase(nick) || moderator) {
-                            brd = brd.replace("%edit%", getTemplate("boards_thread_edit", request, map));
+                            brd = brd.set("edit", getTemplate("boards_thread_edit", request, map));
                         } else {
-                            brd = brd.replace("%edit%", "");
+                            brd = brd.set("edit", "");
                         }
-                        brd = brd.replace("%uid%", db.getData(user, "id"));
-                        brd = brd.replace("%user%", user);
-                        brd = brd.replace("%color%", db.getData(user, "color"));
-                        brd = brd.replace("%board%", String.valueOf(boards[4]));
-                        brd = brd.replace("%posted%", ut.getTime((Long) boards[5]));
-                        brd = brd.replace("%ip%", String.valueOf(boards[6]));
-                        brd = brd.replace("%cat%", String.valueOf(boards[7]));
-                        brd = brd.replace("%id%", String.valueOf(boards[8]));
-                        brd = brd.replace("%closed%", String.valueOf(boards[9]));
-                        brd = brd.replace("%deleted%", String.valueOf(boards[10]));
-                        brd = brd.replace("%signature%", signature);
+                        brd = brd.set("uid", db.getData(user, "id"));
+                        brd = brd.set("user", user);
+                        brd = brd.set("color", db.getData(user, "color"));
+                        brd = brd.set("board", String.valueOf(boards[4]));
+                        brd = brd.set("posted", ut.getTime((Long) boards[5]));
+                        brd = brd.set("ip", String.valueOf(boards[6]));
+                        brd = brd.set("cat", String.valueOf(boards[7]));
+                        brd = brd.set("id", String.valueOf(boards[8]));
+                        brd = brd.set("closed", String.valueOf(boards[9]));
+                        brd = brd.set("deleted", String.valueOf(boards[10]));
+                        brd = brd.set("signature", signature);
                         if (db.isBanned(user)) {
-                            brd = brd.replace("%banned%", getTemplate("boards_thread_banned", request, map));
+                            brd = brd.set("banned", getTemplate("boards_thread_banned", request, map));
                         } else {
-                            brd = brd.replace("%banned%", "");
+                            brd = brd.set("banned", "");
                         }
                         id[0] = (Long) boards[7];
                         sb.append(brd);
                     } else {
                         var brd = getTemplate("boards_thread_deleted", request, map);
                         topic[0] = String.valueOf(boards[0]);
-                        brd = brd.replace("%topic%", ut.parseHtml(String.valueOf(boards[0])));
+                        brd = brd.set("topic", ut.parseHtml(String.valueOf(boards[0])));
                         var content = String.valueOf(boards[1]);
-                        brd = brd.replace("%content%", ut.parseBb(ut.parseHtml(content)));
-                        brd = brd.replace("%ref%", String.valueOf(boards[2]));
+                        brd = brd.set("content", ut.parseBb(ut.parseHtml(content)));
+                        brd = brd.set("ref", String.valueOf(boards[2]));
                         var user = db.getData((Long) boards[3], "nick2");
                         if (db.getData(user, "moderator").equals("1")) {
-                            brd = brd.replace("%delete%", getTemplate("boards_thread_undelete", request, map));
+                            brd = brd.set("delete", getTemplate("boards_thread_undelete", request, map));
                         } else {
-                            brd = brd.replace("%delete%", "");
+                            brd = brd.set("delete", "");
                         }
-                        brd = brd.replace("%user%", user);
-                        brd = brd.replace("%color%", db.getData(user, "color"));
-                        brd = brd.replace("%board%", String.valueOf(boards[4]));
-                        brd = brd.replace("%posted%", ut.getTime((Long) boards[5]));
-                        brd = brd.replace("%ip%", String.valueOf(boards[6]));
-                        brd = brd.replace("%cat%", String.valueOf(boards[7]));
-                        brd = brd.replace("%id%", String.valueOf(boards[8]));
-                        brd = brd.replace("%closed%", String.valueOf(boards[9]));
-                        brd = brd.replace("%deleted%", String.valueOf(boards[10]));
+                        brd = brd.set("user", user);
+                        brd = brd.set("color", db.getData(user, "color"));
+                        brd = brd.set("board", String.valueOf(boards[4]));
+                        brd = brd.set("posted", ut.getTime((Long) boards[5]));
+                        brd = brd.set("ip", String.valueOf(boards[6]));
+                        brd = brd.set("cat", String.valueOf(boards[7]));
+                        brd = brd.set("id", String.valueOf(boards[8]));
+                        brd = brd.set("closed", String.valueOf(boards[9]));
+                        brd = brd.set("deleted", String.valueOf(boards[10]));
                         if (db.isBanned(user)) {
-                            brd = brd.replace("%banned%", getTemplate("boards_thread_banned", request, map));
+                            brd = brd.set("banned", getTemplate("boards_thread_banned", request, map));
                         } else {
-                            brd = brd.replace("%banned%", "");
+                            brd = brd.set("banned", "");
                         }
                         id[0] = (Long) boards[7];
                         sb.append(brd);
                     }
                 });
                 if (sb.toString().isBlank()) {
-                    text = text.replace("%boards%", getTemplate("boards_empty2", request, map));
+                    text = text.set("boards", getTemplate("boards_empty2", request, map));
                 } else {
-                    text = text.replace("%boards%", sb.toString());
+                    text = text.set("boards", sb.toString());
 
                 }
-                text = text.replace("%id%", String.valueOf(id[0]));
-                text = text.replace("%pid%", pid);
-                text = text.replace("%re%", topic[0].startsWith(conf.getString("board_re")) ? "" : conf.getString("board_re"));
-                text = text.replace("%topic%", ut.parseHtml(topic[0]));
+                text = text.set("id", String.valueOf(id[0]));
+                text = text.set("pid", pid);
+                text = text.set("re", topic[0].startsWith(conf.getString("board_re")) ? "" : conf.getString("board_re"));
+                text = text.set("topic", ut.parseHtml(topic[0]));
             }
         } else if (!search.isBlank()) {
             ArrayList<Object[]> board = db.searchBoard(Long.valueOf(ref), Long.valueOf(page), search);
@@ -2927,126 +2910,126 @@ public class ChatServices {
             for (long l = 1; l <= pages; l++) {
                 if (l != Long.valueOf(page)) {
                     var content = getTemplate("boards_page", request, map);
-                    content = content.replace("%page%", String.valueOf(l));
-                    content = content.replace("%pid%", pid);
-                    content = content.replace("%id%", bid);
+                    content = content.set("page", String.valueOf(l));
+                    content = content.set("pid", pid);
+                    content = content.set("id", bid);
                     pageContent.append(content);
                     pageContent.append(" ");
                 } else {
                     var content = getTemplate("boards_page_active", request, map);
-                    content = content.replace("%page%", String.valueOf(l));
-                    content = content.replace("%pid%", pid);
-                    content = content.replace("%id%", bid);
+                    content = content.set("page", String.valueOf(l));
+                    content = content.set("pid", pid);
+                    content = content.set("id", bid);
                     pageContent.append(content);
                     pageContent.append(" ");
                 }
             }
             if (page.equals("1")) {
-                text = text.replace("%prev%", getTemplate("boards_page_prev_disabled", request, map));
+                text = text.set("prev", getTemplate("boards_page_prev_disabled", request, map));
             } else {
                 var content = getTemplate("boards_page_prev_enabled", request, map);
-                content = content.replace("%page%", String.valueOf(Long.valueOf(page) - 1));
-                content = content.replace("%pid%", pid);
-                content = content.replace("%id%", bid);
-                text = text.replace("%prev%", content);
+                content = content.set("page", String.valueOf(Long.valueOf(page) - 1));
+                content = content.set("pid", pid);
+                content = content.set("id", bid);
+                text = text.set("prev", content);
             }
             if (Long.valueOf(page) == pages) {
-                text = text.replace("%next%", getTemplate("boards_page_next_disabled", request, map));
+                text = text.set("next", getTemplate("boards_page_next_disabled", request, map));
             } else {
                 var content = getTemplate("boards_page_next_enabled", request, map);
-                content = content.replace("%page%", String.valueOf(Long.valueOf(page) + 1));
-                content = content.replace("%pid%", pid);
-                content = content.replace("%id%", bid);
-                text = text.replace("%next%", content);
+                content = content.set("page", String.valueOf(Long.valueOf(page) + 1));
+                content = content.set("pid", pid);
+                content = content.set("id", bid);
+                text = text.set("next", content);
             }
-            text = text.replace("%pages%", pageContent.toString());
-            text = text.replace("%count%", String.valueOf(count));
+            text = text.set("pages", pageContent.toString());
+            text = text.set("count", String.valueOf(count));
             topic[0] = "";
             board.forEach((boards) -> {
                 if ((Long) boards[10] == 0) {
                     var brd = getTemplate("boards_thread", request, map);
                     topic[0] = String.valueOf(boards[0]);
-                    brd = brd.replace("%topic%", ut.parseHtml(String.valueOf(boards[0])));
+                    brd = brd.set("topic", ut.parseHtml(String.valueOf(boards[0])));
                     var content = String.valueOf(boards[1]);
-                    brd = brd.replace("%content%", ut.parseBb(ut.parseHtml(content)));
-                    brd = brd.replace("%ref%", String.valueOf(boards[2]));
+                    brd = brd.set("content", ut.parseBb(ut.parseHtml(content)));
+                    brd = brd.set("ref", String.valueOf(boards[2]));
                     var user = db.getData((Long) boards[3], "nick2");
                     if (user.equalsIgnoreCase(nick) || moderator) {
-                        brd = brd.replace("%edit%", getTemplate("boards_thread_edit", request, map));
+                        brd = brd.set("edit", getTemplate("boards_thread_edit", request, map));
                     } else {
-                        brd = brd.replace("%edit%", "");
+                        brd = brd.set("edit", "");
                     }
                     if (moderator) {
                         if (db.isBanned(user)) {
-                            brd = brd.replace("%ban%", getTemplate("boards_thread_unban", request, map));
+                            brd = brd.set("ban", getTemplate("boards_thread_unban", request, map));
                         } else {
-                            brd = brd.replace("%ban%", getTemplate("boards_thread_ban", request, map));
+                            brd = brd.set("ban", getTemplate("boards_thread_ban", request, map));
                         }
                     } else {
-                        brd = brd.replace("%ban%", "");
+                        brd = brd.set("ban", "");
                     }
                     var signature = ut.parseBb(ut.parseHtml(db.getData((Long) boards[3], "signature")));
-                    brd = brd.replace("%delete%", "");
-                    brd = brd.replace("%close%", "");
-                    brd = brd.replace("%user%", user);
-                    brd = brd.replace("%color%", db.getData(user, "color"));
-                    brd = brd.replace("%uid%", String.valueOf(boards[3]));
-                    brd = brd.replace("%board%", String.valueOf(boards[4]));
-                    brd = brd.replace("%posted%", ut.getTime((Long) boards[5]));
-                    brd = brd.replace("%ip%", String.valueOf(boards[6]));
-                    brd = brd.replace("%cat%", String.valueOf(boards[7]));
-                    brd = brd.replace("%id%", String.valueOf(boards[8]));
-                    brd = brd.replace("%closed%", String.valueOf(boards[9]));
-                    brd = brd.replace("%deleted%", String.valueOf(boards[10]));
-                    brd = brd.replace("%signature%", signature);
+                    brd = brd.set("delete", "");
+                    brd = brd.set("close", "");
+                    brd = brd.set("user", user);
+                    brd = brd.set("color", db.getData(user, "color"));
+                    brd = brd.set("uid", String.valueOf(boards[3]));
+                    brd = brd.set("board", String.valueOf(boards[4]));
+                    brd = brd.set("posted", ut.getTime((Long) boards[5]));
+                    brd = brd.set("ip", String.valueOf(boards[6]));
+                    brd = brd.set("cat", String.valueOf(boards[7]));
+                    brd = brd.set("id", String.valueOf(boards[8]));
+                    brd = brd.set("closed", String.valueOf(boards[9]));
+                    brd = brd.set("deleted", String.valueOf(boards[10]));
+                    brd = brd.set("signature", signature);
                     if (db.isBanned(user)) {
-                        brd = brd.replace("%banned%", getTemplate("boards_thread_banned", request, map));
+                        brd = brd.set("banned", getTemplate("boards_thread_banned", request, map));
                     } else {
-                        brd = brd.replace("%banned%", "");
+                        brd = brd.set("banned", "");
                     }
                     id[0] = (Long) boards[7];
                     sb.append(brd);
                 } else {
                     var brd = getTemplate("boards_thread_deleted", request, map);
                     topic[0] = String.valueOf(boards[0]);
-                    brd = brd.replace("%topic%", ut.parseHtml(String.valueOf(boards[0])));
+                    brd = brd.set("topic", ut.parseHtml(String.valueOf(boards[0])));
                     var content = String.valueOf(boards[1]);
-                    brd = brd.replace("%content%", ut.parseBb(ut.parseHtml(content)));
-                    brd = brd.replace("%ref%", String.valueOf(boards[2]));
+                    brd = brd.set("content", ut.parseBb(ut.parseHtml(content)));
+                    brd = brd.set("ref", String.valueOf(boards[2]));
                     var user = db.getData((Long) boards[3], "nick2");
                     if (db.getData(user, "moderator").equals("1")) {
-                        brd = brd.replace("%delete%", getTemplate("boards_thread_undelete", request, map));
+                        brd = brd.set("delete", getTemplate("boards_thread_undelete", request, map));
                     } else {
-                        brd = brd.replace("%delete%", "");
+                        brd = brd.set("delete", "");
                     }
-                    brd = brd.replace("%user%", user);
-                    brd = brd.replace("%color%", db.getData(user, "color"));
-                    brd = brd.replace("%board%", String.valueOf(boards[4]));
-                    brd = brd.replace("%posted%", ut.getTime((Long) boards[5]));
-                    brd = brd.replace("%ip%", String.valueOf(boards[6]));
-                    brd = brd.replace("%cat%", String.valueOf(boards[7]));
-                    brd = brd.replace("%id%", String.valueOf(boards[8]));
-                    brd = brd.replace("%closed%", String.valueOf(boards[9]));
-                    brd = brd.replace("%deleted%", String.valueOf(boards[10]));
+                    brd = brd.set("user", user);
+                    brd = brd.set("color", db.getData(user, "color"));
+                    brd = brd.set("board", String.valueOf(boards[4]));
+                    brd = brd.set("posted", ut.getTime((Long) boards[5]));
+                    brd = brd.set("ip", String.valueOf(boards[6]));
+                    brd = brd.set("cat", String.valueOf(boards[7]));
+                    brd = brd.set("id", String.valueOf(boards[8]));
+                    brd = brd.set("closed", String.valueOf(boards[9]));
+                    brd = brd.set("deleted", String.valueOf(boards[10]));
                     if (db.isBanned(user)) {
-                        brd = brd.replace("%banned%", getTemplate("boards_thread_banned", request, map));
+                        brd = brd.set("banned", getTemplate("boards_thread_banned", request, map));
                     } else {
-                        brd = brd.replace("%banned%", "");
+                        brd = brd.set("banned", "");
                     }
                     id[0] = (Long) boards[7];
                     sb.append(brd);
                 }
             });
             if (sb.toString().isBlank()) {
-                text = text.replace("%boards%", getTemplate("boards_empty2", request, map));
+                text = text.set("boards", getTemplate("boards_empty2", request, map));
             } else {
-                text = text.replace("%boards%", sb.toString());
+                text = text.set("boards", sb.toString());
 
             }
-            text = text.replace("%id%", String.valueOf(id[0]));
-            text = text.replace("%pid%", pid);
-            text = text.replace("%re%", topic[0].startsWith(conf.getString("board_re")) ? "" : conf.getString("board_re"));
-            text = text.replace("%topic%", ut.parseHtml(topic[0]));
+            text = text.set("id", String.valueOf(id[0]));
+            text = text.set("pid", pid);
+            text = text.set("re", topic[0].startsWith(conf.getString("board_re")) ? "" : conf.getString("board_re"));
+            text = text.set("topic", ut.parseHtml(topic[0]));
         } else if (!start.isBlank()) {
             var locked = db.getBoards(Long.valueOf(bid), "readonly").equals("1");
 
@@ -3056,14 +3039,14 @@ public class ChatServices {
                 var add = map.getOrDefault("add", "");
                 if (add.isBlank()) {
                     text = getTemplate("boards_add", request, map);
-                    text = text.replace("%id%", bid);
+                    text = text.set("id", bid);
                 } else {
                     var newPostId = db.addThread(map.getOrDefault("topic", ""), map.getOrDefault("thread", ""), 0, Long.valueOf(db.getData(nick, "id")), 0, ip, Long.valueOf(bid));
                     text = getTemplate("boards_added", request, map);
                     pid = String.valueOf(newPostId);
                     db.updateThread(Long.valueOf(pid), "ref", pid);
-                    text = text.replace("%id%", bid);
-                    text = text.replace("%pid%", pid);
+                    text = text.set("id", bid);
+                    text = text.set("pid", pid);
                 }
             }
         } else if (!delCat.isBlank()) {
@@ -3089,9 +3072,9 @@ public class ChatServices {
                 var cat = map.getOrDefault("cat", "");
                 if (topic.isBlank()) {
                     text = getTemplate("board_edit_board", request, map);
-                    text = text.replace("%cat%", cat);
-                    text = text.replace("%topic%", ut.parseHtml(db.getBoardCat(Long.valueOf(cat), "topic")));
-                    text = text.replace("%description%", ut.parseHtml(db.getBoardCat(Long.valueOf(cat), "description")));
+                    text = text.set("cat", cat);
+                    text = text.set("topic", ut.parseHtml(db.getBoardCat(Long.valueOf(cat), "topic")));
+                    text = text.set("description", ut.parseHtml(db.getBoardCat(Long.valueOf(cat), "description")));
                 } else {
                     db.updateBoardCats(Long.valueOf(cat), "topic", topic);
                     db.updateBoardCats(Long.valueOf(cat), "description", description);
@@ -3107,7 +3090,7 @@ public class ChatServices {
                 var cat = map.getOrDefault("cat", "");
                 if (topic.isBlank()) {
                     text = getTemplate("board_add_board", request, map);
-                    text = text.replace("%cat%", cat);
+                    text = text.set("cat", cat);
                 } else {
                     db.addBoards(topic, description, Long.valueOf(cat));
                     text = getTemplate("board_added_board", request, map);
@@ -3133,89 +3116,78 @@ public class ChatServices {
                 text = getTemplate("board_moderated", request, map);
             }
             TreeMap<Long, Object[]> cat = db.getBoardCat();
-            var category = "";
+            var category = new StringBuilder();
             for (Object[] cats : cat.values()) {
                 var id = String.valueOf(cats[0]);
                 var topic = String.valueOf(cats[1]);
                 var description = String.valueOf(cats[2]);
                 var deleted = (Integer) cats[3];
+                View categoryRow;
                 if (moderator) {
-                    category = category + getTemplate("board_cats_moderated2", request, map);
-                    if (deleted == 0) {
-                        category = category.replace("%delete%", getTemplate("board_cats_del", request, map));
-                    } else {
-                        category = category.replace("%delete%", getTemplate("board_cats_open", request, map));
-                    }
-                    category = category.replace("%edit%", getTemplate("board_cats_edit", request, map));
+                    categoryRow = getTemplate("board_cats_moderated2", request, map);
+                    categoryRow.set("delete", getTemplate(deleted == 0 ? "board_cats_del" : "board_cats_open", request, map));
+                    categoryRow.set("edit", getTemplate("board_cats_edit", request, map));
                 } else {
                     if (deleted == 1) {
                         continue;
                     }
-                    category = category + getTemplate("board_cats", request, map);
-                    category = category.replace("%delete%", "");
-                    category = category.replace("%edit%", "");
+                    categoryRow = getTemplate("board_cats", request, map);
+                    categoryRow.set("delete", "");
+                    categoryRow.set("edit", "");
                 }
-                category = category.replace("%id%", id);
-                category = category.replace("%topic%", ut.parseHtml(topic));
-                category = category.replace("%description%", ut.parseBb(ut.parseHtml(description)));
+                categoryRow.set("id", id);
+                categoryRow.set("topic", ut.parseHtml(topic));
+                categoryRow.set("description", ut.parseBb(ut.parseHtml(description)));
                 TreeMap<Long, Object[]> board = db.getBoards(Long.valueOf(id));
-                var in = "";
+                var in = new StringBuilder();
                 var locked = false;
                 for (Object[] boards : board.values()) {
                     locked = String.valueOf(boards[2]).equals("1");
                     var deleted2 = String.valueOf(boards[6]).equals("1");
+                    View boardRow;
                     if (!moderator) {
                         if (deleted2) {
                             continue;
                         }
-                        in = in + getTemplate("board_boards", request, map);
-
+                        boardRow = getTemplate("board_boards", request, map);
                     } else {
-                        in = in + getTemplate("board_boards_moderated", request, map);
-                        if (!deleted2) {
-                            in = in.replace("%del%", getTemplate("board_boards_moderated_del", request, map));
-                        } else {
-                            in = in.replace("%del%", getTemplate("board_boards_moderated_undel", request, map));
-                        }
-                        in = in.replace("%edit%", getTemplate("board_boards_moderated_edit", request, map));
+                        boardRow = getTemplate("board_boards_moderated", request, map);
+                        boardRow.set("del", getTemplate(!deleted2 ? "board_boards_moderated_del" : "board_boards_moderated_undel", request, map));
+                        boardRow.set("edit", getTemplate("board_boards_moderated_edit", request, map));
                         var readonly = String.valueOf(boards[2]).equals("1");
-                        if (readonly) {
-                            in = in.replace("%lock%", getTemplate("board_boards_moderated_open", request, map));
-                        } else {
-                            in = in.replace("%lock%", getTemplate("board_boards_moderated_close", request, map));
-                        }
-
+                        boardRow.set("lock", getTemplate(readonly ? "board_boards_moderated_open" : "board_boards_moderated_close", request, map));
                     }
-
-                    in = in.replace("%id%", String.valueOf(boards[5]));
-                    in = in.replace("%cat%", String.valueOf(boards[0]));
-                    in = in.replace("%topics%", String.valueOf(db.countBoardTreads2((Long) boards[5])));
-                    in = in.replace("%threads%", String.valueOf(db.countBoardTreads((Long) boards[5])));
-                    in = in.replace("%topic%", ut.parseHtml(String.valueOf(boards[1])));
-                    in = in.replace("%description%", ut.parseBb(ut.parseHtml(String.valueOf(boards[3]))));
+                    boardRow.set("id", String.valueOf(boards[5]));
+                    boardRow.set("cat", String.valueOf(boards[0]));
+                    boardRow.set("topics", String.valueOf(db.countBoardTreads2((Long) boards[5])));
+                    boardRow.set("threads", String.valueOf(db.countBoardTreads((Long) boards[5])));
+                    boardRow.set("topic", ut.parseHtml(String.valueOf(boards[1])));
+                    boardRow.set("description", ut.parseBb(ut.parseHtml(String.valueOf(boards[3]))));
+                    in.append(boardRow);
                 }
-                if (in.isBlank()) {
+                if (in.toString().isBlank()) {
                     if (!moderator && locked) {
-                        category = category.replace("%boards%", getTemplate("board_boards_empty_locked", request, map));
+                        categoryRow.set("boards", getTemplate("board_boards_empty_locked", request, map));
                     } else if (moderator) {
-                        category = category.replace("%boards%", getTemplate("board_boards_empty_moderated", request, map));
-                        category = category.replace("%cat%", id);
+                        categoryRow.set("boards", getTemplate("board_boards_empty_moderated", request, map));
+                        categoryRow.set("cat", id);
                     } else {
-                        category = category.replace("%boards%", getTemplate("board_boards_empty", request, map));
+                        categoryRow.set("boards", getTemplate("board_boards_empty", request, map));
                     }
                 } else {
-                    category = category.replace("%boards%", in);
+                    categoryRow.set("boards", in.toString());
                 }
+                category.append(categoryRow);
             }
-            if (category.isBlank()) {
+            if (category.toString().isBlank()) {
                 if (moderator) {
-                    text = text.replace("%boards%", emptyCategoriesForModerator(getTemplate("board_cats_empty_moderated", request, map)));
+                    text = text.set("boards", getTemplate("board_cats_empty_moderated", request, map));
                 } else {
-                    text = text.replace("%boards%", getTemplate("board_cats_empty", request, map));
+                    text = text.set("boards", getTemplate("board_cats_empty", request, map));
 
                 }
             } else {
-                text = text.replace("%boards%", category);
+                text = text.set("boards", category);
             }
         } else {
             var locked = db.getBoards(Long.valueOf(bid), "readonly").equals("1");
@@ -3234,45 +3206,45 @@ public class ChatServices {
             for (long l = 1; l <= pages; l++) {
                 if (l != Long.valueOf(page)) {
                     var content = getTemplate("boards_page", request, map);
-                    content = content.replace("%page%", String.valueOf(l));
-                    content = content.replace("%pid%", pid);
-                    content = content.replace("%id%", bid);
+                    content = content.set("page", String.valueOf(l));
+                    content = content.set("pid", pid);
+                    content = content.set("id", bid);
                     pageContent.append(content);
                     pageContent.append(" ");
                 } else {
                     var content = getTemplate("boards_page_active", request, map);
-                    content = content.replace("%page%", String.valueOf(l));
-                    content = content.replace("%pid%", pid);
-                    content = content.replace("%id%", bid);
+                    content = content.set("page", String.valueOf(l));
+                    content = content.set("pid", pid);
+                    content = content.set("id", bid);
                     pageContent.append(content);
                     pageContent.append(" ");
                 }
             }
             if (page.equals("1")) {
-                text = text.replace("%prev%", getTemplate("boards_page_prev_disabled", request, map));
+                text = text.set("prev", getTemplate("boards_page_prev_disabled", request, map));
             } else {
                 var content = getTemplate("boards_page_prev_enabled2", request, map);
-                content = content.replace("%page%", String.valueOf(Long.valueOf(page) - 1));
-                content = content.replace("%pid%", pid);
-                content = content.replace("%id%", bid);
-                text = text.replace("%prev%", content);
+                content = content.set("page", String.valueOf(Long.valueOf(page) - 1));
+                content = content.set("pid", pid);
+                content = content.set("id", bid);
+                text = text.set("prev", content);
             }
             if (Long.valueOf(page) == pages) {
-                text = text.replace("%next%", getTemplate("boards_page_next_disabled", request, map));
+                text = text.set("next", getTemplate("boards_page_next_disabled", request, map));
             } else {
                 var content = getTemplate("boards_page_next_enabled2", request, map);
-                content = content.replace("%page%", String.valueOf(Long.valueOf(page) + 1));
-                content = content.replace("%pid%", pid);
-                content = content.replace("%id%", bid);
-                text = text.replace("%next%", content);
+                content = content.set("page", String.valueOf(Long.valueOf(page) + 1));
+                content = content.set("pid", pid);
+                content = content.set("id", bid);
+                text = text.set("next", content);
             }
-            text = text.replace("%pages%", pageContent.toString());
-            text = text.replace("%count%", String.valueOf(count));
+            text = text.set("pages", pageContent.toString());
+            text = text.set("count", String.valueOf(count));
             StringBuilder sb = new StringBuilder();
             board.forEach((boards) -> {
                 if ((Long) boards[10] == 0) {
                     var brd = getTemplate("boards_thread2", request, map);
-                    brd = brd.replace("%topic%", ut.parseHtml(db.getBoardRef((Long) boards[2], "topic")));
+                    brd = brd.set("topic", ut.parseHtml(db.getBoardRef((Long) boards[2], "topic")));
                     var content = String.valueOf(db.getBoardRef((Long) boards[2], "content"));
                     if (content.length() > 255) {
                         content = content.substring(0, 255);
@@ -3280,67 +3252,59 @@ public class ChatServices {
                     }
                     var user = db.getData(Long.valueOf(db.getBoardRef((Long) boards[2], "user")), "nick2");
                     if (user.equalsIgnoreCase(nick) || moderator) {
-                        brd = brd.replace("%edit%", getTemplate("boards_thread_edit", request, map));
+                        brd = brd.set("edit", getTemplate("boards_thread_edit", request, map));
                     } else {
-                        brd = brd.replace("%edit%", "");
+                        brd = brd.set("edit", "");
                     }
-                    brd = brd.replace("%content%", ut.removeBb(ut.parseHtml(content)));
-                    brd = brd.replace("%ref%", String.valueOf(boards[2]));
+                    brd = brd.set("content", ut.removeBb(ut.parseHtml(content)));
+                    brd = brd.set("ref", String.valueOf(boards[2]));
                     if (moderator) {
-                        brd = brd.replace("%delete%", getTemplate("boards_thread_delete", request, map));
+                        brd = brd.set("delete", getTemplate("boards_thread_delete", request, map));
                         if (db.getBoardRef((Long) boards[2], "id").equals(db.getBoardRef((Long) boards[2], "ref"))) {
-                            brd = brd.replace("%close%", getTemplate("boards_thread_close", request, map));
+                            brd = brd.set("close", getTemplate("boards_thread_close", request, map));
                         } else {
-                            brd = brd.replace("%close%", "");
+                            brd = brd.set("close", "");
                         }
                         if (db.isBanned(user)) {
-                            brd = brd.replace("%ban%", getTemplate("boards_thread_unban", request, map));
+                            brd = brd.set("ban", getTemplate("boards_thread_unban", request, map));
                         } else {
-                            brd = brd.replace("%ban%", getTemplate("boards_thread_ban", request, map));
+                            brd = brd.set("ban", getTemplate("boards_thread_ban", request, map));
                         }
                     } else {
-                        brd = brd.replace("%delete%", "");
-                        brd = brd.replace("%close%", "");
-                        brd = brd.replace("%ban%", "");
+                        brd = brd.set("delete", "");
+                        brd = brd.set("close", "");
+                        brd = brd.set("ban", "");
                     }
-                    brd = brd.replace("%uid%", String.valueOf(boards[3]));
-                    brd = brd.replace("%user%", user);
-                    brd = brd.replace("%user%", user);
-                    brd = brd.replace("%color%", db.getData(user, "color"));
-                    brd = brd.replace("%board%", String.valueOf(boards[4]));
-                    brd = brd.replace("%posted%", ut.getTime(Long.valueOf(db.getBoardRef((Long) boards[2], "posted"))));
-                    brd = brd.replace("%ip%", String.valueOf(boards[6]));
-                    brd = brd.replace("%cat%", String.valueOf(boards[7]));
-                    brd = brd.replace("%id%", String.valueOf(boards[8]));
-                    brd = brd.replace("%closed%", String.valueOf(boards[9]));
-                    brd = brd.replace("%deleted%", String.valueOf(boards[10]));
-                    brd = brd.replace("%signature%", "");
+                    brd = brd.set("uid", String.valueOf(boards[3]));
+                    brd = brd.set("user", user);
+                    brd = brd.set("user", user);
+                    brd = brd.set("color", db.getData(user, "color"));
+                    brd = brd.set("board", String.valueOf(boards[4]));
+                    brd = brd.set("posted", ut.getTime(Long.valueOf(db.getBoardRef((Long) boards[2], "posted"))));
+                    brd = brd.set("ip", String.valueOf(boards[6]));
+                    brd = brd.set("cat", String.valueOf(boards[7]));
+                    brd = brd.set("id", String.valueOf(boards[8]));
+                    brd = brd.set("closed", String.valueOf(boards[9]));
+                    brd = brd.set("deleted", String.valueOf(boards[10]));
+                    brd = brd.set("signature", "");
                     if (db.isBanned(user)) {
-                        brd = brd.replace("%banned%", getTemplate("boards_thread_banned", request, map));
+                        brd = brd.set("banned", getTemplate("boards_thread_banned", request, map));
                     } else {
-                        brd = brd.replace("%banned%", "");
+                        brd = brd.set("banned", "");
                     }
                     sb.append(brd);
                 }
             });
             if (sb.toString().isBlank()) {
-                text = text.replace("%boards%", getTemplate("boards_empty", request, map));
-                text = text.replace("%id%", bid);
+                text = text.set("boards", getTemplate("boards_empty", request, map));
+                text = text.set("id", bid);
             } else {
-                text = text.replace("%boards%", sb.toString());
-                text = text.replace("%id%", bid);
+                text = text.set("boards", sb.toString());
+                text = text.set("id", bid);
             }
         }
-        text = text.replace("%board_error_if_one%", "");
+        text = text.set("board_error_if_one", "");
         ut.submitContent(text, response);
-    }
-
-    static String emptyCategoriesForModerator(String template) {
-        return template.replace("&add_cat=true&cat=%cat%", "&add_board=true")
-                .replace("Es sind noch keine Foren eingerichtet.", "Es sind noch keine Kategorien eingerichtet.")
-                .replace("Neues Forum anlegen", "Neue Kategorie anlegen")
-                .replace("There are no forums yet.", "There are no categories yet.")
-                .replace("Creating a new forum", "Create a new category");
     }
 
     /**
@@ -3358,7 +3322,7 @@ public class ChatServices {
             return;
         }
         cm.getUsersCommunity().get((String) session.getAttribute("nick")).setTimeoutTimer(0);
-        String text = null;
+        View text = null;
         var service = map.getOrDefault("service", "");
         var data = map.getOrDefault("data", "");
         var db = conf.getDb();
@@ -3426,31 +3390,31 @@ public class ChatServices {
                     telegram = db.getData(nick, "telegram");
                     fam = db.getData(nick, "fam_status");
                     text = getTemplate("account_form_profile_com", request, map);
-                    text = text.replace("%homepage%", homepage);
-                    text = text.replace("%city%", city);
-                    text = text.replace("%hobby%", hobby);
-                    text = text.replace("%description%", description);
-                    text = text.replace("%slogan%", slogan);
-                    text = text.replace("%signature%", signature);
-                    text = text.replace("%icq%", icq);
-                    text = text.replace("%live%", live);
-                    text = text.replace("%yahoo%", yahoo);
-                    text = text.replace("%facebook%", facebook);
-                    text = text.replace("%twitter%", twitter);
-                    text = text.replace("%irc%", irc);
-                    text = text.replace("%youtube%", youtube);
-                    text = text.replace("%instagram%", instagram);
-                    text = text.replace("%linkedin%", linkedin);
-                    text = text.replace("%tiktok%", tiktok);
-                    text = text.replace("%discord%", discord);
-                    text = text.replace("%twitch%", twitch);
-                    text = text.replace("%github%", github);
-                    text = text.replace("%reddit%", reddit);
-                    text = text.replace("%snapchat%", snapchat);
-                    text = text.replace("%pinterest%", pinterest);
-                    text = text.replace("%whatsapp%", whatsapp);
-                    text = text.replace("%telegram%", telegram);
-                    text = text.replace("%fam_status%", fam);
+                    text = text.set("homepage", homepage);
+                    text = text.set("city", city);
+                    text = text.set("hobby", hobby);
+                    text = text.set("description", description);
+                    text = text.set("slogan", slogan);
+                    text = text.set("signature", signature);
+                    text = text.set("icq", icq);
+                    text = text.set("live", live);
+                    text = text.set("yahoo", yahoo);
+                    text = text.set("facebook", facebook);
+                    text = text.set("twitter", twitter);
+                    text = text.set("irc", irc);
+                    text = text.set("youtube", youtube);
+                    text = text.set("instagram", instagram);
+                    text = text.set("linkedin", linkedin);
+                    text = text.set("tiktok", tiktok);
+                    text = text.set("discord", discord);
+                    text = text.set("twitch", twitch);
+                    text = text.set("github", github);
+                    text = text.set("reddit", reddit);
+                    text = text.set("snapchat", snapchat);
+                    text = text.set("pinterest", pinterest);
+                    text = text.set("whatsapp", whatsapp);
+                    text = text.set("telegram", telegram);
+                    text = text.set("fam_status", fam);
                 }
                 case "change" -> {
                     homepage = map.getOrDefault("homepage", "");
@@ -3479,31 +3443,31 @@ public class ChatServices {
                     telegram = map.getOrDefault("telegram", "");
                     fam = map.getOrDefault("fam_status", "");
                     text = getTemplate("account_form_profile_success_com", request, map);
-                    text = text.replace("%homepage%", homepage);
-                    text = text.replace("%city%", city);
-                    text = text.replace("%hobby%", hobby);
-                    text = text.replace("%description%", description);
-                    text = text.replace("%slogan%", slogan);
-                    text = text.replace("%signature%", signature);
-                    text = text.replace("%icq%", icq);
-                    text = text.replace("%live%", live);
-                    text = text.replace("%yahoo%", yahoo);
-                    text = text.replace("%facebook%", facebook);
-                    text = text.replace("%twitter%", twitter);
-                    text = text.replace("%irc%", irc);
-                    text = text.replace("%youtube%", youtube);
-                    text = text.replace("%instagram%", instagram);
-                    text = text.replace("%linkedin%", linkedin);
-                    text = text.replace("%tiktok%", tiktok);
-                    text = text.replace("%discord%", discord);
-                    text = text.replace("%twitch%", twitch);
-                    text = text.replace("%github%", github);
-                    text = text.replace("%reddit%", reddit);
-                    text = text.replace("%snapchat%", snapchat);
-                    text = text.replace("%pinterest%", pinterest);
-                    text = text.replace("%whatsapp%", whatsapp);
-                    text = text.replace("%telegram%", telegram);
-                    text = text.replace("%fam_status%", fam);
+                    text = text.set("homepage", homepage);
+                    text = text.set("city", city);
+                    text = text.set("hobby", hobby);
+                    text = text.set("description", description);
+                    text = text.set("slogan", slogan);
+                    text = text.set("signature", signature);
+                    text = text.set("icq", icq);
+                    text = text.set("live", live);
+                    text = text.set("yahoo", yahoo);
+                    text = text.set("facebook", facebook);
+                    text = text.set("twitter", twitter);
+                    text = text.set("irc", irc);
+                    text = text.set("youtube", youtube);
+                    text = text.set("instagram", instagram);
+                    text = text.set("linkedin", linkedin);
+                    text = text.set("tiktok", tiktok);
+                    text = text.set("discord", discord);
+                    text = text.set("twitch", twitch);
+                    text = text.set("github", github);
+                    text = text.set("reddit", reddit);
+                    text = text.set("snapchat", snapchat);
+                    text = text.set("pinterest", pinterest);
+                    text = text.set("whatsapp", whatsapp);
+                    text = text.set("telegram", telegram);
+                    text = text.set("fam_status", fam);
                     db.updateNick(nick, "homepage", homepage);
                     db.updateNick(nick, "city", city);
                     db.updateNick(nick, "hobby", hobby);
@@ -3540,7 +3504,7 @@ public class ChatServices {
                     var oldPwd = map.getOrDefault("old_pwd", "");
                     var newPwd = map.getOrDefault("new_pwd", "");
                     var newPwd2 = map.getOrDefault("new_pwd2", "");
-                    String errorMessage = null;
+                    View errorMessage = null;
                     if (!db.checkPassword(nick, oldPwd)) {
                         errorMessage = getTemplate("account_error_message_pass_wrong", request, map);
                     } else if (newPwd.length() < conf.getInt("min_pwd_length")) {
@@ -3555,8 +3519,8 @@ public class ChatServices {
                         db.updatePassword(nick, newPwd);
                     } else {
                         text = getTemplate("account_form_password_com", request, map);
-                        text = text.replace("%account_error_if_one%", getTemplate("account_failed", request, map));
-                        text = text.replace("%error_message%", errorMessage);
+                        text = text.set("account_error_if_one", getTemplate("account_failed", request, map));
+                        text = text.set("error_message", errorMessage);
                     }
                 }
                 case "" -> {
@@ -3571,7 +3535,7 @@ public class ChatServices {
                 case "delete" -> {
                     var pwd = map.getOrDefault("pwd", "");
                     var pwd2 = map.getOrDefault("pwd2", "");
-                    String errorMessage = null;
+                    View errorMessage = null;
                     if (!pwd.equals(pwd2)) {
                         errorMessage = getTemplate("account_error_message_pass_same", request, map);
                     } else if (!db.checkPassword(nick, pwd)) {
@@ -3585,8 +3549,8 @@ public class ChatServices {
                         db.delNick(nick);
                     } else {
                         text = getTemplate("account_form_delete_com", request, map);
-                        text = text.replace("%account_error_if_one%", getTemplate("account_failed", request, map));
-                        text = text.replace("%error_message%", errorMessage);
+                        text = text.set("account_error_if_one", getTemplate("account_failed", request, map));
+                        text = text.set("error_message", errorMessage);
                     }
                 }
                 case "" -> {
@@ -3615,64 +3579,64 @@ public class ChatServices {
                     room = map.getOrDefault("room2", "");
                     if (bg_color_1.length() != 6 || !bg_color_1.matches("[a-fA-F0-9]*")) {
                         text = getTemplate("account_form_napping_color_com", request, map);
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     } else if (bg_color_2.length() != 6 || !bg_color_2.matches("[a-fA-F0-9]*")) {
                         text = getTemplate("account_form_napping_color_com", request, map);
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     } else if (border_color.length() != 6 || !border_color.matches("[a-fA-F0-9]*")) {
                         text = getTemplate("account_form_napping_color_com", request, map);
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     } else if (color.length() != 6 || !color.matches("[a-fA-F0-9]*")) {
                         text = getTemplate("account_form_napping_color_com", request, map);
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     } else if (link_color.length() != 6 || !link_color.matches("[a-fA-F0-9]*")) {
                         text = getTemplate("account_form_napping_color_com", request, map);
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     } else if (db.ownerExists(nick) && !db.getRoomNameByOwner(nick).equals(room)) {
                         text = getTemplate("account_form_napping_used_com", request, map);
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     } else if (db.roomExists(room) && db.getRoomData(room, "owner").equalsIgnoreCase(nick)) {
                         db.updateRoomData(room, "owner", nick);
                         db.updateRoomData(room, "first_bgcolor", bg_color_1);
@@ -3682,36 +3646,36 @@ public class ChatServices {
                         db.updateRoomData(room, "textcolor", color);
                         db.updateRoomData(room, "page_title", title);
                         text = getTemplate("account_form_napping_change_com", request, map);
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     } else if (!db.roomExists(room)) {
                         db.addRoomData(nick, room, title, bg_color_1, bg_color_2, color, border_color, link_color);
                         db.updateRoomData(room, "su", nick);
                         text = getTemplate("account_form_napping_add_com", request, map);
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     } else {
                         text = getTemplate("account_form_napping_error_com", request, map);
-                        text = text.replace("%title%", title);
-                        text = text.replace("%bg_color_1%", bg_color_1);
-                        text = text.replace("%bg_color_2%", bg_color_2);
-                        text = text.replace("%color%", color);
-                        text = text.replace("%link_color%", link_color);
-                        text = text.replace("%border_color%", border_color);
-                        text = text.replace("%room2%", room);
-                        text = text.replace("%nick%", nick);
+                        text = text.set("title", title);
+                        text = text.set("bg_color_1", bg_color_1);
+                        text = text.set("bg_color_2", bg_color_2);
+                        text = text.set("color", color);
+                        text = text.set("link_color", link_color);
+                        text = text.set("border_color", border_color);
+                        text = text.set("room2", room);
+                        text = text.set("nick", nick);
                     }
                 }
                 case "" -> {
@@ -3729,21 +3693,21 @@ public class ChatServices {
                         map.replace("room", map.getOrDefault("room", ""), room);
                     }
                     text = getTemplate("account_form_napping_com", request, map);
-                    text = text.replace("%title%", title);
-                    text = text.replace("%bg_color_1%", bg_color_1);
-                    text = text.replace("%bg_color_2%", bg_color_2);
-                    text = text.replace("%color%", color);
-                    text = text.replace("%link_color%", link_color);
-                    text = text.replace("%border_color%", border_color);
-                    text = text.replace("%room2%", room);
-                    text = text.replace("%nick%", nick);
+                    text = text.set("title", title);
+                    text = text.set("bg_color_1", bg_color_1);
+                    text = text.set("bg_color_2", bg_color_2);
+                    text = text.set("color", color);
+                    text = text.set("link_color", link_color);
+                    text = text.set("border_color", border_color);
+                    text = text.set("room2", room);
+                    text = text.set("nick", nick);
                 }
                 default -> {
                     text = getTemplate("account_form_unknown_com", request, map);
                 }
             }
         } else if (service.equals("data")) {
-            String errorMessage = null;
+            View errorMessage = null;
             String mail = null;
             String gender = null;
             String day = null;
@@ -3779,12 +3743,12 @@ public class ChatServices {
                     } else {
                         text = getTemplate("account_form_default_com", request, map);
                         text = ut.parseGender(text, gender);
-                        text = text.replace("%account_error_if_one%", getTemplate("account_failed", request, map));
-                        text = text.replace("%error_message%", errorMessage);
-                        text = text.replace("%mail%", mail);
-                        text = text.replace("%day%", day);
-                        text = text.replace("%month%", month);
-                        text = text.replace("%year%", year);
+                        text = text.set("account_error_if_one", getTemplate("account_failed", request, map));
+                        text = text.set("error_message", errorMessage);
+                        text = text.set("mail", mail);
+                        text = text.set("day", day);
+                        text = text.set("month", month);
+                        text = text.set("year", year);
                     }
                 }
                 case "" -> {
@@ -3800,10 +3764,10 @@ public class ChatServices {
                     year = year == null ? "" : year;
                     text = getTemplate("account_form_default_com", request, map);
                     text = ut.parseGender(text, gender);
-                    text = text.replace("%mail%", mail);
-                    text = text.replace("%day%", day);
-                    text = text.replace("%month%", month);
-                    text = text.replace("%year%", year);
+                    text = text.set("mail", mail);
+                    text = text.set("day", day);
+                    text = text.set("month", month);
+                    text = text.set("year", year);
                 }
                 default -> {
                     text = getTemplate("account_form_unknown_com", request, map);
@@ -3831,7 +3795,7 @@ public class ChatServices {
         } else {
             text = getTemplate("account_form_com", request, map);
         }
-        text = text.replace("%account_error_if_one%", "");
+        text = text.set("account_error_if_one", "");
         ut.submitContent(text, response);
     }
 
@@ -3858,7 +3822,7 @@ public class ChatServices {
         var month = map.getOrDefault("reg_month", "");
         var year = map.getOrDefault("reg_year", "");
         var owner = map.getOrDefault("owner", "");
-        var errorMessage = "";
+        View errorMessage = null;
         var regSuccess = false;
         var skin = map.getOrDefault("skin", "");
         skin = ut.parseHost(skin, request)[1];
@@ -3916,8 +3880,8 @@ public class ChatServices {
         var pwd = ut.createRandomPassword();
         if (regSuccess) {
             var text = getMail("register", request, map);
-            text = text.replace("%pwd%", pwd);
-            text = text.replace("%nick%", nick);
+            text = text.set("pwd", pwd);
+            text = text.set("nick", nick);
             try {
                 if (mailer != null) {
                     mailer.sendEmail(text, db.getCommand("register_subject", lang), mail);
@@ -3926,7 +3890,7 @@ public class ChatServices {
                 logError(ex);
             }
         }
-        String rf = null;
+        View rf = null;
         String roomName = "";
         if (!owner.isBlank()) {
             roomName = db.getRoomNameByOwner(owner.toLowerCase());
@@ -3936,14 +3900,14 @@ public class ChatServices {
                 rf = getTemplate("reg_form", request, map);
             } else {
                 rf = getTemplate("reg_form_napping", request, map);
-                rf = rf.replace("%owner%", owner);
-                rf = rf.replace("%title%", db.getRoomData(roomName, "page_title"));
+                rf = rf.set("owner", owner);
+                rf = rf.set("title", db.getRoomData(roomName, "page_title"));
             }
             if (service.equals("reg_done")) {
-                rf = rf.replace("%reg_error_if_one%", getTemplate("reg_failed", request, map));
-                rf = rf.replace("%error_message%", errorMessage);
+                rf = rf.set("reg_error_if_one", getTemplate("reg_failed", request, map));
+                rf = rf.set("error_message", errorMessage);
             } else {
-                rf = rf.replace("%reg_error_if_one%", "");
+                rf = rf.set("reg_error_if_one", "");
             }
             cid = generateSid();
         } else {
@@ -3953,20 +3917,20 @@ public class ChatServices {
                 rf = getTemplate("reg_form_success", request, map);
             } else {
                 rf = getTemplate("reg_form_success_napping", request, map);
-                rf = rf.replace("%owner%", owner);
-                rf = rf.replace("%title%", db.getRoomData(roomName, "page_title"));
+                rf = rf.set("owner", owner);
+                rf = rf.set("title", db.getRoomData(roomName, "page_title"));
             }
         }
-        rf = rf.replace("%reg_nick%", nick);
-        rf = rf.replace("%reg_mail%", mail);
-        rf = rf.replace("%reg_cid%", cid);
-        rf = rf.replace("%reg_captcha%", captcha);
-        rf = rf.replace("%reg_reminder_question%", question);
-        rf = rf.replace("%reg_reminder_answer%", answer);
-        rf = rf.replace("%reg_day%", day);
-        rf = rf.replace("%reg_month%", month);
-        rf = rf.replace("%reg_year%", year);
-        rf = rf.replace("%skin%", skin);
+        rf = rf.set("reg_nick", nick);
+        rf = rf.set("reg_mail", mail);
+        rf = rf.set("reg_cid", cid);
+        rf = rf.set("reg_captcha", captcha);
+        rf = rf.set("reg_reminder_question", question);
+        rf = rf.set("reg_reminder_answer", answer);
+        rf = rf.set("reg_day", day);
+        rf = rf.set("reg_month", month);
+        rf = rf.set("reg_year", year);
+        rf = rf.set("skin", skin);
         rf = ut.parseGender(rf, gender);
         ut.submitContent(rf, response);
     }
@@ -4035,59 +3999,6 @@ public class ChatServices {
                 printTemplate("error", request, response, map);
             }
         }
-    }
-
-    /**
-     * Platzhalter f&uuml;r ehemalige Debuggingseiten
-     *
-     * @param out Die Output-Klasse
-     */
-    private void removed(HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
-        var sb = new StringBuilder();
-        var ut = Bootstrap.boot.getUtil();
-        response.setStatus(404);
-        sb.append("<html>\r\n");
-        sb.append("<head>\r\n");
-        sb.append("<title>Document removed!</title>\r\n");
-        sb.append("</head>\r\n");
-        sb.append("<body>\r\n");
-        sb.append("<h1>Document removed!</h1>\r\n");
-        sb.append("<p>\r\n");
-        sb.append("The requested document was integrated for troubleshooting and is no longer available.\r\n");
-        sb.append("</p>\r\n");
-        sb.append("<hr>\r\n");
-        sb.append("<address>%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS%</address>\r\n");
-        sb.append("</body>\r\n");
-        sb.append("<html>\r\n");
-        var data = sb.toString();
-        data = ut.replaceServerInfo(data);
-        ut.submitContent(data, response);
-    }
-
-    /**
-     * Platzhalter f&uuml;r k&uuml;nftige Seiten
-     *
-     * @param out Die Output-Klasse
-     */
-    private void notIntegrated(HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
-        var sb = new StringBuilder();
-        var ut = Bootstrap.boot.getUtil();
-        sb.append("<html>\r\n");
-        sb.append("<head>\r\n");
-        sb.append("<title>Document not integrated!</title>\r\n");
-        sb.append("</head>\r\n");
-        sb.append("<body>\r\n");
-        sb.append("<h1>Document not integrated!</h1>\r\n");
-        sb.append("<p>\r\n");
-        sb.append("The requested document is currently not integrated! It will be activated in later versions!\r\n");
-        sb.append("</p>\r\n");
-        sb.append("<hr>\r\n");
-        sb.append("<address>%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS%</address>\r\n");
-        sb.append("</body>\r\n");
-        sb.append("<html>\r\n");
-        var data = sb.toString();
-        data = ut.replaceServerInfo(data);
-        ut.submitContent(data, response);
     }
 
     /**
@@ -4327,8 +4238,8 @@ public class ChatServices {
                     printTemplate("chars", request, response, map);
                 } else {
                     var text = getTemplate("chars_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if (nick.toLowerCase().startsWith(conf.getString("guest_prefix").toLowerCase())) {
@@ -4336,8 +4247,8 @@ public class ChatServices {
                     printTemplate("guest", request, response, map);
                 } else {
                     var text = getTemplate("guest_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if ((conf.getInt("guest") == 1 && !nick.equals("")) && nick.length() < conf.getInt("min_nick_length")) {
@@ -4345,8 +4256,8 @@ public class ChatServices {
                     printTemplate("nick", request, response, map);
                 } else {
                     var text = getTemplate("nick_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if (nickIsCommand(nick)) {
@@ -4354,8 +4265,8 @@ public class ChatServices {
                     printTemplate("command", request, response, map);
                 } else {
                     var text = getTemplate("command_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if ((reg = db.isRegistered(nick)) && !db.checkPassword(nick, pwd)) {
@@ -4363,8 +4274,8 @@ public class ChatServices {
                     printTemplate("pwd", request, response, map);
                 } else {
                     var text = getTemplate("pwd_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if (db.isBanned(nick) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
@@ -4373,8 +4284,8 @@ public class ChatServices {
                     printTemplate("banned", request, response, map);
                 } else {
                     var text = getTemplate("banned_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if (db.isBanned(ip) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
@@ -4383,8 +4294,8 @@ public class ChatServices {
                     printTemplate("banned", request, response, map);
                 } else {
                     var text = getTemplate("banned_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if (db.isBanned(ipResolved) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
@@ -4393,8 +4304,8 @@ public class ChatServices {
                     printTemplate("banned", request, response, map);
                 } else {
                     var text = getTemplate("banned_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if (db.isBanned(ipResolved2) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
@@ -4403,8 +4314,8 @@ public class ChatServices {
                     printTemplate("banned", request, response, map);
                 } else {
                     var text = getTemplate("banned_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if (db.isBanned(realIp) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
@@ -4413,8 +4324,8 @@ public class ChatServices {
                     printTemplate("banned", request, response, map);
                 } else {
                     var text = getTemplate("banned_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if (db.isTimedBanned(nick) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
@@ -4424,8 +4335,8 @@ public class ChatServices {
                     printTemplate("banned_temp", request, response, map);
                 } else {
                     var text = getTemplate("banned_temp_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if (db.isTimedBanned(ip) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
@@ -4435,8 +4346,8 @@ public class ChatServices {
                     printTemplate("banned_temp", request, response, map);
                 } else {
                     var text = getTemplate("banned_temp_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if (db.isTimedBanned(ipResolved) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
@@ -4446,8 +4357,8 @@ public class ChatServices {
                     printTemplate("banned_temp", request, response, map);
                 } else {
                     var text = getTemplate("banned_temp_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if (db.isTimedBanned(ipResolved2) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
@@ -4457,8 +4368,8 @@ public class ChatServices {
                     printTemplate("banned_temp", request, response, map);
                 } else {
                     var text = getTemplate("banned_temp_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if (db.isTimedBanned(realIp) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
@@ -4468,8 +4379,8 @@ public class ChatServices {
                     printTemplate("banned_temp", request, response, map);
                 } else {
                     var text = getTemplate("banned_temp_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if (!reg && (conf.getInt("guest") == 1 && !nick.equals("") && conf.getInt("only_registered_users") == 1)) {
@@ -4478,8 +4389,8 @@ public class ChatServices {
                     printTemplate("reg", request, response, map);
                 } else {
                     var text = getTemplate("reg_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if (!reg && db.roomExists(room) && db.getRoomData(room, "locked").equals("1")) {
@@ -4490,8 +4401,8 @@ public class ChatServices {
                     printTemplate("locked_room", request, response, map);
                 } else {
                     var text = getTemplate("locked_room_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if (reg && db.roomExists(room) && db.getRoomData(room, "locked").equals("1") && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("lock_status")) {
@@ -4502,8 +4413,8 @@ public class ChatServices {
                     printTemplate("locked_room", request, response, map);
                 } else {
                     var text = getTemplate("locked_room_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else if (cm.isOnline(nick)) {
@@ -4512,8 +4423,8 @@ public class ChatServices {
                     printTemplate("online", request, response, map);
                 } else {
                     var text = getTemplate("online_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else {
@@ -4549,13 +4460,13 @@ public class ChatServices {
                 if (owner.equals("")) {
                     var room2 = map.getOrDefault("room", "");
                     if (!room2.isBlank() && db.roomExists(room2) && db.getRoomData(room2, "chat_napping").equals("1")) {
-                        String text = null;
+                        View text = null;
                         if (reg) {
                             text = getTemplate("frameset_reg_napping", request, map);
                         } else {
                             text = getTemplate("frameset_napping", request, map);
                         }
-                        text = text.replace("%owner%", db.getRoomData(room2, "owner"));
+                        text = text.set("owner", db.getRoomData(room2, "owner"));
                         ut.submitContent(text, response);
                     } else {
                         if (reg) {
@@ -4565,7 +4476,7 @@ public class ChatServices {
                         }
                     }
                 } else {
-                    String text = null;
+                    View text = null;
                     if (reg) {
                         text = getTemplate("frameset_reg_napping", request, map);
                     } else {
@@ -4579,13 +4490,13 @@ public class ChatServices {
                     var color = db.getRoomData(room2, "textcolor");
                     var link_color = db.getRoomData(room2, "linkcolor");
                     var border_color = db.getRoomData(room2, "bordercolor");
-                    text = text.replace("%title%", title);
-                    text = text.replace("%bg_color_1%", bg_color_1);
-                    text = text.replace("%bg_color_2%", bg_color_2);
-                    text = text.replace("%color%", color);
-                    text = text.replace("%link_color%", link_color);
-                    text = text.replace("%border_color%", border_color);
-                    text = text.replace("%owner%", owner);
+                    text = text.set("title", title);
+                    text = text.set("bg_color_1", bg_color_1);
+                    text = text.set("bg_color_2", bg_color_2);
+                    text = text.set("color", color);
+                    text = text.set("link_color", link_color);
+                    text = text.set("border_color", border_color);
+                    text = text.set("owner", owner);
                     ut.submitContent(text, response);
 
                 }
@@ -4654,118 +4565,118 @@ public class ChatServices {
                 printTemplate("room", request, response, map);
             } else if (!roomName.isBlank() && !nick.matches(conf.getString("allowed_chars"))) {
                 var text = getTemplate("chars_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (!roomName.isBlank() && nick.toLowerCase().startsWith(conf.getString("guest_prefix").toLowerCase())) {
                 var text = getTemplate("guest_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (!roomName.isBlank() && (conf.getInt("guest") == 1 && !nick.equals("")) && nick.length() < conf.getInt("min_nick_length")) {
                 var text = getTemplate("nick_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (!roomName.isBlank() && nickIsCommand(nick)) {
                 var text = getTemplate("command_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (!roomName.isBlank() && !reg && !db.checkPassword(nick, pwd)) {
                 var text = getTemplate("pwd_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (!roomName.isBlank() && db.isBanned(nick) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                 request.setAttribute("reason", db.getBanReason(nick));
                 var text = getTemplate("banned_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (!roomName.isBlank() && db.isBanned(ip) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                 request.setAttribute("reason", db.getBanReason(ip));
                 var text = getTemplate("banned_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (!roomName.isBlank() && db.isBanned(ipResolved) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                 request.setAttribute("reason", db.getBanReason(ipResolved));
                 var text = getTemplate("banned_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (!roomName.isBlank() && db.isBanned(ipResolved2) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                 request.setAttribute("reason", db.getBanReason(ipResolved2));
                 var text = getTemplate("banned_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (!roomName.isBlank() && db.isBanned(realIp) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                 request.setAttribute("reason", db.getBanReason(realIp));
                 var text = getTemplate("banned_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (!roomName.isBlank() && db.isTimedBanned(nick) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
 
                 request.setAttribute("reason", db.getTimedBanReason(nick));
                 var text = getTemplate("banned_temp_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (!roomName.isBlank() && db.isTimedBanned(ip) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
 
                 request.setAttribute("reason", db.getTimedBanReason(ip));
                 var text = getTemplate("banned_temp_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (db.isTimedBanned(ipResolved) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
 
                 request.setAttribute("reason", db.getTimedBanReason(ipResolved));
                 var text = getTemplate("banned_temp_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (!roomName.isBlank() && db.isTimedBanned(ipResolved2) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                 var text = getTemplate("banned_temp_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (!roomName.isBlank() && db.isTimedBanned(realIp) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
 
                 request.setAttribute("reason", db.getTimedBanReason(realIp));
                 var text = getTemplate("banned_temp_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (!roomName.isBlank() && !reg && (conf.getInt("guest") == 1 && !nick.equals("") && conf.getInt("only_registered_users") == 1)) {
                 var text = getTemplate("reg_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (!roomName.isBlank() && !reg && db.roomExists(room) && db.getRoomData(room, "locked").equals("1")) {
 
                 request.setAttribute("reason", db.getRoomData(room, "lock_reason"));
                 var text = getTemplate("locked_room_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (!roomName.isBlank() && reg && db.roomExists(room) && db.getRoomData(room, "locked").equals("1") && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("lock_status")) {
 
                 request.setAttribute("reason", db.getRoomData(room, "lock_reason"));
                 var text = getTemplate("locked_room_napping", request, map);
-                text = text.replace("%owner%", owner);
-                text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                text = text.set("owner", owner);
+                text = text.set("title", db.getRoomData(roomName, "page_title"));
                 ut.submitContent(text, response);
             } else if (cm.isOnline(nick)) {
                 if (roomName.isBlank()) {
                     printTemplate("online", request, response, map);
                 } else {
                     var text = getTemplate("online_napping", request, map);
-                    text = text.replace("%owner%", owner);
-                    text = text.replace("%title%", db.getRoomData(roomName, "page_title"));
+                    text = text.set("owner", owner);
+                    text = text.set("title", db.getRoomData(roomName, "page_title"));
                     ut.submitContent(text, response);
                 }
             } else {
@@ -4783,13 +4694,13 @@ public class ChatServices {
                 if (owner.equals("")) {
                     var room2 = map.getOrDefault("room", "");
                     if (!room2.isBlank() && db.roomExists(room2) && db.getRoomData(room2, "chat_napping").equals("1")) {
-                        String text = null;
+                        View text = null;
                         if (reg) {
                             text = getTemplate("frameset_reg_com_napping", request, map);
                         } else {
                             text = getTemplate("frameset_com_napping", request, map);
                         }
-                        text = text.replace("%owner%", db.getRoomData(room2, "owner"));
+                        text = text.set("owner", db.getRoomData(room2, "owner"));
                         ut.submitContent(text, response);
                     } else {
                         if (reg) {
@@ -4799,7 +4710,7 @@ public class ChatServices {
                         }
                     }
                 } else {
-                    String text = null;
+                    View text = null;
                     if (reg) {
                         text = getTemplate("frameset_reg_com_napping", request, map);
                     } else {
@@ -4813,19 +4724,19 @@ public class ChatServices {
                     var color = db.getRoomData(room2, "textcolor");
                     var link_color = db.getRoomData(room2, "linkcolor");
                     var border_color = db.getRoomData(room2, "bordercolor");
-                    text = text.replace("%title%", title);
-                    text = text.replace("%bg_color_1%", bg_color_1);
-                    text = text.replace("%bg_color_2%", bg_color_2);
-                    text = text.replace("%color%", color);
-                    text = text.replace("%link_color%", link_color);
-                    text = text.replace("%border_color%", border_color);
-                    text = text.replace("%owner%", owner);
+                    text = text.set("title", title);
+                    text = text.set("bg_color_1", bg_color_1);
+                    text = text.set("bg_color_2", bg_color_2);
+                    text = text.set("color", color);
+                    text = text.set("link_color", link_color);
+                    text = text.set("border_color", border_color);
+                    text = text.set("owner", owner);
                     ut.submitContent(text, response);
 
                 }
             }
         } else {
-            String text = null;
+            View text = null;
             var oldnick = nick;
             var sid = map.getOrDefault("sid", "");
             if (cm.isOnline(nick)) {
@@ -4839,7 +4750,7 @@ public class ChatServices {
             request.setAttribute("nick", nick);
             if (owner.isBlank()) {
                 text = getTemplate("frameset_privchat", request, map);
-                text = text.replace("%oldnick%", oldnick);
+                text = text.set("oldnick", oldnick);
                 ut.submitContent(text, response);
 
             } else {
@@ -4852,14 +4763,14 @@ public class ChatServices {
                 var color = db.getRoomData(room2, "textcolor");
                 var link_color = db.getRoomData(room2, "linkcolor");
                 var border_color = db.getRoomData(room2, "bordercolor");
-                text = text.replace("%oldnick%", oldnick);
-                text = text.replace("%title%", title);
-                text = text.replace("%bg_color_1%", bg_color_1);
-                text = text.replace("%bg_color_2%", bg_color_2);
-                text = text.replace("%color%", color);
-                text = text.replace("%link_color%", link_color);
-                text = text.replace("%border_color%", border_color);
-                text = text.replace("%owner%", owner);
+                text = text.set("oldnick", oldnick);
+                text = text.set("title", title);
+                text = text.set("bg_color_1", bg_color_1);
+                text = text.set("bg_color_2", bg_color_2);
+                text = text.set("color", color);
+                text = text.set("link_color", link_color);
+                text = text.set("border_color", border_color);
+                text = text.set("owner", owner);
                 ut.submitContent(text, response);
 
             }
@@ -4982,169 +4893,94 @@ public class ChatServices {
     }
 
     /**
-     * Liefert ein Mail-Template als String aus
-     *
-     * @param template Der Templatename
-     * @param request
-     * @return
+     * Creates the view of a template. The values every template can use come
+     * from the request; pages add their own values with
+     * {@link View#set(String, Object)}.
      */
-protected String getMail(String template, HttpServletRequest request, Map<String, String> map) {
-         var skin = map.getOrDefault("skin", "");
-         var conf = Bootstrap.boot.getConfig();
-         var ut = Bootstrap.boot.getUtil();
-         var db = conf.getDb();
-         var lang = readLang(request, map);
-         skin = ut.parseHost(skin, request)[1];
-         var data = db.getMail(template, skin, lang);
-        if (data.toLowerCase().startsWith("error")) {
-            var temp = data;
-            data = "Mail template not Found\r\n%missing_template%";
-            data = data.replace("%missing_template%", temp);
-        }
-        data = ut.replacePaths(data);
-        data = ut.replaceFilePaths(data);
-        data = ut.replaceServerInfo(data);
-        String mailScheme = detectScheme(request);
-        data = data.replace("%host_ws%", (mailScheme.equals("https") ? "wss" : "ws") + "://" + request.getHeader("host"));
-        data = data.replace("%host_http%", mailScheme + "://" + request.getHeader("host"));
-        return data;
-    }
-
-    /**
-     * Liefert ein Template als String aus
-     *
-     * @param template Der Templatename
-     * @param request
-     * @return
-     */
-protected String getConsole(String template, HttpServletRequest request, Map<String, String> map) {
-         var sid = map.getOrDefault("sid", "");
-         var conf = Bootstrap.boot.getConfig();
-         var ut = Bootstrap.boot.getUtil();
-         var db = conf.getDb();
-         var skin = map.getOrDefault("skin", "");
-         var lang = readLang(request, map);
-         if (sid.isBlank()) {
-             sid = (String) request.getAttribute("sid");
-         }
-         sid = sid != null ? sid : map.getOrDefault("sid", "");
-         skin = ut.parseHost(skin, request)[1];
-         var data = db.getConsole(template, skin, lang);
-        if (data.toLowerCase().startsWith("error")) {
-            var temp = data;
-            data = "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>%missing_template%</b></p><hr><address>%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS%</address></body><html>";
-            data = data.replace("%missing_template%", temp);
-        }
-         data = parseHeader(data, template, request, map);
-         data = ut.replacePaths(data);
-         data = ut.replaceFilePaths(data);
-         data = ut.replaceCommands(data, lang);
-         var host = request.getHeader("host");
-        host = host != null ? host : "";
-        data = ut.replaceServerInfo(data);
-        data = data.replace("%skin%", skin);
-        String scheme = detectScheme(request);
-        data = data.replace("%host_ws%", (scheme.equals("https") ? "wss" : "ws") + "://" + request.getHeader("host"));
-        data = data.replace("%host_http%", scheme + "://" + request.getHeader("host"));
-        return data;
-    }
-
-    /**
-     * Parst Header
-     *
-     * @param value Der Text zum parsen
-     * @return
-     */
-    protected String parseHeader(String value, String template, HttpServletRequest request, Map<String, String> map) {
-        if (value.matches("(?s)<!-- design=.*? -->(.*?)")) {
-            var valueSplitted = value.split("\n");
-            var valueLine = valueSplitted[0].replaceFirst("<!-- design=(.*?) -->", "$1").strip();
-            StringBuilder sb = new StringBuilder();
-            for (int i = 1; i < valueSplitted.length; i++) {
-                sb.append(valueSplitted[i]);
-                sb.append("\n");
-            }
-            var secData = sb.toString();
-            value = getPageDesign(valueLine, request, map);
-            value = value.replace("%content%", secData);
-        }
-        return value;
-    }
-
-    /**
-     * Liefert ein Template als String aus
-     *
-     * @param template Der Templatename
-     * @param request
-     * @return
-     */
-protected String getTemplate(String template, HttpServletRequest request, Map<String, String> map) {
-         var sid = map.getOrDefault("sid", "");
-         var conf = Bootstrap.boot.getConfig();
-         var cm = Bootstrap.boot.getChatManager();
-         var ut = Bootstrap.boot.getUtil();
-         String nick = null;
-         String pwd = null;
-         String skin = null;
-         String room = null;
-         String owner = null;
-         String roomName = "";
-         String target = null;
-         var reason = (String) request.getAttribute("reason");
-         if (sid.isBlank()) {
-             sid = (String) request.getAttribute("sid");
-         }
-         var session = request.getSession(false);
-         if (session != null && !session.isNew()) {
-             nick = map.getOrDefault("nick", "").isBlank() ? (String) session.getAttribute("nick") : map.getOrDefault("nick", "");
-             skin = map.getOrDefault("skin", "").isBlank() ? (String) session.getAttribute("skin") : map.getOrDefault("skin", "");
-             room = map.getOrDefault("room", "").isBlank() ? (String) session.getAttribute("room") : map.getOrDefault("room", "");
-             pwd = map.getOrDefault("pwd", "").isBlank() ? (String) session.getAttribute("pwd") : map.getOrDefault("pwd", "");
-             owner = map.getOrDefault("owner", "").isBlank() ? (String) session.getAttribute("owner") : map.getOrDefault("owner", "");
-         }
-         nick = nick != null ? nick : (cm.getNameFromId(sid != null ? sid : "") == null || map.getOrDefault("nick", "").length() > 0 ? map.getOrDefault("nick", "") : cm.getUser(cm.getNameFromId(sid)).getName());
-         skin = skin != null ? skin : map.getOrDefault("skin", "");
-         room = room != null ? room : map.getOrDefault("room", "");
-         pwd = pwd != null ? pwd : map.getOrDefault("pwd", "");
-         owner = owner != null ? owner : map.getOrDefault("owner", "");
-         sid = sid != null ? sid : map.getOrDefault("sid", "");
-         target = map.getOrDefault("target", "");
-         if (session != null && session.isNew()) {
-             nick = (String) session.getAttribute("nick");
-             nick = nick != null ? nick : map.getOrDefault("nick", "");
-         }
-         var db = conf.getDb();
-         if (!owner.isBlank()) {
-             roomName = db.getRoomNameByOwner(owner.toLowerCase());
-         }
-         var lang = readLang(request, map);
-         skin = ut.parseHost(skin, request)[1];
-         skin = skin != null ? skin : map.getOrDefault("skin", "");
-         var data = db.getTemplate(template, skin, lang);
-        if (data.toLowerCase().startsWith("error")) {
-            var temp = data;
-            data = "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>%missing_template%</b></p><hr><address>%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS%</address></body><html>";
-            data = data.replace("%missing_template%", temp);
-        } else if (template.equals("picture") || template.equals("picture_napping")) {
-            data = UploadFile.markChatUploadForm(data);
-        }
-        data = parseHeader(data, template, request, map);
-        data = ut.replacePaths(data);
-        data = ut.replaceFilePaths(data);
-        data = ut.replaceCommands(data, readLang(request, map));
-        reason = reason != null ? reason : "";
+    private View newView(String type, String name, HttpServletRequest request, Map<String, String> map,
+            String nick, String sid, String skin, String room, String reason) {
+        var ut = Bootstrap.boot.getUtil();
+        var db = Bootstrap.boot.getConfig().getDb();
         var host = request.getHeader("host");
         host = host != null ? host : "";
-        data = ut.replaceDefaultReplacements(data, nick, sid, skin, room, reason, host);
-        data = data.replace("%user%", map.getOrDefault("user", ""));
-        data = ut.replaceServerInfo(data);
-        data = data.replace("%owner%", owner);
-        data = data.replace("%target%", target);
-        data = data.replace("%title%", db.getRoomData(roomName, "page_title"));
-        String scheme = detectScheme(request);
-        data = data.replace("%host_ws%", (scheme.equals("https") ? "wss" : "ws") + "://" + request.getHeader("host"));
-        data = data.replace("%host_http%", scheme + "://" + request.getHeader("host"));
-        return data;
+        var scheme = detectScheme(request);
+        var owner = map.getOrDefault("owner", "");
+        var roomName = owner.isBlank() ? "" : db.getRoomNameByOwner(owner.toLowerCase());
+        var view = ViewFactory.create(type, name, readLang(request, map), new ViewFactory.Request(
+                nick != null ? nick : "", sid != null ? sid : "", skin != null ? skin : "", room != null ? room : "",
+                reason != null ? reason : "", host, owner, map.getOrDefault("target", ""), map.getOrDefault("user", ""),
+                roomName, (scheme.equals("https") ? "wss" : "ws") + "://" + host, scheme + "://" + host));
+        var session = request.getSession(false);
+        view.defaults().put("theme", readTheme(request, map));
+        view.defaults().put("designs", new ViewFactory.Texts(design -> selectCommunityDesign(design, session,
+                Bootstrap.boot.getChatManager(), db)));
+        return view;
+    }
+
+    /**
+     * Liefert ein Mail-Template aus
+     *
+     * @param template Der Templatename
+     * @param request
+     * @return
+     */
+    protected View getMail(String template, HttpServletRequest request, Map<String, String> map) {
+        var skin = Bootstrap.boot.getUtil().parseHost(map.getOrDefault("skin", ""), request)[1];
+        return newView("mail", template, request, map, "", map.getOrDefault("sid", ""), skin, "", "");
+    }
+
+    /**
+     * Liefert ein Console-Template aus
+     *
+     * @param template Der Templatename
+     * @param request
+     * @return
+     */
+    protected View getConsole(String template, HttpServletRequest request, Map<String, String> map) {
+        var sid = map.getOrDefault("sid", "");
+        if (sid.isBlank()) {
+            sid = (String) request.getAttribute("sid");
+        }
+        sid = sid != null ? sid : map.getOrDefault("sid", "");
+        var skin = Bootstrap.boot.getUtil().parseHost(map.getOrDefault("skin", ""), request)[1];
+        return newView("console", template, request, map, "", sid, skin, "", "");
+    }
+
+    /**
+     * Liefert ein Template aus
+     *
+     * @param template Der Templatename
+     * @param request
+     * @return
+     */
+    protected View getTemplate(String template, HttpServletRequest request, Map<String, String> map) {
+        var sid = map.getOrDefault("sid", "");
+        var cm = Bootstrap.boot.getChatManager();
+        var ut = Bootstrap.boot.getUtil();
+        String nick = null;
+        String skin = null;
+        String room = null;
+        var reason = (String) request.getAttribute("reason");
+        if (sid.isBlank()) {
+            sid = (String) request.getAttribute("sid");
+        }
+        var session = request.getSession(false);
+        if (session != null && !session.isNew()) {
+            nick = map.getOrDefault("nick", "").isBlank() ? (String) session.getAttribute("nick") : map.getOrDefault("nick", "");
+            skin = map.getOrDefault("skin", "").isBlank() ? (String) session.getAttribute("skin") : map.getOrDefault("skin", "");
+            room = map.getOrDefault("room", "").isBlank() ? (String) session.getAttribute("room") : map.getOrDefault("room", "");
+        }
+        nick = nick != null ? nick : (cm.getNameFromId(sid != null ? sid : "") == null || map.getOrDefault("nick", "").length() > 0 ? map.getOrDefault("nick", "") : cm.getUser(cm.getNameFromId(sid)).getName());
+        skin = skin != null ? skin : map.getOrDefault("skin", "");
+        room = room != null ? room : map.getOrDefault("room", "");
+        sid = sid != null ? sid : map.getOrDefault("sid", "");
+        if (session != null && session.isNew()) {
+            nick = (String) session.getAttribute("nick");
+            nick = nick != null ? nick : map.getOrDefault("nick", "");
+        }
+        skin = ut.parseHost(skin, request)[1];
+        skin = skin != null ? skin : map.getOrDefault("skin", "");
+        return newView("template", template, request, map, nick, sid, skin, room, reason);
     }
 
     /**
@@ -5154,51 +4990,35 @@ protected String getTemplate(String template, HttpServletRequest request, Map<St
      * @param out Die Output-Klasse
      */
     protected void printTemplate(String template, HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
-        var tmp = getTemplate(template, request, map);
-        var ut = Bootstrap.boot.getUtil();
-        ut.submitContent(tmp, response);
+        Bootstrap.boot.getUtil().submitContent(getTemplate(template, request, map).toString(), response);
     }
 
     /**
-     * Liefert ein Stylesheet als String aus
-     *
+     * Liefert ein Stylesheet aus
      *
      * @param template Der Templatename
-     * @param out Die Output-Klasse
      */
- private String getStyleSheet(String template, HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
-          var skin = map.getOrDefault("skin", "");
-          var conf = Bootstrap.boot.getConfig();
-          var ut = Bootstrap.boot.getUtil();
-          var db = conf.getDb();
-          var owner = map.getOrDefault("owner", "");
-          var room = map.getOrDefault("room", "");
-          var lang = readLang(request, map);
-          skin = ut.parseHost(skin, request)[1];
-          var data = db.getStyle(template, skin, lang);
-         data = ut.replacePaths(data);
-         data = ut.replaceFilePaths(data);
-         data = data.replace("%skin%", skin);
-         data = ut.replaceServerInfo(data);
-         data = ut.replaceDefaultReplacements(data, "", "", skin, "", "", request.getHeader("host"));
-         String roomName = null;
-         if (!owner.isBlank()) {
-             roomName = db.getRoomNameByOwner(owner.toLowerCase());
-         } else if (!room.isBlank()) {
-             roomName = room;
-         }
-          if (roomName != null && db.roomExists(roomName) && db.getRoomData(roomName, "chat_napping").equals("1")) {
-              data = data.replace("%bg_color_1%", db.getRoomData(roomName, "first_bgcolor"));
-              data = data.replace("%bg_color_2%", db.getRoomData(roomName, "second_bgcolor"));
-              data = data.replace("%color%", db.getRoomData(roomName, "textcolor"));
-              data = data.replace("%link_color%", db.getRoomData(roomName, "linkcolor"));
-              data = data.replace("%border_color%", db.getRoomData(roomName, "bordercolor"));
-          }
-          String scheme = detectScheme(request);
-          data = data.replace("%host_ws%", (scheme.equals("https") ? "wss" : "ws") + "://" + request.getHeader("host"));
-          data = data.replace("%host_http%", scheme + "://" + request.getHeader("host"));
-          return data;
-     }
+    private View getStyleSheet(String template, HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
+        var db = Bootstrap.boot.getConfig().getDb();
+        var skin = Bootstrap.boot.getUtil().parseHost(map.getOrDefault("skin", ""), request)[1];
+        var owner = map.getOrDefault("owner", "");
+        var room = map.getOrDefault("room", "");
+        var view = newView("style", template, request, map, "", "", skin, "", "");
+        String roomName = null;
+        if (!owner.isBlank()) {
+            roomName = db.getRoomNameByOwner(owner.toLowerCase());
+        } else if (!room.isBlank()) {
+            roomName = room;
+        }
+        if (roomName != null && db.roomExists(roomName) && db.getRoomData(roomName, "chat_napping").equals("1")) {
+            view.set("bg_color_1", db.getRoomData(roomName, "first_bgcolor"));
+            view.set("bg_color_2", db.getRoomData(roomName, "second_bgcolor"));
+            view.set("color", db.getRoomData(roomName, "textcolor"));
+            view.set("link_color", db.getRoomData(roomName, "linkcolor"));
+            view.set("border_color", db.getRoomData(roomName, "bordercolor"));
+        }
+        return view;
+    }
 
     /**
      * Zeigt ein Stylesheet im Browser an
@@ -5207,43 +5027,51 @@ protected String getTemplate(String template, HttpServletRequest request, Map<St
      * @param out Die Output-Klasse
      */
     private void printStyleSheet(String template, HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
-        var tmp = getStyleSheet(template, request, response, map);
-        var ut = Bootstrap.boot.getUtil();
-        ut.submitContent(tmp, response);
+        var css = getStyleSheet(template, request, response, map).toString();
+        if (!"dark".equals(readTheme(request, map))) {
+            css = stripDarkTheme(css);
+        }
+        // The delivered style sheet depends on the "theme" cookie
+        response.setHeader("Vary", "Cookie");
+        response.setHeader("Cache-Control", "no-cache");
+        Bootstrap.boot.getUtil().submitContent(css, response);
     }
 
     /**
-     * Liefert ein Script als String aus
+     * Theme of the request: the "theme" parameter, else the "theme" cookie,
+     * else the light theme.
+     *
+     * @return "dark" or "light"
+     */
+    private String readTheme(HttpServletRequest request, Map<String, String> map) {
+        var theme = map.getOrDefault("theme", "");
+        if (theme == null || theme.isBlank()) {
+            theme = Bootstrap.boot.getUtil().readCookieValue(request, "theme");
+        }
+        return "dark".equalsIgnoreCase(theme) ? "dark" : "light";
+    }
+
+    /**
+     * Removes the part of a style sheet that is only meant for the dark theme.
+     * The part starts with the comment {@link #DARK_THEME_MARKER} and ends with
+     * the style sheet.
+     */
+    static String stripDarkTheme(String css) {
+        var start = css.indexOf(DARK_THEME_MARKER);
+        return start < 0 ? css : css.substring(0, start);
+    }
+
+    /**
+     * Liefert ein Script aus
      *
      * @param template Der Templatename
-     * @param out Die Output-Klasse
      */
-    private String getScript(String template, HttpServletRequest request, Map<String, String> map) {
-        var skin = map.getOrDefault("skin", "");
-        var conf = Bootstrap.boot.getConfig();
-var ut = Bootstrap.boot.getUtil();
-         var db = conf.getDb();
-         var nick = map.getOrDefault("nick", "");
-         var room = map.getOrDefault("room2", "");
-         var owner = map.getOrDefault("owner", "");
-         var target = map.getOrDefault("target", "");
-         var sid = map.getOrDefault("sid", "");
-         var lang = readLang(request, map);
-         skin = ut.parseHost(skin, request)[1];
-         var data = db.getScript(template, skin, lang);
-         data = ut.replacePaths(data);
-         data = ut.replaceFilePaths(data);
-         data = data.replace("%skin%", skin);
-         data = data.replace("%room2%", room);
-         data = data.replace("%owner%", owner);
-         data = data.replace("%target%", target);
-          data = ut.replaceServerInfo(data);
-          data = ut.replaceDefaultReplacements(data, nick, sid, skin, room, "", request.getHeader("host"));
-          String scheme = detectScheme(request);
-          data = data.replace("%host_ws%", (scheme.equals("https") ? "wss" : "ws") + "://" + request.getHeader("host"));
-          data = data.replace("%host_http%", scheme + "://" + request.getHeader("host"));
-          return data;
-     }
+    private View getScript(String template, HttpServletRequest request, Map<String, String> map) {
+        var skin = Bootstrap.boot.getUtil().parseHost(map.getOrDefault("skin", ""), request)[1];
+        var view = newView("script", template, request, map, map.getOrDefault("nick", ""), map.getOrDefault("sid", ""),
+                skin, map.getOrDefault("room2", ""), "");
+        return view.set("room2", map.getOrDefault("room2", ""));
+    }
 
     /**
      * Zeigt ein Script im Browser an
@@ -5252,61 +5080,7 @@ var ut = Bootstrap.boot.getUtil();
      * @param out Die Output-Klasse
      */
     private void printScript(String template, HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
-        var tmp = getScript(template, request, map);
-        var ut = Bootstrap.boot.getUtil();
-        ut.submitContent(tmp, response);
-    }
-
-    /**
-     * Liefert ein Design als String aus
-     *
-     * @param template Der Templatename
-     * @param out Die Output-Klasse
-     */
-    private String getPageDesign(String template, HttpServletRequest request, Map<String, String> map) {
-var skin = map.getOrDefault("skin", "");
-         var conf = Bootstrap.boot.getConfig();
-         var db = conf.getDb();
-         var ut = Bootstrap.boot.getUtil();
-         var lang = readLang(request, map);
-         skin = ut.parseHost(skin, request)[1];
-         var selectedDesign = selectCommunityDesign(template, request.getSession(false), Bootstrap.boot.getChatManager(), db);
-         var data = db.getPageDesign(selectedDesign, skin, lang);
-        if (data.toLowerCase().startsWith("error")) {
-            var temp = data;
-            data = "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>%missing_template%</b></p><hr><address>%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS%</address></body><html>";
-            data = data.replace("%missing_template%", temp);
-        }
-        if (template.equals("frameset") || template.equals("frameset_napping")
-                || template.equals("frameset_privchat") || template.equals("frameset_privchat_napping")) {
-            data = addTypingIndicatorScript(data);
-        }
-        if (selectedDesign.equals("console")) {
-            var navEnd = data.indexOf("</ul>");
-            if (navEnd >= 0) {
-                var url = conf.getString("path_hwebchat") + "?page="
-                        + conf.getString("path_console") + "&service=news";
-                var label = readLang(request, map).equalsIgnoreCase("de") ? "News verwalten" : "Manage news";
-                var link = "<li class=\"nav-item\"><a class=\"nav-link\" href=\""
-                        + org.owasp.encoder.Encode.forHtmlAttribute(url)
-                        + "\"><i class=\"fa fa-newspaper-o\" aria-hidden=\"true\"></i> " + label + "</a></li>";
-                data = data.substring(0, navEnd) + link + data.substring(navEnd);
-            }
-        }
-        return addChatPanelNavigationRules(data);
-    }
-
-    static String addTypingIndicatorScript(String design) {
-        var bodyEnd = java.util.regex.Pattern.compile("</body\\s*>", java.util.regex.Pattern.CASE_INSENSITIVE)
-                .matcher(design);
-        if (!bodyEnd.find()) {
-            throw new IllegalArgumentException("Chat design does not contain a closing body element");
-        }
-        return design.substring(0, bodyEnd.start())
-                + "<script src=\"%path_file%typing-indicator.js\"></script>"
-                + "<script src=\"%path_file%nick-completion.js\"></script>"
-                + "<script src=\"%path_file%message-history.js\"></script>"
-                + design.substring(bodyEnd.start());
+        Bootstrap.boot.getUtil().submitContent(getScript(template, request, map).toString(), response);
     }
 
     static UsersCommunity activeCommunitySession(HttpSession session, ChatManager manager) {
@@ -5338,77 +5112,22 @@ var skin = map.getOrDefault("skin", "");
                 ? "frameset_community_reg" : "frameset_community";
     }
 
-    static String addChatPanelNavigationRules(String design) {
-        var head = java.util.regex.Pattern.compile("<head\\b[^>]*>", java.util.regex.Pattern.CASE_INSENSITIVE)
-                .matcher(design);
-        var doctype = java.util.regex.Pattern.compile("^\\s*<!doctype\\s+[^>]*>", java.util.regex.Pattern.CASE_INSENSITIVE)
-                .matcher(design);
-        var position = head.find() ? head.end() : doctype.find() ? doctype.end() : 0;
-        var panelRules = "<script>if(window.frameElement && window.frameElement.classList.contains('chat-panel-iframe'))"
-                + "{document.documentElement.classList.add('chat-panel-embedded');}</script>"
-                + "<style>html.chat-panel-embedded body > nav.navbar{display:none!important;}"
-                + "html.chat-panel-embedded body{padding-top:0!important;}</style>";
-        return design.substring(0, position) + panelRules + design.substring(position);
-    }
-
     /**
-     * Liefert eine Seite als String aus
+     * Liefert eine Seite aus
      *
      * @param template Der Templatename
-     * @param out Die Output-Klasse
      */
-    private String getPage(String template, HttpServletRequest request, Map<String, String> map) {
+    private View getPage(String template, HttpServletRequest request, Map<String, String> map) {
         var sid = map.getOrDefault("sid", "");
-        var conf = Bootstrap.boot.getConfig();
         var cm = Bootstrap.boot.getChatManager();
         var ut = Bootstrap.boot.getUtil();
-        String nick = null;
-        String pwd = null;
-        String skin = null;
-        String room = null;
-        String roomName = "";
-        var db = conf.getDb();
-        var owner = map.getOrDefault("owner", "");
-        if (!owner.isBlank()) {
-            roomName = db.getRoomNameByOwner(owner.toLowerCase());
-        }
-        var reason = map.getOrDefault("reason", "");
-        nick = cm.getNameFromId(sid) == null || map.getOrDefault("nick", "").length() > 0 ? map.getOrDefault("nick", "") : cm.getUser(cm.getNameFromId(sid)).getName();
+        var nick = cm.getNameFromId(sid) == null || map.getOrDefault("nick", "").length() > 0 ? map.getOrDefault("nick", "") : cm.getUser(cm.getNameFromId(sid)).getName();
         if (nick == null || nick.isBlank()) {
             nick = (String) request.getSession().getAttribute("nick");
         }
-        if (nick == null) {
-            nick = "";
-        }
-pwd = map.getOrDefault("pwd", "");
-         skin = map.getOrDefault("skin", "");
-         room = map.getOrDefault("room", "");
-         var lang = readLang(request, map);
-         skin = ut.parseHost(skin, request)[1];
-         var data = db.getPage(template, skin, lang);
-
-        if (data.toLowerCase().startsWith("error")) {
-            var temp = data;
-            data = "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>%missing_template%</b></p><hr><address>%SERVER_SOFTWARE% %SERVER_VERSION%-%SERVER_STATUS%</address></body><html>";
-            data = data.replace("%missing_template%", temp);
-        } else {
-            data = parseHeader(data, template, request, map);
-            data = ut.replacePaths(data);
-            data = ut.replaceFilePaths(data);
-            data = ut.replaceCommands(data, readLang(request, map));
-            reason = reason != null ? reason : "";
-            var host = request.getHeader("host");
-            host = host != null ? host : "";
-            data = ut.replaceDefaultReplacements(data, nick, sid, skin, room, reason, host);
-            data = data.replace("%user%", map.getOrDefault("user", ""));
-        }
-        data = ut.replaceServerInfo(data);
-        data = data.replace("%owner%", owner);
-        data = data.replace("%title%", db.getRoomData(roomName, "page_title"));
-        String scheme = detectScheme(request);
-        data = data.replace("%host_ws%", (scheme.equals("https") ? "wss" : "ws") + "://" + request.getHeader("host"));
-        data = data.replace("%host_http%", scheme + "://" + request.getHeader("host"));
-        return data;
+        var skin = ut.parseHost(map.getOrDefault("skin", ""), request)[1];
+        return newView("pages", template, request, map, nick != null ? nick : "", sid, skin, map.getOrDefault("room", ""),
+                map.getOrDefault("reason", ""));
     }
 
     /**
@@ -5418,9 +5137,7 @@ pwd = map.getOrDefault("pwd", "");
      * @param out Die Output-Klasse
      */
     private void printPage(String template, HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
-        var tmp = getPage(template, request, map);
-        var ut = Bootstrap.boot.getUtil();
-        ut.submitContent(tmp, response);
+        Bootstrap.boot.getUtil().submitContent(getPage(template, request, map).toString(), response);
     }
 
     /**
@@ -5440,7 +5157,7 @@ pwd = map.getOrDefault("pwd", "");
      * @param out Die Output Klasse
      */
     private void readMessage(HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
-        String text = null;
+        View text = null;
         var sid = map.getOrDefault("sid", "");
         var conf = Bootstrap.boot.getConfig();
         var cm = Bootstrap.boot.getChatManager();
@@ -5481,9 +5198,9 @@ pwd = map.getOrDefault("pwd", "");
             } else {
                 text = getTemplate("message_new_napping", request, map);
             }
-            text = text.replace("%count%", String.valueOf(db.countMessage(nick)));
-            text = text.replace("%color%", db.getData(nick, "color"));
-            text = text.replace("%messages%", db.getMessages(nick, request, map));
+            text = text.set("count", String.valueOf(db.countMessage(nick)));
+            text = text.set("color", db.getData(nick, "color"));
+            text = text.set("messages", db.getMessages(nick, request, map));
             db.delMessages(nick);
         } else {
             if (roomName.isBlank()) {
@@ -5491,7 +5208,7 @@ pwd = map.getOrDefault("pwd", "");
             } else {
                 text = getTemplate("message_no_napping", request, map);
             }
-            text = text.replace("%color%", db.getData(nick, "color"));
+            text = text.set("color", db.getData(nick, "color"));
         }
         ut.submitContent(text, response);
     }
@@ -5507,26 +5224,26 @@ pwd = map.getOrDefault("pwd", "");
             var counts = db.getHomepageCounts();
             var latest = new NewsRepository(db, boot.getConfig().getP().getProperty("sql.prefix", "")).latest();
             var homepageExtra = getTemplate("homepage_extra", request, map)
-                    .replace("%homepage_chatters%", org.owasp.encoder.Encode.forHtmlContent(cm.getUserSizeInChat()))
-                    .replace("%homepage_rooms%", org.owasp.encoder.Encode.forHtmlContent(String.valueOf(cm.getRooms().size())))
-                    .replace("%homepage_registered%", org.owasp.encoder.Encode.forHtmlContent(String.valueOf(counts.registered())))
-                    .replace("%homepage_messages%", org.owasp.encoder.Encode.forHtmlContent(String.valueOf(counts.messages())));
-            var homepageNews = "";
+                    .set("homepage_chatters", org.owasp.encoder.Encode.forHtmlContent(cm.getUserSizeInChat()))
+                    .set("homepage_rooms", org.owasp.encoder.Encode.forHtmlContent(String.valueOf(cm.getRooms().size())))
+                    .set("homepage_registered", org.owasp.encoder.Encode.forHtmlContent(String.valueOf(counts.registered())))
+                    .set("homepage_messages", org.owasp.encoder.Encode.forHtmlContent(String.valueOf(counts.messages())));
+            View homepageNews = null;
             if (latest.isPresent()) {
                 var article = latest.get();
                 homepageNews = getTemplate("homepage_news", request, map)
-                        .replace("%homepage_news_title%", org.owasp.encoder.Encode.forHtmlContent(article.title()))
-                        .replace("%homepage_news_author%", org.owasp.encoder.Encode.forHtmlContent(article.author()))
-                        .replace("%homepage_news_published%", org.owasp.encoder.Encode.forHtmlContent(util.getTime(article.published())))
-                        .replace("%homepage_news_body%", org.owasp.encoder.Encode.forHtmlContent(article.body()))
-                        .replace("%homepage_news_url%", org.owasp.encoder.Encode.forHtmlAttribute(
+                        .set("homepage_news_title", org.owasp.encoder.Encode.forHtmlContent(article.title()))
+                        .set("homepage_news_author", org.owasp.encoder.Encode.forHtmlContent(article.author()))
+                        .set("homepage_news_published", org.owasp.encoder.Encode.forHtmlContent(util.getTime(article.published())))
+                        .set("homepage_news_body", org.owasp.encoder.Encode.forHtmlContent(article.body()))
+                        .set("homepage_news_url", org.owasp.encoder.Encode.forHtmlAttribute(
                                 request.getContextPath() + "/Start?page=news"));
             }
-            homepageExtra = homepageExtra.replace("%homepage_news%", homepageNews);
+            homepageExtra = homepageExtra.set("homepage_news", homepageNews);
             var homepageNick = community == null ? "" : org.owasp.encoder.Encode.forHtmlContent(community.getName());
             var page = getTemplate(pageTemplate, request, map)
-                    .replace("%homepage_extra%", homepageExtra)
-                    .replace("%homepage_nick%", homepageNick);
+                    .set("homepage_extra", homepageExtra)
+                    .set("homepage_nick", homepageNick);
             util.submitContent(page, response);
         } catch (java.sql.SQLException ex) {
             logError(ex);
@@ -5538,7 +5255,7 @@ pwd = map.getOrDefault("pwd", "");
     private void news(HttpServletRequest request, HttpServletResponse response, Map<String, String> map, boolean admin) {
         var conf = Bootstrap.boot.getConfig();
         var util = Bootstrap.boot.getUtil();
-        boolean de = readLang(request, map).equalsIgnoreCase("de");
+        var lang = readLang(request, map);
         var consoleUrl = request.getContextPath() + "/Start?page=" + util.encodeHtml(conf.getString("path_console"))
                 + "&service=news";
         try {
@@ -5558,7 +5275,7 @@ pwd = map.getOrDefault("pwd", "");
                 var body = map.getOrDefault("body", "").strip();
                 if ((action.equals("create") || action.equals("update"))
                         && (title.isBlank() || title.length() > 200 || body.isBlank() || body.length() > 20000)) {
-                    response.sendError(400, de ? "Titel oder Text ungültig." : "Invalid title or text.");
+                    response.sendError(400, I18n.get(lang, "news.invalid_input"));
                     return;
                 }
                 if (action.equals("create")) {
@@ -5603,13 +5320,13 @@ pwd = map.getOrDefault("pwd", "");
                 }
                 response.setHeader("Cache-Control", "no-store");
             }
-            var content = new StringBuilder("<h1>").append(admin && de ? "News verwalten" : admin ? "Manage news" : "News").append("</h1>");
+            var content = new StringBuilder("<h1>").append(I18n.get(lang, admin ? "news.manage" : "news.title")).append("</h1>");
             if (admin) {
-                content.append(newsForm(consoleUrl, token, null, de));
+                content.append(newsForm(consoleUrl, token, null, lang));
             }
             var articles = repository.list();
             if (articles.isEmpty()) {
-                content.append("<p>").append(de ? "Noch keine News vorhanden." : "No news yet.").append("</p>");
+                content.append("<p>").append(I18n.get(lang, "news.empty")).append("</p>");
             }
             for (var article : articles) {
                 content.append("<article class=\"card mb-3\"><div class=\"card-body\"><h2 class=\"h4\">")
@@ -5619,47 +5336,40 @@ pwd = map.getOrDefault("pwd", "");
                         .append("</p><div style=\"white-space:pre-wrap\">")
                         .append(org.owasp.encoder.Encode.forHtmlContent(article.body())).append("</div>");
                 if (admin) {
-                    content.append("<details class=\"mt-3\"><summary>").append(de ? "Bearbeiten" : "Edit")
-                            .append("</summary>").append(newsForm(consoleUrl, token, article, de)).append("</details>");
+                    content.append("<details class=\"mt-3\"><summary>").append(I18n.get(lang, "news.edit"))
+                            .append("</summary>").append(newsForm(consoleUrl, token, article, lang)).append("</details>");
                     content.append("<form method=\"post\" action=\"").append(org.owasp.encoder.Encode.forHtmlAttribute(consoleUrl))
                             .append("\" class=\"mt-2\"><input type=\"hidden\" name=\"csrf\" value=\"").append(token)
                             .append("\"><input type=\"hidden\" name=\"action\" value=\"delete\"><input type=\"hidden\" name=\"id\" value=\"")
                             .append(article.id()).append("\"><button class=\"btn btn-danger btn-sm\" type=\"submit\">")
-                            .append(de ? "Löschen" : "Delete").append("</button></form>");
+                            .append(I18n.get(lang, "news.delete")).append("</button></form>");
                 }
                 content.append("</div></article>");
             }
-            var design = getPageDesign(admin ? "console" : "start", request, map);
-            design = util.replacePaths(design);
-            design = util.replaceFilePaths(design);
-            design = util.replaceCommands(design, readLang(request, map));
-            design = util.replaceServerInfo(design);
-            var skin = util.parseHost(map.getOrDefault("skin", ""), request)[1];
-            var sid = request.getAttribute("sid");
-            design = design.replace("%skin%", org.owasp.encoder.Encode.forHtmlAttribute(skin));
-            design = design.replace("%sid%", org.owasp.encoder.Encode.forHtmlAttribute(sid instanceof String ? (String) sid : ""));
-            util.submitContent(design.replace("%content%", content.toString()), response);
+            util.submitContent(getTemplate("news", request, map)
+                    .set("newsDesign", admin ? "console" : "start")
+                    .set("content", content.toString()), response);
         } catch (java.sql.SQLException | IOException ex) {
             logError(ex);
             response.setStatus(500);
-            util.submitContent(de ? "News konnten nicht geladen oder gespeichert werden." : "Unable to load or save news.", response);
+            util.submitContent(I18n.get(lang, "news.load_failed"), response);
         }
     }
 
-    private String newsForm(String url, String token, NewsRepository.Article article, boolean de) {
+    private String newsForm(String url, String token, NewsRepository.Article article, String lang) {
         boolean edit = article != null;
         var html = new StringBuilder("<form method=\"post\" class=\"mb-4\" action=\"")
                 .append(org.owasp.encoder.Encode.forHtmlAttribute(url))
                 .append("\"><input type=\"hidden\" name=\"csrf\" value=\"").append(token)
                 .append("\"><input type=\"hidden\" name=\"action\" value=\"").append(edit ? "update" : "create").append("\">");
         if (edit) html.append("<input type=\"hidden\" name=\"id\" value=\"").append(article.id()).append("\">");
-        html.append("<label>").append(de ? "Titel" : "Title").append("<input class=\"form-control\" name=\"title\" maxlength=\"200\" required value=\"")
+        html.append("<label>").append(I18n.get(lang, "news.form.title")).append("<input class=\"form-control\" name=\"title\" maxlength=\"200\" required value=\"")
                 .append(org.owasp.encoder.Encode.forHtmlAttribute(edit ? article.title() : "")).append("\"></label>")
-                .append("<label class=\"d-block\">").append(de ? "Text" : "Text")
+                .append("<label class=\"d-block\">").append(I18n.get(lang, "news.form.text"))
                 .append("<textarea class=\"form-control\" name=\"body\" maxlength=\"20000\" rows=\"5\" required>")
                 .append(org.owasp.encoder.Encode.forHtmlContent(edit ? article.body() : ""))
                 .append("</textarea></label><button class=\"btn btn-primary\" type=\"submit\">")
-                .append(edit ? (de ? "Speichern" : "Save") : (de ? "Veröffentlichen" : "Publish"))
+                .append(I18n.get(lang, edit ? "news.form.save" : "news.form.publish"))
                 .append("</button></form>");
         return html.toString();
     }
@@ -5670,7 +5380,6 @@ pwd = map.getOrDefault("pwd", "");
         var db = conf.getDb();
         var cm = Bootstrap.boot.getChatManager();
         var lang = readLang(request, map);
-        boolean de = "de".equalsIgnoreCase(lang);
 
         var hourly = db.getStatsHourly();
         var daily = db.getStatsDaily();
@@ -5690,13 +5399,13 @@ pwd = map.getOrDefault("pwd", "");
             relSb.append("</td></tr>");
         }
         if (relationships.isEmpty()) {
-            relSb.append("<tr><td colspan=\"4\" class=\"text-center text-muted\">").append(de ? "Noch keine direkten Beziehungen aufgezeichnet." : "No direct relationships recorded yet.").append("</td></tr>");
+            relSb.append("<tr><td colspan=\"4\" class=\"text-center text-muted\">").append(I18n.get(lang, "stats.no_relationships")).append("</td></tr>");
         }
 
-        String t_msgs = de ? "Nachrichten" : "Messages";
-        String t_peak_users = de ? "Peak Nutzer" : "Peak Users";
-        String t_avg_users = de ? "Ø Nutzer" : "Avg Users";
-        String t_active_users = de ? "Aktive Nutzer" : "Active Users";
+        String t_msgs = I18n.get(lang, "stats.messages");
+        String t_peak_users = I18n.get(lang, "stats.peak_users");
+        String t_avg_users = I18n.get(lang, "stats.avg_users");
+        String t_active_users = I18n.get(lang, "stats.active_users");
 
         var chartSb = new StringBuilder();
         chartSb.append("<script>");
@@ -5727,12 +5436,12 @@ pwd = map.getOrDefault("pwd", "");
 
         var templateName = loggedIn ? "stats_community" : "stats";
         var data = getTemplate(templateName, request, map);
-        data = data.replace("%stat_online%", cm.getUserSizeInChat());
-        data = data.replace("%stat_total_messages%", String.valueOf(db.countPublicMessages() > -1 ? db.countPublicMessages() : 0));
-        data = data.replace("%stat_registered%", String.valueOf(db.countChatter() > -1 ? db.countChatter() : 0));
-        data = data.replace("%stat_rooms%", String.valueOf(cm.getRooms().size()));
-        data = data.replace("%stat_relationships%", relSb.toString());
-        data = data.replace("%stat_chart_script%", chartSb.toString());
+        data = data.set("stat_online", cm.getUserSizeInChat());
+        data = data.set("stat_total_messages", String.valueOf(db.countPublicMessages() > -1 ? db.countPublicMessages() : 0));
+        data = data.set("stat_registered", String.valueOf(db.countChatter() > -1 ? db.countChatter() : 0));
+        data = data.set("stat_rooms", String.valueOf(cm.getRooms().size()));
+        data = data.set("stat_relationships", relSb.toString());
+        data = data.set("stat_chart_script", chartSb.toString());
 
         ut.submitContent(data, response);
     }

@@ -1,0 +1,1 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><li class="page-item"><a class="page-link" href="${paths.board}&id=${id}&p=${page}" aria-label="<fmt:message key="common.further_information"/>"><i class="fa fa-chevron-right"></i></a></li>

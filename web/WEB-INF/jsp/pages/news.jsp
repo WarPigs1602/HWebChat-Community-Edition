@@ -1,0 +1,1 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="t" tagdir="/WEB-INF/tags" %><t:layout design="${newsDesign}">${content}</t:layout>

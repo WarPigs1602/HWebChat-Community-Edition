@@ -990,98 +990,20 @@ public final class Util implements Software {
     }
 
     /**
-     * Tausche die Serverinfos im Text aus
-     *
-     * @param text Der Text zum parsen
-     * @return
-     */
-    protected String replaceServerInfo(String text) {
-        text = text.replace("%SERVER_SOFTWARE%", SERVER_SOFTWARE);
-        text = text.replace("%SERVER_VERSION%", SERVER_VERSION);
-        text = text.replace("%SERVER_STATUS%", SERVER_STATUS);
-        text = text.replace("%SERVER_PROJECT_NAME%", SERVER_PROJECT_NAME);
-        text = text.replace("%SERVER_VENDOR%", SERVER_VENDOR);
-        text = text.replace("%SERVER_HOMEPAGE%", SERVER_HOMEPAGE);
-        text = text.replace("%SERVER_YEAR%", SERVER_YEAR);
-        text = text.replace("%SERVER_MAIL%", SERVER_MAIL);
-        return text;
-    }
-
-    /**
      * Liefert den Stream des Servers aus
      *
      * @param data der Text
      * @param out Die Output KLasse
      */
-    protected void submitContent(String data, HttpServletResponse out) {
+    protected void submitContent(CharSequence data, HttpServletResponse out) {
         try {
 
             var pw = out.getWriter();
-            pw.print(data);
+            pw.print(String.valueOf(data));
             pw.flush();
         } catch (IOException ex) {
         }
 
-    }
-
-    /**
-     * Tauscht standardangaben aus f&uuml;r Templates
-     *
-     * @param text Der Text zum austauschen
-     * @param nick Der Nickname
-     * @param sid Die Sessionid
-     * @param skin Der Raum
-     * @param room
-     * @param reason Der Grund
-     * @param host
-     * @return
-     */
-    protected String replaceDefaultReplacements(String text, String nick, String sid, String skin, String room, String reason, String host) {
-        var conf = Bootstrap.boot.getConfig();
-        var cm = Bootstrap.boot.getChatManager();
-        var db = conf.getDb();
-        text = text.replace("%nick%", nick);
-        text = text.replace("%sid%", sid);
-        text = text.replace("%skin%", skin);
-        text = text.replace("%room%", room);
-        text = text.replace("%reason%", reason);
-        text = text.replace("%host%", host);
-        var lang = cm.getUserLang(nick);
-        text = text.replace("%ulist%", cm.getUserList(sid, skin, lang));
-        text = text.replace("%path_file%", conf.getString("path_file"));
-        text = text.replace("%reg_count%", String.valueOf(db.countChatter()));
-        text = text.replace("%user_count%", String.valueOf(cm.getUserSizeInChat()));
-        text = text.replace("%user_count_community%", String.valueOf(cm.getUsersCommunity().size()));
-        return text;
-    }
-
-    /**
-     * Ersetzt i18n-Platzhalter im Format %com[SCHLUESSEL]% durch den
-     * sprachabh&auml;ngigen Wert aus den Command-Bundles (commands.json /
-     * commands_en.json). Damit k&ouml;nnen Design-Templates &uuml;bersetzt
-     * werden, ohne den eigentlichen Seiteninhalt anzufassen.
-     *
-     * @param text Der zu verarbeitende Text
-     * @param lang Die Sprache ("de" oder "en")
-     * @return Der Text mit aufgel&ouml;sten i18n-Platzhaltern
-     */
-    protected String replaceCommands(String text, String lang) {
-        if (text == null || text.isBlank()) {
-            return text;
-        }
-        var conf = Bootstrap.boot.getConfig();
-        var db = conf.getDb();
-        var langFallback = lang != null && !lang.isBlank() ? lang : "de";
-        var pattern = compile("%com\\[([^\\]]+)\\]%", DOTALL);
-        var matcher = pattern.matcher(text);
-        var sb = new StringBuilder();
-        while (matcher.find()) {
-            var key = matcher.group(1);
-            var value = db.getCommand(key, langFallback);
-            matcher.appendReplacement(sb, Matcher.quoteReplacement(value));
-        }
-        matcher.appendTail(sb);
-        return sb.toString();
     }
 
     /**
@@ -1302,25 +1224,10 @@ public final class Util implements Software {
      * @param gender Das Geschlecht
      * @return
      */
-    protected String parseGender(String text, String gender) {
-        switch (gender) {
-            case "m" -> {
-                text = text.replace("%selected_no%", "");
-                text = text.replace("%selected_male%", " selected");
-                text = text.replace("%selected_female%", "");
-            }
-            case "f" -> {
-                text = text.replace("%selected_no%", "");
-                text = text.replace("%selected_male%", "");
-                text = text.replace("%selected_female%", " selected");
-            }
-            default -> {
-                text = text.replace("%selected_no%", " selected");
-                text = text.replace("%selected_male%", "");
-                text = text.replace("%selected_female%", "");
-            }
-        }
-        return text;
+    protected View parseGender(View view, String gender) {
+        return view.set("selected_no", gender.equals("m") || gender.equals("f") ? "" : " selected")
+                .set("selected_male", gender.equals("m") ? " selected" : "")
+                .set("selected_female", gender.equals("f") ? " selected" : "");
     }
 
     /**
@@ -1330,19 +1237,18 @@ public final class Util implements Software {
      * @param status Der Status
      * @return
      */
-    protected String parseHelp(String text, int status, String lang) {
+    protected View parseHelp(View view, int status, String lang) {
         var conf = Bootstrap.boot.getConfig();
         var db = conf.getDb();
         var help = db.getHelp();
         if (lang != null && lang.equalsIgnoreCase("en") && db.getHelpEn() != null) {
             help = db.getHelpEn();
         }
+        var texts = new java.util.HashMap<String, String>();
         for (var key : db.getCmd().keySet()) {
-            var elem = db.getCmd().get(key);
-            int st = Integer.valueOf(elem);
             var value = help.get(key);
             if (value != null) {
-                text = text.replaceFirst("%HELP_\\[(.*?)\\]%", st <= status ? value : "");
+                texts.put(key, Integer.valueOf(db.getCmd().get(key)) <= status ? value : "");
             }
         }
         var sb = new StringBuilder();
@@ -1356,9 +1262,8 @@ public final class Util implements Software {
                 sb.append("</td></tr>\r\n");
             }
         });
-        text = text.replace("%HELP_[fun]%", sb.toString());
-        text = text.replaceAll("%HELP_\\[(.*?)\\]%", "");
-        return text;
+        texts.put("fun", sb.toString());
+        return view.set("help", texts);
     }
 
     /**

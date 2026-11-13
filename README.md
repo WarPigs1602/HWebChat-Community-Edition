@@ -18,7 +18,7 @@ Web-based community chat (Jakarta EE / WebSocket) for Apache Tomcat.
 - Emoji support, file uploads
 - Moderation (kick, ban, gag, …)
 - Admin console, communities / napping rooms
-- Skins and templates under `~/.homewebcom` (`native` German, `native_en` English)
+- Built-in skin `native` as JSP templates (`web/WEB-INF/jsp`) with full i18n (German/English) via resource bundles and native EL/JSTL instead of `%placeholders%`
 - MySQL / MariaDB, PostgreSQL, or SQLite storage
 
 Statistics use the configured `time_zone`, just like the chat. Previously stored
@@ -151,16 +151,17 @@ Templates/config under `~/.homewebcom` are **not** inside the WAR — edit them 
 | `~/.homewebcom/config/hosts.json` | Virtual Host → skin |
 | `~/.homewebcom/config/commands.json` | Chat command texts |
 | `~/.homewebcom/config/paths.json` | URL path names |
-| `~/.homewebcom/templates/native/` | German skin (HTML, JS, CSS) |
-| `~/.homewebcom/templates/native_en/` | English skin (HTML, JS, CSS) |
+| `~/.homewebcom/templates/native/`, `native_en/` | Plain scripts and stylesheets (the page templates are JSPs in the WAR) |
 
 The setup wizard supports all three database backends. SQLite is the default. For manual configuration, set `sql.type` to `sqlite`, `mysql`, or `postgresql`. PostgreSQL uses `sql.host` (`host:port`), `sql.db`, `sql.user`, and `sql.pw`; `pgcrypto` must be installed in the database (the setup wizard attempts to install it). SQLite uses `sql.path`, defaulting to `~/.homewebcom/data/hwebchat.sqlite`; `sql.user` and `sql.pw` are ignored.
 
 The repo copy `web/default-homewebcom/` is a template; on first start the app creates `~/.homewebcom` automatically and copies all files from there.
 
-Random colors for new users and guests have at least 4.5:1 contrast against the default dark theme. The `bright_0` through `bright_5` digit restrictions still apply; adjust them if they prevent sufficiently light colors. Custom room colors may have different contrast.
+Random colors for new users and guests have at least 4.5:1 contrast against the dark theme. The `bright_0` through `bright_5` digit restrictions still apply; adjust them if they prevent sufficiently light colors. Custom room colors may have different contrast.
 
 Pages embedded in a chat tab hide their own navigation bar; it remains visible outside the chat tab. This also applies to previously copied page designs with a `nav.navbar` directly inside `body`.
+
+The navigation bar offers a dark alternative to the light default theme ("Theme" menu, stored in the `theme` cookie). The part of a style sheet after the comment `/* theme:dark` belongs to the dark theme only and is left out for the light theme. In the chat, the language menu changes the language in real time over the open WebSocket connection (no reload); elements with `data-i18n="<command key>"` are translated.
 
 Public and community pages select their navigation according to the active community session: registered user, guest, or signed out. Expired sessions receive the public navigation.
 
@@ -193,7 +194,17 @@ Web resources: `web/`
 ## FAQ
 
 **Language?**  
-Default UI/templates are German. An English skin is available as `.homewebcom/templates/native_en/`, plus matching config files like `help_en.json` and `profile_en.json`. The language is automatically detected and can be changed in the frontend.
+Default UI/templates are German. English is available through the same JSP templates, plus matching config files like `help_en.json` and `profile_en.json`. The language is automatically detected (`lang` cookie, `lang` parameter, `Accept-Language`) and can be changed in the frontend.
+
+### JSP templates and i18n
+
+- All pages are JSPs below `web/WEB-INF/jsp`: `pages` (templates), `pages/doc` (`doc=` pages), `console`, `mail`, `script`, `style`, `system` and `includes`.
+- A page wraps its content with `<t:layout design="start">…</t:layout>`. [layout.tag](web/WEB-INF/tags/layout.tag) is the only layout: it composes `includes/header.jsp` (`<head>`), `includes/navbar.jsp` (site, console and logo-only navigation) and `includes/footer.jsp` (legal links and scripts) around the content. The design name only selects the parameters (title, style sheets, navigation variant, wrapper, footer parts) in the list at the top of the tag; `includes/navbar-chat.jsp` is the navigation of the chat window.
+- Values are read with EL, no `%placeholder%` replacement is involved: `${nick}`, `${sid}`, `${skin}`, `${paths.login}` (paths.json), `${com.design_nav_start}` (commands.json), `${help.away}`, `${profile.hobby}`, `${SERVER_SOFTWARE}`, … Page specific values are set in Java with `view.set("name", value)` on the `View` returned by `getTemplate(...)`; a `View` can be used as value of another `View`, which then sees the values of the surrounding one.
+- Texts live in the resource bundles `src/resources/i18n/messages.properties` (German, default) and `messages_en.properties` and are printed with `<fmt:message key="…"/>`. Messages with values use `{0}`, `{1}`, … and `<fmt:param value="${…}"/>` (quote `'` as `''` and `{` as `'{'` in such messages). Add a language with `messages_<lang>.properties` using the same keys.
+- Only the strings inside the JSON configuration files (`paths.json`, `commands.json`, `help.json`, `profile.json`) still use `%name%`, `%PATH_[name]%` and `%com[name]%`; they are resolved when the value is read from `${paths.…}` / `${com.…}`.
+- Templates below `~/.homewebcom/templates` are not used any more except for the plain scripts and style sheets (jQuery, Bootstrap, …) in `native` / `native_en`. Change the JSPs in the WAR (or deploy an adapted WAR) to change the layout.
+- Public pages in the web root: `index.jsp` (welcome file, redirects to `Start`) and `404.jsp` (error page); both follow the language detection above.
 
 **First-start setup?**  
 On first request, the app redirects to `/Setup`. The wizard creates `~/.homewebcom`, database tables, the first admin user, and writes a complete `config.json` automatically.

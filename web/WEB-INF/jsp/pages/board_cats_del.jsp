@@ -1,0 +1,1 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><a class="btn btn-outline-danger btn-sm" href="${paths.board}&del_cat=true&cat=${id}" title="<fmt:message key="page.board_cats_del.delete_category"/>"><i class="fa fa-trash"></i></a>

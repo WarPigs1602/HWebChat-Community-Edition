@@ -1,0 +1,1 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><a class="btn btn-outline-warning btn-sm" href="${paths.board}&pid=${id}&id=${cat}&close=true" title="<fmt:message key="page.boards_thread_close.close_the_thread"/>"><i class="fa fa-lock"></i></a>

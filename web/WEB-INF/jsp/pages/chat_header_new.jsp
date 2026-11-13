@@ -1,0 +1,2 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><!-- set_own_nick_name: "${nick}" -->
+<p><a href="${paths.redirect}http://${SERVER_HOMEPAGE}/" target="_blank" style="font-weight: bold">${SERVER_SOFTWARE}</a><br>&copy; ${SERVER_YEAR} by <a href="mailto:${SERVER_MAIL}">${SERVER_VENDOR}</a><br>All rights reserved.</p>

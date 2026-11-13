@@ -1,0 +1,70 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><%@ taglib prefix="t" tagdir="/WEB-INF/tags" %><t:layout design="frameset_privchat"><script>
+function submitMessage(text)
+{
+    text = escapeHtml(text);
+    var msg = {
+       <fmt:message key="common.category_privchat_user"><fmt:param value="${oldnick}"/><fmt:param value="${target}"/></fmt:message>
+       <fmt:message key="common.message_text"><fmt:param value="${oldnick}"/></fmt:message>
+       <fmt:message key="common.targ_et"><fmt:param value="${target}"/></fmt:message>
+    };
+    socket.send(JSON.stringify(msg));
+}
+</script>
+
+<div class="chat-privchat-shell container-fluid p-0 d-flex flex-column" style="height: 100%;">
+  <div class="chat_frame flex-grow-1" id="chat_window" style="min-height: 0;">
+    <script type="text/javascript" src="${paths.script_nav}"></script>
+  </div>
+  <div class="post_frame post_field input-group" style="min-height: 64px; flex: 0 0 auto;">
+      <input type="text" name="msg" class="form-control form-control-sm" autocomplete="off" id="message" maxlength="1024" value="" onkeydown="return submitChatInput(event)"></input>
+      <div class="input-group-append">
+        <input type="button" value="<fmt:message key="common.submission"/>" class="btn btn-primary btn-sm" onclick="sendText();"></input>
+      </div>
+      <script type="text/javascript">
+    App = {};
+    let textarea = document.getElementById("message");
+    if (!(App.emojiSelector instanceof Emojilist)) {
+        App.emojiSelector = new <fmt:message key="common.emojilist"/>();
+    }
+    App.emojiSelector.attach({
+        node: textarea,
+        insert: function(emoji, event) {
+            let startBefore = textarea.selectionStart,
+            before = textarea.value.substr(0, startBefore),
+            after = textarea.value.substr(textarea.selectionEnd);
+            textarea.value = before + emoji + after;
+            textarea.setSelectionRange(before.length+emoji.length, before.length+emoji.length);
+            textarea.focus();
+            /*event.preventDefault();
+            event.stopPropagation();*/
+        },
+        categoryclick: function(event) {
+            textarea.focus();
+            /*event.preventDefault();
+            event.stopPropagation();*/
+        },
+        offset: '15%',
+        prepend: true,
+        template: '<div class="popover" style="width: 50vw!important; max-width: 50vw!important; min-width: 50vw; height: 50vh!important; max-height: 50vh!important; min-height: 50vh!important;" role="tooltip"><div class="arrow"></div><div class="popover-body" style="position: relative; width: 100%!important; max-width: 100%!important; min-width: 100%; height: 100%!important; max-height: 100%!important; min-height: 100%!important; overflow-y: scroll;"></div></div>',
+        pageTitle: function(title) {
+            return {
+                'Recent':'😁',
+                'Smileys & People':'😀',
+                'Animals & Nature':'🐱',
+                'Food & Drink':'🍟',
+                'Travel & Places':'🚄',
+                'Activities':'⚽',
+                'Objects':'💿',
+                'Symbols':'❓',
+                'Flags':'🏁'
+            }[title];
+        },
+        container: 'body'
+    });
+    </script>
+  </div>
+</div>
+  <script type="text/javascript" src="${paths.script_chat_privchat}"></script>
+  <script type="text/javascript" src="${paths.script_post_privchat}"></script>
+  <script type="text/javascript" src="${paths.script_color}"></script>
+</t:layout>

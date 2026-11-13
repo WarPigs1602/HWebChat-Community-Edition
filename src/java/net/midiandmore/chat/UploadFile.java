@@ -89,24 +89,13 @@ public class UploadFile extends HttpServlet {
             var community = useCommunityTemplate(request.getSession().getAttribute("community") != null,
                     map.get("upload_context"));
             var err = cs.getTemplate(community ? "picture_error_com" : "picture_error", request, map);
-            err = err.replace("%message%", ex.getLocalizedMessage());
+            err.set("message", ex.getLocalizedMessage());
             out.println(err);
         }
     }
 
     static boolean useCommunityTemplate(boolean community, String uploadContext) {
         return community && !"chat".equals(uploadContext);
-    }
-
-    static String markChatUploadForm(String template) {
-        var form = java.util.regex.Pattern.compile("<form\\b[^>]*>", java.util.regex.Pattern.CASE_INSENSITIVE)
-                .matcher(template);
-        if (!form.find()) {
-            throw new IllegalStateException("Profile picture upload template does not contain a form");
-        }
-        return template.substring(0, form.end())
-                + "<input type=\"hidden\" name=\"upload_context\" value=\"chat\">"
-                + template.substring(form.end());
     }
 
     @Override

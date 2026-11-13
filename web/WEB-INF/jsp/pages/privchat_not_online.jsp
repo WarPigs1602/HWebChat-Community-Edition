@@ -1,0 +1,1 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><p><fmt:message key="page.privchat_not_online.the_chatter_with_the_names"/> <span style="font-weight:bold">${nick}</span> <fmt:message key="page.privchat_not_online.it_is_not_online"/></p>

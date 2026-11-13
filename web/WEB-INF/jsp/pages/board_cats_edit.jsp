@@ -1,0 +1,1 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><a class="btn btn-outline-primary btn-sm" href="${paths.board}&edit_cat=true&cat=${id}" title="<fmt:message key="common.processing_category"/>"><i class="fa fa-pencil"></i></a>

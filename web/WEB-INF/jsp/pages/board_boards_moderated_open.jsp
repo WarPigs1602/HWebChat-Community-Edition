@@ -1,0 +1,1 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><a class="btn btn-outline-success btn-sm" href="${paths.board}&id=${id}&cat=${cat}&close_boards=true" title="<fmt:message key="page.board_boards_moderated_open.unlocking_the_forum"/>"><i class="fa fa-unlock"></i></a>

@@ -1,0 +1,1 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><p><fmt:message key="page.bday_greeting.all_the_best_for"/> <span style="font-weight: bold">${age}.</span> <fmt:message key="page.bday_greeting.birthday"/></p>

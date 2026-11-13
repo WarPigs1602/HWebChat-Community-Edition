@@ -35,6 +35,7 @@ public class ChatPages extends HttpServlet {
      */
     @Override
     public void init() {
+        JspTemplates.init(getServletContext());
         try {
             setMaster(new Bootstrap());
             getMaster().init();

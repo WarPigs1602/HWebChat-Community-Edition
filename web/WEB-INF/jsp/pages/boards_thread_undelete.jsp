@@ -1,0 +1,1 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><a class="btn btn-outline-success btn-sm" href="${paths.board}&pid=${id}&id=${cat}&undel=true" title="<fmt:message key="page.boards_thread_undelete.restoring_thread"/>"><i class="fa fa-undo"></i></a>

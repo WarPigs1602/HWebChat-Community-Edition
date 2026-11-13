@@ -1,0 +1,1 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><a class="btn btn-outline-success btn-sm" href="${paths.board}&uid=${uid}&ban=true" title="<fmt:message key="page.boards_thread_unban.remove_users"/>"><i class="fa fa-check-circle"></i></a>

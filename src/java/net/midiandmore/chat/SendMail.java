@@ -33,7 +33,7 @@ public final class SendMail implements Software {
      * @param to Die Zieladresse
      * @throws MessagingException
      */
-    protected void sendEmail(String msg, String subject, String to) throws MessagingException {
+    protected void sendEmail(CharSequence msg, String subject, String to) throws MessagingException {
         final Properties p = Bootstrap.boot.getConfig().getDb().getMail();
         Session session;
         if (p.get("use_auth").equals("true")) {
@@ -51,7 +51,7 @@ public final class SendMail implements Software {
         message.setFrom(new InternetAddress(p.getProperty("from-mail-address")));
         message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
         message.setSubject(subject);
-        message.setText(msg);
+        message.setText(String.valueOf(msg));
         Transport.send(message);
     }
 

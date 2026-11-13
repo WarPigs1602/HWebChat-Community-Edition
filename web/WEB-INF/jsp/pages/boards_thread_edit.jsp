@@ -1,0 +1,1 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><a class="btn btn-outline-primary btn-sm" href="${paths.board}&pid=${id}&id=${cat}&edit=true" title="<fmt:message key="page.boards_thread_edit.processing"/>"><i class="fa fa-pencil"></i></a>

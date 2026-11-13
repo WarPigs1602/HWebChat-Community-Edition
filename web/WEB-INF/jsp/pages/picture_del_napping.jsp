@@ -1,0 +1,13 @@
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><%@ taglib prefix="t" tagdir="/WEB-INF/tags" %><t:layout design="napping_account"><h1>${SERVER_SOFTWARE}<fmt:message key="common.delete_the_profile_picture"/>!!</h1>
+
+
+  <p class="form-section-title">
+    <fmt:message key="common.delete_profile_picture"/>!
+  </p>
+  <p>
+    <fmt:message key="common.please_click_2"/> <a href="${path_hwebchat}?page=account&service=picture_del&data=delete&skin=${skin}"><fmt:message key="common.here"/></a> <fmt:message key="common.to_continue_the_deletion_process"/>!
+  </p>
+  <p class="form-section-title">
+    <fmt:message key="common.and_already_done"/>
+  </p>
+</t:layout>

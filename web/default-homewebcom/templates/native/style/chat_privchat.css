@@ -203,6 +203,7 @@ body > .container-fluid.p-0.d-flex.flex-column {
   }
 }
 
+/* theme:dark - everything below applies to the dark theme only */
 :root {
   color-scheme: dark;
   --hwc-primary: #60a5fa;

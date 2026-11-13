@@ -398,54 +398,6 @@ public class Database {
         setBans(name, reason, banner, time);
     }
 
-    /**
-     * Ruft Templates ab (urspr&uuml;nglich in SQL-Datenbank abgespeichert
-     * deswegen nicht in der Config-Klasse)
-     *
-     * @param template Das Template
-     * @param skin Der Skin
-     * @return Der Inhalt
-     */
-    protected String getTemplate(String template, String skin) {
-        return readFile(skin, "template", template, "html", null);
-    }
-
-    protected String getTemplate(String template, String skin, String lang) {
-        return readFile(skin, "template", template, "html", lang);
-    }
-
-    /**
-     * Ruft Templates ab (urspr&uuml;nglich in SQL-Datenbank abgespeichert
-     * deswegen nicht in der Config-Klasse)
-     *
-     * @param template Das Template
-     * @param skin Der Skin
-     * @return Der Inhalt
-     */
-    protected String getConsole(String template, String skin) {
-        return readFile(skin, "console", template, "html", null);
-    }
-
-    protected String getConsole(String template, String skin, String lang) {
-        return readFile(skin, "console", template, "html", lang);
-    }
-
-    /**
-     * Ruft Seiten ab (urspr&uuml;nglich in SQL-Datenbank abgespeichert deswegen
-     * nicht in der Config-Klasse)
-     *
-     * @param template Das Template
-     * @param skin Der Skin
-     * @return Der Inhalt
-     */
-    protected String getPage(String template, String skin) {
-        return readFile(skin, "pages", template, "html", null);
-    }
-
-    protected String getPage(String template, String skin, String lang) {
-        return readFile(skin, "pages", template, "html", lang);
-    }
-
     /*
      * Dies ist veraltet
      private void createFile(String text, String style, String type, String file) {
@@ -548,38 +500,7 @@ public class Database {
         return text;
     }
 
-    /**
-     * Ruft die Designs ab (urspr&uuml;nglich in SQL-Datenbank abgespeichert
-     * deswegen nicht in der Config-Klasse)
-     *
-     * @param template Das Template
-     * @param skin Der Skin
-     * @return Das Template
-     */
-    protected String getPageDesign(String template, String skin) {
-        return readFile(skin, "design", template, "html", null);
-    }
-
-    protected String getPageDesign(String template, String skin, String lang) {
-        return readFile(skin, "design", template, "html", lang);
-    }
-
-    /**
-     * Ruft die Mail-Vorlage ab
-     *
-     * @param template Das Template
-     * @param skin Der Skin
-     * @return Das Script
-     */
-    protected String getMail(String template, String skin) {
-        return readFile(skin, "mail", template, "txt", null);
-    }
-
-    protected String getMail(String template, String skin, String lang) {
-        return readFile(skin, "mail", template, "txt", lang);
-    }
-
-    /**
+            /**
      * Ruft die Scripte ab (urspr&uuml;nglich in SQL-Datenbank abgespeichert
      * deswegen nicht in der Config-Klasse)
      *
@@ -1250,22 +1171,22 @@ public class Database {
                     var reg = resultset.getLong("timestamp_reg");
                     var login = resultset.getLong("timestamp_login");
                     var points = resultset.getInt("points");
-                    String text = null;
+                    View text;
                     if (bright) {
                         text = getMaster().getChatServices().getTemplate("toplist_list_1", request, map);
                     } else {
                         text = getMaster().getChatServices().getTemplate("toplist_list_2", request, map);
                     }
-                    text = text.replace("%top_nick%", nick);
-                    text = text.replace("%top_color%", color);
-                    text = text.replace("%reg_time%", ut.getTime(reg));
-                    text = text.replace("%last_login%", ut.getTime(login));
-                    text = text.replace("%points%", valueOf(points));
-                    text = text.replace("%count%", valueOf(count));
+                    text.set("top_nick", nick);
+                    text.set("top_color", color);
+                    text.set("reg_time", ut.getTime(reg));
+                    text.set("last_login", ut.getTime(login));
+                    text.set("points", valueOf(points));
+                    text.set("count", valueOf(count));
                     if (cm.isOnline(nick)) {
-                        text = text.replace("%online%", getMaster().getChatServices().getTemplate("toplist_list_online", request, map));
+                        text.set("online", getMaster().getChatServices().getTemplate("toplist_list_online", request, map));
                     } else {
-                        text = text.replace("%online%", getMaster().getChatServices().getTemplate("toplist_list_offline", request, map));
+                        text.set("online", getMaster().getChatServices().getTemplate("toplist_list_offline", request, map));
                     }
                     sb.append(text);
                     bright = !bright;
