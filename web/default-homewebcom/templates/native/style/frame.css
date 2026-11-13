@@ -2,8 +2,8 @@ html, body {
   height: 100%;
   margin: 0;
   padding: 0;
-  color: #212529;
-  background-color: #e9edf3;
+  color: #e5e7eb;
+  background-color: #111827;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
   font-size: 0.925rem;
 }

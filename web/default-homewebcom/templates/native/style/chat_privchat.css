@@ -202,3 +202,69 @@ body > .container-fluid.p-0.d-flex.flex-column {
     padding: 0.5rem !important;
   }
 }
+
+:root {
+  color-scheme: dark;
+  --hwc-primary: #60a5fa;
+  --hwc-primary-dark: #93c5fd;
+  --hwc-dark: #e5e7eb;
+  --hwc-muted: #9ca3af;
+  --hwc-border: #374151;
+  --hwc-bg: #111827;
+  --hwc-surface: #1f2937;
+}
+
+html,
+body,
+.chat-shell,
+.chat-privchat-shell,
+.container-fluid.p-0.d-flex.flex-column,
+.chat_frame {
+  color: var(--hwc-dark);
+  background-color: var(--hwc-bg);
+}
+
+.chat-frame-container,
+.chat-panel-overlay,
+.chat-panel-iframe,
+.right_frame,
+.chat-tabs,
+.post_frame {
+  background-color: var(--hwc-surface);
+  border-color: var(--hwc-border);
+}
+
+.post_frame .form-control,
+.chat-tab {
+  color: var(--hwc-dark);
+  background-color: #273449;
+  border-color: var(--hwc-border);
+}
+
+.chat-tab:hover {
+  background-color: #334155;
+  border-color: #475569;
+}
+
+.dropdown-menu {
+  color: var(--hwc-dark);
+  background-color: var(--hwc-surface);
+  border-color: var(--hwc-border);
+}
+
+.dropdown-item,
+.dropdown-item-text {
+  color: var(--hwc-dark);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  color: var(--hwc-primary-dark);
+  background-color: #334155;
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+  color: #fff;
+  background-color: #2563eb;
+}

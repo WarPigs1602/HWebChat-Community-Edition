@@ -4,7 +4,7 @@
   --hwc-dark: #%color%;
   --hwc-border: #%border_color%;
   --hwc-bg: #%bg_color_1%;
-  --hwc-surface: #ffffff;
+  --hwc-surface: #%bg_color_1%;
   --hwc-radius: 0.75rem;
   --hwc-shadow: 0 0.25rem 0.75rem rgba(33, 37, 41, 0.08);
   --hwc-shadow-lg: 0 0.5rem 1.25rem rgba(33, 37, 41, 0.12);
@@ -43,7 +43,7 @@ h1 { font-size: 1.75rem; font-weight: 700; }
 h2 { font-size: 1.35rem; font-weight: 600; }
 h3 { font-size: 1.1rem; font-weight: 600; }
 
-table { width: 100%; border-collapse: collapse; background: #ffffff; }
+table { width: 100%; border-collapse: collapse; background: var(--hwc-surface); }
 td,th { font-size: 0.9rem; padding: 0.5rem 0.65rem; border-bottom: 1px solid #%border_color%; vertical-align: top; }
 tr:last-child td { border-bottom: none; }
 
@@ -52,7 +52,7 @@ input, textarea, select, .form-control {
   border-radius: 0.5rem;
   padding: 0.55rem 0.85rem;
   font-size: 0.9375rem;
-  background: #ffffff;
+  background: var(--hwc-surface);
   color: #%color%;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -318,8 +318,8 @@ body > .navbar {
   margin: 0 auto 1.25rem;
   padding: 1.5rem;
   text-align: left;
-  color: #000;
-  background: #ffffff;
+  color: #%color%;
+  background: var(--hwc-surface);
   border: 1px solid #%border_color%;
   border-radius: var(--hwc-radius);
   box-shadow: var(--hwc-shadow);
@@ -341,7 +341,7 @@ body > .navbar {
   padding: 1.5rem;
   text-align: left;
   color: #%color%;
-  background: #ffffff;
+  background: var(--hwc-surface);
   border: 1px solid #%border_color%;
   border-radius: var(--hwc-radius);
   box-shadow: var(--hwc-shadow);
@@ -353,7 +353,7 @@ body > .navbar {
 
 .login, .reg, .chat {
   border: 1px solid #%border_color%;
-  background: #ffffff;
+  background: var(--hwc-surface);
   border-radius: var(--hwc-radius);
   box-shadow: var(--hwc-shadow);
   padding: 1.25rem;
@@ -361,7 +361,7 @@ body > .navbar {
 }
 .select {
   border: 1px solid #%border_color%;
-  background: #ffffff;
+  background: var(--hwc-surface);
   border-radius: 0.5rem;
   padding: 0.45rem 0.75rem;
   width: 100%;
@@ -544,4 +544,38 @@ body > .navbar {
   border-radius: var(--hwc-radius);
   margin: 0.5rem;
   padding: 1.5rem !important;
+}
+
+.text-dark,
+.text-body {
+  color: #%color% !important;
+}
+
+.bg-light,
+.bg-white {
+  background-color: #%bg_color_1% !important;
+  color: #%color% !important;
+}
+
+.dropdown-menu {
+  color: #%color%;
+  background-color: #%bg_color_1%;
+  border-color: #%border_color%;
+}
+
+.dropdown-item,
+.dropdown-item-text {
+  color: #%color%;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  color: #%color%;
+  background-color: #%bg_color_2%;
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+  color: #%color%;
+  background-color: #%link_color%;
 }

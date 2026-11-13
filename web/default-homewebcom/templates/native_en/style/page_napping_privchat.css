@@ -5,7 +5,7 @@
   --hwc-muted: #6c757d;
   --hwc-border: #dee2e6;
   --hwc-bg: #f0f2f5;
-  --hwc-surface: #ffffff;
+  --hwc-surface: #%bg_color_1%;
   --hwc-radius: 0.75rem;
 }
 
@@ -103,8 +103,8 @@ h3 {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  background: #ffffff;
-  color: #000000;
+  background: var(--hwc-surface);
+  color: #%color%;
   border: 1px solid #%border_color%;
   border-radius: 0.5rem;
   margin: 0.25rem;
@@ -144,7 +144,7 @@ h3 {
   min-height: 64px;
   margin: 0 !important;
   padding: 0.65rem 0.85rem !important;
-  background: #ffffff;
+  background: var(--hwc-surface);
   border-top: 1px solid #%border_color%;
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
   position: relative !important;
@@ -159,11 +159,11 @@ h3 {
   height: 38px;
   border-radius: 0.5rem;
   border: 1px solid #%border_color%;
-  background: #f8f9fa;
+  background: var(--hwc-surface);
 }
 
 .post_frame .form-control:focus {
-  background: #fff;
+  background: var(--hwc-surface);
   border-color: #%link_color%;
   box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.15);
 }
@@ -244,11 +244,11 @@ h3 {
   margin: 0 auto 1.25rem;
   padding: 1.5rem;
   text-align: left;
-  background: #ffffff;
+  background: var(--hwc-surface);
   border: 1px solid #%border_color%;
   border-radius: var(--hwc-radius);
   box-shadow: 0 0.25rem 0.75rem rgba(33, 37, 41, 0.08);
-  color: #000000;
+  color: #%color%;
 }
 
 #profilecontent {
@@ -258,18 +258,52 @@ h3 {
   margin: 0 auto 1.25rem;
   padding: 1.5rem;
   text-align: left;
-  background: #ffffff;
+  background: var(--hwc-surface);
   border: 1px solid #%border_color%;
   border-radius: var(--hwc-radius);
   box-shadow: 0 0.25rem 0.75rem rgba(33, 37, 41, 0.08);
   min-height: 200px;
   position: relative;
   z-index: 1;
-  color: #000000;
+  color: #%color%;
 }
 
 #profilecontent a {
   color: #%link_color%;
+}
+
+.text-dark,
+.text-body {
+  color: #%color% !important;
+}
+
+.bg-light,
+.bg-white {
+  background-color: #%bg_color_1% !important;
+  color: #%color% !important;
+}
+
+.dropdown-menu {
+  color: #%color%;
+  background-color: #%bg_color_1%;
+  border-color: #%border_color%;
+}
+
+.dropdown-item,
+.dropdown-item-text {
+  color: #%color%;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  color: #%color%;
+  background-color: #%bg_color_2%;
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+  color: #%color%;
+  background-color: #%link_color%;
 }
 
 body > .navbar {

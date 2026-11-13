@@ -1065,12 +1065,7 @@ public class ChatServices {
                             }
                             cid = generateSid();
                         } else {
-                            String color = null;
-                            if (conf.getInt("random_color") == 1) {
-                                color = ut.createRandomColor();
-                            } else {
-                                color = conf.getString("default_color");
-                            }
+                            var color = ut.createRandomColor();
                             db.addNick(gender, nick, mail, color, pwd, question, answer, day, month, year);
                             rf = getConsole("reg_form_success", request, map);
                         }
@@ -3952,12 +3947,7 @@ public class ChatServices {
             }
             cid = generateSid();
         } else {
-            String color = null;
-            if (conf.getInt("random_color") == 1) {
-                color = ut.createRandomColor();
-            } else {
-                color = conf.getString("default_color");
-            }
+            var color = ut.createRandomColor();
             db.addNick(gender, nick, mail, color, pwd, question, answer, day, month, year);
             if (roomName.isBlank()) {
                 rf = getTemplate("reg_form_success", request, map);
@@ -4275,7 +4265,7 @@ public class ChatServices {
         var skin = map.getOrDefault("skin", "");
         var session = request.getSession();
         applyLang(request, response, map);
-        if ((target.isBlank() && session == null) || (target.isBlank() && session.isNew())) {
+        if (target.isBlank() && (session.isNew() || session.getAttribute("nick") == null)) {
             if (db.isRegistered(nick)) {
                 if (!nick.equalsIgnoreCase(db.getData(nick, "nick2"))) {
                     nick = db.getData(nick, "nick2");

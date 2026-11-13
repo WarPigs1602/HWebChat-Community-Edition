@@ -8,8 +8,10 @@ import java.io.StringReader;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.List;
 import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.logging.Level;
@@ -258,23 +260,64 @@ public final class Util implements Software {
         return timeArray;
     }
 
-    /**
-     * Erzeugt zuf&auml;llig Farben im Hexadezimalen Format
-     *
-     * @return
-     */
     protected String createRandomColor() {
         var conf = Bootstrap.boot.getConfig();
-        var sb = new StringBuilder();
+        var blocked = new String[6];
         for (var i = 0; i < 6; i++) {
-            var col = HEX[round(getRnd().nextFloat() * 15)];
-
-            while (conf.getString("bright_" + Integer.valueOf(i)).indexOf(col) != -1) {
-                col = HEX[round(getRnd().nextFloat() * 15)];
-            }
-            sb.append(col);
+            blocked[i] = conf.getString("bright_" + i);
         }
-        return sb.toString();
+        return createRandomColor(getRnd(), blocked);
+    }
+
+    static String createRandomColor(Random random, String[] blocked) {
+        var allowed = new ArrayList<List<Integer>>();
+        for (var channel = 0; channel < 3; channel++) {
+            var values = new ArrayList<Integer>();
+            for (var value = 0; value < 256; value++) {
+                if (blocked[channel * 2].indexOf(HEX[value / 16]) < 0
+                        && blocked[channel * 2 + 1].indexOf(HEX[value % 16]) < 0) {
+                    values.add(value);
+                }
+            }
+            if (values.isEmpty()) {
+                throw new IllegalStateException("Color restrictions bright_0 to bright_5 allow no colors");
+            }
+            allowed.add(values);
+        }
+
+        double[] weights = {0.2126, 0.7152, 0.0722};
+        double minLuminance = 4.5 * (luminance(0x37, 0x41, 0x51) + 0.05) - 0.05;
+        var color = new StringBuilder(6);
+        double selectedLuminance = 0;
+        for (var channel = 0; channel < 3; channel++) {
+            double remainingMaximum = 0;
+            for (var next = channel + 1; next < 3; next++) {
+                var values = allowed.get(next);
+                remainingMaximum += weights[next] * linearChannel(values.get(values.size() - 1));
+            }
+            var candidates = new ArrayList<Integer>();
+            for (var value : allowed.get(channel)) {
+                if (selectedLuminance + weights[channel] * linearChannel(value) + remainingMaximum >= minLuminance) {
+                    candidates.add(value);
+                }
+            }
+            if (candidates.isEmpty()) {
+                throw new IllegalStateException("Color restrictions bright_0 to bright_5 prevent readable colors on the dark theme");
+            }
+            int value = candidates.get(random.nextInt(candidates.size()));
+            color.append(HEX[value / 16]).append(HEX[value % 16]);
+            selectedLuminance += weights[channel] * linearChannel(value);
+        }
+        return color.toString();
+    }
+
+    private static double luminance(int red, int green, int blue) {
+        return 0.2126 * linearChannel(red) + 0.7152 * linearChannel(green) + 0.0722 * linearChannel(blue);
+    }
+
+    private static double linearChannel(int value) {
+        double component = value / 255.0;
+        return component <= 0.04045 ? component / 12.92 : Math.pow((component + 0.055) / 1.055, 2.4);
     }
 
     /**

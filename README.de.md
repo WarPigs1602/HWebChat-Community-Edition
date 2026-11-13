@@ -157,6 +157,8 @@ Der Setup-Assistent unterstützt alle drei Datenbank-Backends. SQLite ist die Vo
 
 Die Repo-Kopie `web/default-homewebcom/` ist eine Vorlage; beim Erststart erstellt die App automatisch `~/.homewebcom` und kopiert alle Dateien dorthin.
 
+Zufallsfarben für neue Benutzer und Gäste erreichen mindestens 4,5:1 Kontrast zum dunklen Standarddesign. Die Zeichenbeschränkungen `bright_0` bis `bright_5` gelten weiterhin; wenn sie keine ausreichend helle Farbe zulassen, muss die Konfiguration angepasst werden. Individuelle Raumfarben können einen anderen Kontrast ergeben.
+
 Im Chat-Tab eingebettete Seiten blenden ihre eigene Navigationsleiste aus; außerhalb des Chat-Tabs bleibt sie sichtbar. Dies gilt auch für bereits kopierte Seitendesigns mit einer `nav.navbar` direkt im `body`.
 
 Öffentliche und Community-Seiten wählen die Navigation anhand der aktiven Community-Sitzung: registrierter Benutzer, Gast oder nicht angemeldet. Abgelaufene Sitzungen erhalten die öffentliche Navigation.

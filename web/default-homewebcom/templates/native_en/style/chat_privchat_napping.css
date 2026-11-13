@@ -1,11 +1,11 @@
 :root {
-  --hwc-primary: #0d6efd;
-  --hwc-primary-dark: #0a58ca;
-  --hwc-dark: #212529;
-  --hwc-muted: #6c757d;
-  --hwc-border: #dee2e6;
-  --hwc-bg: #f0f2f5;
-  --hwc-surface: #ffffff;
+  --hwc-primary: #%link_color%;
+  --hwc-primary-dark: #%link_color%;
+  --hwc-dark: #%color%;
+  --hwc-muted: #%color%;
+  --hwc-border: #%border_color%;
+  --hwc-bg: #%bg_color_1%;
+  --hwc-surface: #%bg_color_1%;
   --hwc-radius: 0.75rem;
 }
 
@@ -13,8 +13,8 @@ html, body {
   height: 100vh;
   margin: 0;
   padding: 0;
-  color: var(--hwc-dark);
-  background-color: #e9edf3;
+  color: #%color%;
+  background-color: #%bg_color_1%;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
   font-size: 0.925rem;
   overflow: hidden;
@@ -31,7 +31,7 @@ body > .container-fluid.p-0.d-flex.flex-column {
   min-height: 0;
   display: flex !important;
   flex-direction: column !important;
-  background: #e9edf3;
+  background: #%bg_color_1%;
 }
 
 .chat_frame {
@@ -81,7 +81,7 @@ body > .container-fluid.p-0.d-flex.flex-column {
   min-height: 64px;
   margin: 0 !important;
   padding: 0.65rem 0.85rem !important;
-  background: #ffffff;
+  background: var(--hwc-surface);
   border-top: 1px solid var(--hwc-border);
   box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
   position: relative !important;
@@ -96,11 +96,11 @@ body > .container-fluid.p-0.d-flex.flex-column {
   height: 38px;
   border-radius: 0.5rem;
   border: 1px solid var(--hwc-border);
-  background: #f8f9fa;
+  background: var(--hwc-surface);
 }
 
 .post_frame .form-control:focus {
-  background: #fff;
+  background: var(--hwc-surface);
   border-color: var(--hwc-primary);
   box-shadow: 0 0 0 0.15rem rgba(13, 110, 253, 0.15);
 }
@@ -123,7 +123,7 @@ cw {
 
 html,
 body {
-  background-color: #f3f6fa;
+  background-color: #%bg_color_1%;
 }
 
 body > .navbar {
@@ -144,7 +144,7 @@ body > .navbar .nav-link:focus-visible {
 .chat-shell,
 .chat-privchat-shell,
 body > .container-fluid.p-0.d-flex.flex-column {
-  background: #eef2f7;
+  background: #%bg_color_1%;
 }
 
 .chat_frame {
@@ -159,27 +159,27 @@ body > .container-fluid.p-0.d-flex.flex-column {
 
 .chat_frame::-webkit-scrollbar-thumb,
 .right_frame::-webkit-scrollbar-thumb {
-  background: #c4cfdd;
+  background: #%border_color%;
   border: 2px solid transparent;
   border-radius: 8px;
   background-clip: padding-box;
 }
 
 .right_frame {
-  background: #f7f9fc;
-  border-left-color: #dce3ed;
+  background: #%bg_color_1%;
+  border-left-color: #%border_color%;
 }
 
 .post_frame {
   gap: 0.65rem;
   padding: 0.75rem 1rem !important;
-  background: #fff;
-  border-top-color: #dce3ed;
+  background: var(--hwc-surface);
+  border-top-color: #%border_color%;
   box-shadow: 0 -4px 14px rgba(27, 39, 55, 0.06);
 }
 
 .post_frame .form-control {
-  background: #f7f9fc;
+  background: var(--hwc-surface);
 }
 
 .post_frame .btn {

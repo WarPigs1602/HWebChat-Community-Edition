@@ -1459,3 +1459,129 @@ body > .navbar .dropdown-menu {
     gap: 0.85rem;
   }
 }
+
+:root {
+  color-scheme: dark;
+  --hwc-primary: #60a5fa;
+  --hwc-primary-dark: #93c5fd;
+  --hwc-dark: #e5e7eb;
+  --hwc-muted: #9ca3af;
+  --hwc-border: #374151;
+  --hwc-bg: #111827;
+  --hwc-surface: #1f2937;
+  --hwc-light: #374151;
+  --hwc-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.25);
+  --hwc-shadow-lg: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.35);
+}
+
+body {
+  background: linear-gradient(180deg, #0b1220 0%, var(--hwc-bg) 40%, #111827 100%);
+}
+
+blockquote,
+.form-section-title,
+.month-pill,
+.dropdown-menu,
+.toplist-row:hover td,
+.toplist-row-alt td,
+.toplist-row-alt:hover td,
+.rank-badge,
+.profile-avatar,
+.profile-dates,
+.profile-section-card .card-header,
+.profile-napping-wrapper,
+#pagecontent form table,
+#profilecontent form table,
+#pagecontent .card,
+#profilecontent .card,
+#pagecontent .card-header,
+#profilecontent .card-header,
+.start-intro,
+.start-login-icon,
+.start-page > section > h2,
+.start-page .start-overview .card {
+  background-color: var(--hwc-light);
+  color: var(--hwc-dark);
+}
+
+.form-section-title,
+.start-intro,
+.start-page .start-overview .card {
+  background-image: none;
+}
+
+.profile-napping-wrapper {
+  background: var(--hwc-light) !important;
+}
+
+.dropdown-menu {
+  color: var(--hwc-dark);
+  background-color: var(--hwc-surface);
+  border-color: var(--hwc-border);
+}
+
+.dropdown-item,
+.dropdown-item-text {
+  color: var(--hwc-dark);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  color: var(--hwc-primary-dark);
+  background-color: #334155;
+}
+
+.dropdown-item.active,
+.dropdown-item:active {
+  color: #fff;
+  background-color: #2563eb;
+}
+
+.dropdown-item.disabled,
+.dropdown-item:disabled {
+  color: var(--hwc-muted);
+}
+
+.dropdown-item:hover,
+.month-pill:hover,
+.emoji:hover {
+  background: #334155;
+  color: var(--hwc-primary-dark);
+}
+
+.status-online {
+  color: #86efac;
+  background: #14532d;
+}
+
+.status-offline {
+  color: #fca5a5;
+  background: #7f1d1d;
+}
+
+.text-dark,
+.text-body {
+  color: var(--hwc-dark) !important;
+}
+
+.text-muted {
+  color: var(--hwc-muted) !important;
+}
+
+a.text-dark,
+a.text-dark:hover,
+a.text-dark:focus {
+  color: var(--hwc-primary) !important;
+}
+
+.bg-light,
+.bg-white {
+  background-color: var(--hwc-light) !important;
+  color: var(--hwc-dark) !important;
+}
+
+.list-group-item {
+  background-color: var(--hwc-surface);
+  border-color: var(--hwc-border);
+  color: var(--hwc-dark);
+}

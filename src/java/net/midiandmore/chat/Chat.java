@@ -73,6 +73,22 @@ public class Chat {
                 langParam = getMap().containsKey("lang") ? getMap().get("lang").get(0) : "";
             }
             if (langParam != null && !langParam.isBlank()) {
+                getSession().getUserProperties().put("lang", langParam);
+            }
+            if (getHttpSession() != null) {
+                try {
+                    getHttpSession().getCreationTime();
+                } catch (IllegalStateException expired) {
+                    setHttpSession(null);
+                }
+            }
+            if (getHttpSession() == null) {
+                getSession().getUserProperties().put("rejected_no_session", true);
+                ut.sendText(getTemplate("chat_session_expired"), getSession(), "error", "");
+                disconnect();
+                return;
+            }
+            if (langParam != null && !langParam.isBlank()) {
                 getHttpSession().setAttribute("lang", langParam);
             }
             var target = getMap().containsKey("target") ? getMap().get("target").get(0) : "";
@@ -471,6 +487,10 @@ public class Chat {
                 }
             }
         }
+        var lang = getSession().getUserProperties().get("lang");
+        if (lang instanceof String && !((String) lang).isBlank()) {
+            return (String) lang;
+        }
         return "de";
     }
 
@@ -547,6 +567,9 @@ public class Chat {
      */
     @OnClose
     public synchronized void onClose(Session session) throws IOException {
+        if (Boolean.TRUE.equals(session.getUserProperties().get("rejected_no_session"))) {
+            return;
+        }
         var cm = boot.getChatManager();
         try {
             if (session.isOpen()) {

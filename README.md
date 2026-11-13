@@ -158,6 +158,8 @@ The setup wizard supports all three database backends. SQLite is the default. Fo
 
 The repo copy `web/default-homewebcom/` is a template; on first start the app creates `~/.homewebcom` automatically and copies all files from there.
 
+Random colors for new users and guests have at least 4.5:1 contrast against the default dark theme. The `bright_0` through `bright_5` digit restrictions still apply; adjust them if they prevent sufficiently light colors. Custom room colors may have different contrast.
+
 Pages embedded in a chat tab hide their own navigation bar; it remains visible outside the chat tab. This also applies to previously copied page designs with a `nav.navbar` directly inside `body`.
 
 Public and community pages select their navigation according to the active community session: registered user, guest, or signed out. Expired sessions receive the public navigation.
