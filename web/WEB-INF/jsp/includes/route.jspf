@@ -1,0 +1,3 @@
+<%@ page session="false" trimDirectiveWhitespaces="true" import="net.midiandmore.chat.Web" %><%
+    Web.start(application);
+%>

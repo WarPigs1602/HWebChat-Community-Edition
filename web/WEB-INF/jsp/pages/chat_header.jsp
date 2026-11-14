@@ -7,8 +7,8 @@
   <meta content="${SERVER_SOFTWARE} ${SERVER_VERSION}-${SERVER_STATUS}" name="software">
   <meta content="text/html; charset=UTF-8" http-equiv="content-type">
   <meta http-equiv="Content-Style-Type" content="text/css">
-  <link rel="stylesheet" href="${paths.style_chat}" type="text/css">
-  <link rel="stylesheet" href="${paths.style_iframe}" type="text/css">
+  <link rel="stylesheet" href="${paths.style_chat}" type="text/css" data-hwc-theme>
+  <link rel="stylesheet" href="${paths.style_iframe}" type="text/css" data-hwc-theme>
   <script type="text/javascript" src="${paths.script_jquery}"></script>
   <script type="text/javascript" src="${paths.script_window}"></script>
   <script type="text/javascript" src="${paths.script_chat}"></script>

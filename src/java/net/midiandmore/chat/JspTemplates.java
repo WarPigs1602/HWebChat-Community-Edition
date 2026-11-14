@@ -36,11 +36,8 @@ final class JspTemplates {
     private static final Logger LOG = Logger.getLogger(JspTemplates.class.getName());
     private static final Map<String, String> DIRECTORIES = Map.of(
             "template", "pages",
-            "pages", "pages/doc",
             "console", "console",
             "mail", "mail",
-            "script", "script",
-            "style", "style",
             "system", "system");
     private static volatile ServletContext context;
 
@@ -59,8 +56,7 @@ final class JspTemplates {
     /**
      * Renders a template.
      *
-     * @param type template type (template, pages, console, mail,
-     * script, style, system)
+     * @param type template type (template, console, mail, system)
      * @param name template name without extension
      * @param lang language code ("de" or "en")
      * @param view source of the values used by the template, may be

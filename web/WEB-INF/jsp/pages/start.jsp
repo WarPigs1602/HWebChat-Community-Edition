@@ -28,7 +28,7 @@
         <a href="${paths.register}"><i class="fa fa-user-plus" aria-hidden="true"></i> <fmt:message key="page.start.create_an_account"/></a>
         <a href="${paths.password}"><i class="fa fa-key" aria-hidden="true"></i> <fmt:message key="page.start.forgot_password"/></a>
       </div>
-      <a class="start-guest-link" href="${paths.login}&amp;skin=${skin}"><i class="fa fa-user-o" aria-hidden="true"></i> <fmt:message key="page.start.continue_as_a_guest"/></a>
+      <a class="start-guest-link" href="${paths.login}?skin=${skin}"><i class="fa fa-user-o" aria-hidden="true"></i> <fmt:message key="page.start.continue_as_a_guest"/></a>
     </aside>
   </section>
   ${homepage_extra}

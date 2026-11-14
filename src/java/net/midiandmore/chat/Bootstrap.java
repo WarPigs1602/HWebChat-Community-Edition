@@ -173,7 +173,7 @@ public final class Bootstrap implements Software {
             }
             copyDefaultContent(homeWebCom);
             out.printf("* First start detected - setup required.\r\n");
-            out.printf("* Setup directories created. Please visit /Setup to complete configuration.\r\n");
+            out.printf("* Setup directories created. Please visit /setup.jsp to complete configuration.\r\n");
             setChatServices(new ChatServices(this));
             setCaptcha(new Captcha(this));
             setSendMail(new SendMail(this));

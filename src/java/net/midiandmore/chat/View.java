@@ -27,11 +27,11 @@ final class View implements CharSequence {
     private final Map<String, Object> values = new HashMap<>();
     private final Map<String, Object> defaults;
     private String rendered;
+    private boolean missing;
     private long renderedVersion = -1;
 
     /**
-     * @param type template type (design, template, pages, console, mail,
-     * script, style, system)
+     * @param type template type (template, console, mail, system)
      * @param name template name
      * @param lang language ("de" or "en")
      * @param defaults values every template of the request can use; values
@@ -108,15 +108,71 @@ final class View implements CharSequence {
     }
 
     /**
+     * Makes the values of this view available to a JSP that is requested
+     * directly: they are read through EL (<code>${nick}</code>) from the
+     * request attributes. Values that are computed on demand are computed when
+     * the JSP prints them.
+     *
+     * @param request the request of the JSP
+     */
+    void expose(jakarta.servlet.http.HttpServletRequest request) {
+        request.setAttribute(JspTemplates.FMT_LOCALE,
+                java.util.Locale.forLanguageTag("en".equalsIgnoreCase(lang) ? "en" : "de"));
+        var all = new HashMap<String, Object>();
+        if (defaults != null) {
+            all.putAll(defaults);
+        }
+        all.putAll(values);
+        all.forEach((key, value) -> request.setAttribute(key, value instanceof Supplier<?> supplier
+                ? new OnDemand(supplier) : value));
+    }
+
+    /** A value that is computed when it is printed. */
+    private static final class OnDemand implements CharSequence {
+
+        private final Supplier<?> supplier;
+        private String text;
+
+        OnDemand(Supplier<?> supplier) {
+            this.supplier = supplier;
+        }
+
+        @Override
+        public String toString() {
+            if (text == null) {
+                var value = supplier.get();
+                text = value == null ? "" : String.valueOf(value);
+            }
+            return text;
+        }
+
+        @Override
+        public int length() {
+            return toString().length();
+        }
+
+        @Override
+        public char charAt(int index) {
+            return toString().charAt(index);
+        }
+
+        @Override
+        public CharSequence subSequence(int start, int end) {
+            return toString().subSequence(start, end);
+        }
+    }
+
+    /**
      * Resolves <code>%name%</code>, <code>%PATH_[name]%</code> and
      * <code>%com[name]%</code> tokens in strings that come from the JSON
-     * configuration files (paths.json, commands.json).
+     * configured text and fixed path definitions.
      */
     String expand(String text) {
         if (text == null) {
             return "";
         }
         for (int pass = 0; pass < 6 && text.indexOf('%') >= 0; pass++) {
+            text = FixedPaths.normalizeLegacyQuery(text, key -> lookupMap("paths", key));
             var matcher = TOKEN.matcher(text);
             var sb = new StringBuilder();
             boolean changed = false;
@@ -158,6 +214,7 @@ final class View implements CharSequence {
         active.push(this);
         try {
             var text = JspTemplates.render(type, name, lang, this);
+            missing = false;
             rendered = text != null ? text : notFound();
         } finally {
             active.pop();
@@ -167,16 +224,14 @@ final class View implements CharSequence {
     }
 
     private String notFound() {
-        var db = Bootstrap.boot != null && Bootstrap.boot.getConfig() != null ? Bootstrap.boot.getConfig().getDb() : null;
-        if (db != null && (type.equals("script") || type.equals("style"))) {
-            var raw = type.equals("script") ? db.getScript(name, "native", lang) : db.getStyle(name, "native", lang);
-            if (!raw.toLowerCase().startsWith("error")) {
-                return raw;
-            }
-        }
+        missing = true;
         return "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>Error: The requested "
                 + type + " '" + name + "' does not exist!</b></p><hr><address>" + Software.SERVER_SOFTWARE + " "
                 + Software.SERVER_VERSION + "-" + Software.SERVER_STATUS + "</address></body><html>";
+    }
+
+    boolean isMissing() {
+        return missing;
     }
 
     @Override

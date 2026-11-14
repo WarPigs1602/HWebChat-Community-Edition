@@ -3160,7 +3160,6 @@ public class Database {
     private ArrayList<Long> timedBanTime;
     private ArrayList<Long> timedBanCounter;
     private TreeMap<String, String> smilies;
-    private TreeMap<String, String> paths;
     private TreeMap<String, String> cmd;
     private TreeMap<String, String> hosts;
     private TreeMap<String, String> mimeTypes;
@@ -3224,24 +3223,6 @@ public class Database {
      */
     protected void setHosts(TreeMap<String, String> hosts) {
         this.hosts = hosts;
-    }
-
-    /**
-     * Die Pfad-Parameter avfragen
-     *
-     * @return Die Pfad-Parameter
-     */
-    protected TreeMap<String, String> getPaths() {
-        return paths;
-    }
-
-    /**
-     * Die Pfad-Parameter setzen
-     *
-     * @param paths Die Pfad-Parameter
-     */
-    protected void setPaths(TreeMap<String, String> paths) {
-        this.paths = paths;
     }
 
     /**

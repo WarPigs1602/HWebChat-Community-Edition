@@ -7,7 +7,7 @@
   is changed (data-i18n-attr names the attribute to translate instead of the content).
 --%><c:set var="registered" value="${param.registered eq 'true'}"/><c:set var="napping" value="${param.napping eq 'true'}"/><c:set var="suffix" value="${napping ? '&owner='.concat(owner) : ''}"/><nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
   <div class="container-fluid">
-    <span class="navbar-brand mb-0"><img src="file/gfx/logo.svg" alt="HWebChat" style="height: 40px;"></span>
+    <span class="navbar-brand mb-0"><img src="${path_file}gfx/logo.svg" alt="HWebChat" style="height: 40px;"></span>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="${com.design_toggle_navigation}" data-i18n="design_toggle_navigation" data-i18n-attr="aria-label">
       <span class="navbar-toggler-icon"></span>
     </button>

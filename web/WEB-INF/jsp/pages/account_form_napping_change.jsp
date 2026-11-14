@@ -13,7 +13,7 @@ ${SERVER_SOFTWARE} &ndash; Chatnapping
   <input value="Login" type="submit">
 </form>
 <p>
-  <a href="${host_http}${paths.login_chat}&skin=${skin}&room=${room2}&owner=${nick}"><fmt:message key="common.guest_access"/></a><br>
+  <a href="${host_http}${paths.login_chat}?skin=${skin}&room=${room2}&owner=${nick}"><fmt:message key="common.guest_access"/></a><br>
   <a href="${host_http}${paths.register}&owner=${nick}"><fmt:message key="common.register"/></a><br>
   <a href="${host_http}${paths.password}&owner=${nick}"><fmt:message key="common.forgot_password"/></a>
 </p>

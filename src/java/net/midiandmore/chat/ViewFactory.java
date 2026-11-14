@@ -7,21 +7,10 @@ import java.util.function.Supplier;
 
 /**
  * Provides the values every template can use: the request data (nick, sid,
- * skin, room, ...), server information, the configured paths and texts and
+ * skin, room, ...), server information, fixed paths and configured texts and
  * some counters.
  */
 final class ViewFactory {
-
-    private static final String[][] FILE_PATHS = {
-        {"path_account", "path_account"}, {"path_account_com", "path_account_com"}, {"path_message", "path_message"},
-        {"path_chat", "path_chat"}, {"path_profile", "path_profile"}, {"path_emot", "path_emot"},
-        {"path_help", "path_help"}, {"path_output", "path_output"}, {"path_start", "path_start"},
-        {"path_image", "path_image"}, {"path_memory", "path_memory"}, {"path_captcha", "path_captcha"},
-        {"path_register", "path_reg_form"}, {"path_password", "path_password"}, {"path_login", "path_login"},
-        {"path_logout", "path_logout"}, {"path_link", "path_link"}, {"path_file", "path_file"},
-        {"path_toplist", "path_toplist"}, {"path_webchat", "path_webchat"}, {"path_hwebchat", "path_hwebchat"},
-        {"path_login_chat", "path_login_chat"}, {"path_upload", "path_upload"},
-        {"path_console_index", "path_console"}, {"path_board", "path_board"}, {"path_stats", "path_stats"}};
 
     private ViewFactory() {
     }
@@ -39,10 +28,8 @@ final class ViewFactory {
         var conf = Bootstrap.boot.getConfig();
         var db = conf.getDb();
         var cm = Bootstrap.boot.getChatManager();
-        for (var path : FILE_PATHS) {
-            var value = conf.getString(path[1]);
-            values.put(path[0], value == null ? "" : value);
-        }
+        values.putAll(FixedPaths.placeholders(Web.contextPath()));
+        values.put("page_base", Web.contextPath());
         values.put("SERVER_SOFTWARE", Software.SERVER_SOFTWARE);
         values.put("SERVER_VERSION", Software.SERVER_VERSION);
         values.put("SERVER_STATUS", Software.SERVER_STATUS);
@@ -53,7 +40,7 @@ final class ViewFactory {
         values.put("SERVER_MAIL", Software.SERVER_MAIL);
         values.put("lang", lang);
         values.put("paths", new Texts(key -> {
-            var raw = db.getPaths().get(key);
+            var raw = FixedPaths.get(key);
             if (raw == null) {
                 return null;
             }

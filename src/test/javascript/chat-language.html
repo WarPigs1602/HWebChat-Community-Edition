@@ -1,0 +1,102 @@
+<!doctype html>
+<!-- Serve the repository root over HTTP and open /src/test/javascript/chat-language.html. -->
+<meta charset="utf-8">
+<title>Chat language regression tests</title>
+<pre id="result">Running...</pre>
+<script>
+async function source(path) {
+    const response = await fetch("../../../" + path);
+    if (!response.ok) throw new Error("Cannot load " + path + ": " + response.status);
+    return response.text();
+}
+
+function renderScript(jsp) {
+    return jsp.replace(/<%@[\s\S]*?%>/g, "")
+        .replace(/\$\{'\$'\}/g, "@@DOLLAR@@")
+        .replace(/\$\{'\\\\'\}/g, "@@BACKSLASH@@")
+        .replace(/\$\{[^}]*\}/g, "")
+        .replace(/@@DOLLAR@@/g, "$")
+        .replace(/@@BACKSLASH@@/g, "\\");
+}
+
+function assert(condition, message) {
+    if (!condition) throw new Error(message);
+}
+
+async function testVariant(userlistPath, chatSource) {
+    const frame = document.createElement("iframe");
+    frame.srcdoc = '<div id="chat_window"></div><div id="right"></div>' +
+        '<input id="send" type="button" value="Senden" data-i18n="msg:common.submission" data-i18n-attr="value">';
+    document.body.appendChild(frame);
+    await new Promise(resolve => frame.addEventListener("load", resolve, {once: true}));
+    const w = frame.contentWindow;
+    const d = frame.contentDocument;
+    w.WebSocket = class {
+        static OPEN = 1;
+        readyState = 1;
+        send(message) { this.sent = JSON.parse(message); }
+    };
+    for (const scriptSource of [await source(userlistPath), chatSource]) {
+        const script = d.createElement("script");
+        script.textContent = renderScript(scriptSource);
+        d.body.appendChild(script);
+    }
+
+    w.setRoom("Lobby", "1", "0", "0", "Topic");
+    w.setOwnNickName("Alice");
+    w.addUser("Alice", "f", "1", "123456", "5", "0", "", "0");
+    w.addUser("Bob", "m", "0", "abcdef", "1", "1", "busy", "0");
+    w.setBirthday("Alice", "1");
+    w.toggleGroup("guest");
+    const filter = d.getElementById("user-list-filter");
+    filter.value = "Ali";
+    filter.dispatchEvent(new w.Event("input"));
+    w.openUserDropdown("Alice");
+    const socket = w.socket;
+    d.getElementById("send").value = "changed";
+
+    for (const [lang, button, placeholder, guest, room, birthday, menu] of [
+        ["en", "Submission", "Filter nicks...", "Guests", "Locked", "Has birthday today", "Show profile"],
+        ["de", "Senden", "Nicks filtern...", "Gäste", "Abgeschlossen", "Hat heute Geburtstag", "Profil anzeigen"]
+    ]) {
+        w.setChatLang(lang);
+        assert(socket.sent.keys.includes("msg:common.submission"), "Send button key missing");
+        socket.onmessage({data: JSON.stringify({category: "lang", message: JSON.stringify({
+            lang, texts: {"msg:common.submission": button}
+        })})});
+        assert(w.socket === socket, "WebSocket was replaced");
+        assert(d.getElementById("send").value === button, "Send button: " + lang);
+        assert(filter.value === "Ali" && filter.placeholder === placeholder, "Filter: " + lang);
+        assert(d.querySelector('[data-group="guest"]').classList.contains("collapsed"), "Collapsed group lost");
+        assert(d.querySelector('[data-group="guest"] .lbl').textContent === guest, "Group label: " + lang);
+        assert(d.querySelector(".user-list-status-label").textContent === room, "Room status: " + lang);
+        assert(d.querySelector(".user-list-birthday").title === birthday, "Birthday: " + lang);
+        assert(d.querySelector(".user-list-dropdown.open").textContent.includes(menu), "Open menu: " + lang);
+        assert(d.querySelector('[data-group-body="guest"] .user-list-item').style.display === "none", "Filter lost");
+        assert(w.user.length === 2 && d.getElementById("user-list-counter").textContent.startsWith("2"), "Users lost");
+    }
+    w.removeAllUsers();
+    w.setChatLang("en");
+    socket.onmessage({data: JSON.stringify({category: "lang", message: JSON.stringify({
+        lang: "en", texts: {"msg:common.submission": "Submission"}
+    })})});
+    assert(d.getElementById("user-list-empty").textContent.includes("No chatters in the room yet"), "Empty state");
+    frame.remove();
+}
+
+(async function () {
+    try {
+        const chatSource = await source("web/content/script_chat.jsp");
+        for (const variant of ["script_userlist.jsp", "script_userlist_napping.jsp"]) {
+            await testVariant("web/content/" + variant, chatSource);
+        }
+        for (const suffix of ["", "_reg", "_napping", "_reg_napping", "_com", "_reg_com", "_com_napping", "_reg_com_napping"]) {
+            const page = await source("web/WEB-INF/jsp/pages/frameset" + suffix + ".jsp");
+            assert(/<input type="button" value="<fmt:message key="common\.submission"\/>" data-i18n="msg:common\.submission" data-i18n-attr="value"/.test(page), "Send button markup: " + suffix);
+        }
+        document.getElementById("result").textContent = "PASS";
+    } catch (error) {
+        document.getElementById("result").textContent = "FAIL: " + error.stack;
+    }
+})();
+</script>

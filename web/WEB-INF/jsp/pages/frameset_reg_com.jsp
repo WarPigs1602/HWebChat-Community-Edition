@@ -37,7 +37,7 @@ function submitMessage(text)
   <div class="post_frame post_field input-group">
       <input type="text" class="form-control form-control-sm" autocomplete="off" id="message" maxlength="1024" value="" onkeydown="return submitChatInput(event);"></input>
       <div class="input-group-append">
-        <input type="button" value="Senden" class="btn btn-primary btn-sm" onclick="sendText();"></input>
+        <input type="button" value="<fmt:message key="common.submission"/>" data-i18n="msg:common.submission" data-i18n-attr="value" class="btn btn-primary btn-sm" onclick="sendText();"></input>
       </div>
       <script type="text/javascript">
     App = {};

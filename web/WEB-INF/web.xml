@@ -16,6 +16,10 @@
         <error-code>404</error-code>
         <location>/404.jsp</location>
     </error-page>
+    <error-page>
+        <error-code>500</error-code>
+        <location>/500.jsp</location>
+    </error-page>
     <session-config>
         <session-timeout>
             30
@@ -27,26 +31,27 @@
     </session-config>
     <servlet>
         <servlet-name>Start</servlet-name>
-        <servlet-class>net.midiandmore.chat.ChatPages</servlet-class>
+        <jsp-file>/WEB-INF/jsp/endpoints/start.jsp</jsp-file>
     </servlet>
     <servlet-mapping>
         <servlet-name>Start</servlet-name>
-        <url-pattern>/Start</url-pattern>
+        <url-pattern>/start.jsp</url-pattern>
     </servlet-mapping>  
     <servlet>
         <servlet-name>UploadFile</servlet-name>
-        <servlet-class>net.midiandmore.chat.UploadFile</servlet-class>
+        <jsp-file>/WEB-INF/jsp/endpoints/upload.jsp</jsp-file>
+        <multipart-config/>
     </servlet>
     <servlet-mapping>
         <servlet-name>UploadFile</servlet-name>
-        <url-pattern>/UploadFile</url-pattern>
+        <url-pattern>/upload.jsp</url-pattern>
     </servlet-mapping>   
     <servlet>
         <servlet-name>Setup</servlet-name>
-        <servlet-class>net.midiandmore.chat.SetupServlet</servlet-class>
+        <jsp-file>/WEB-INF/jsp/endpoints/setup.jsp</jsp-file>
     </servlet>
     <servlet-mapping>
         <servlet-name>Setup</servlet-name>
-        <url-pattern>/Setup</url-pattern>
+        <url-pattern>/setup.jsp</url-pattern>
     </servlet-mapping>
 </web-app>

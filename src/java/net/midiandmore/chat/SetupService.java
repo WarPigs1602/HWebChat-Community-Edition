@@ -3,7 +3,6 @@ package net.midiandmore.chat;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -15,16 +14,24 @@ import java.sql.PreparedStatement;
 import static java.lang.System.getProperty;
 import static java.lang.System.out;
 import static java.lang.System.err;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import static net.midiandmore.chat.Bootstrap.boot;
 import static net.midiandmore.chat.Bootstrap.fatalError;
 import static net.midiandmore.chat.Bootstrap.logError;
 import static java.sql.DriverManager.getConnection;
 
-public class SetupServlet extends HttpServlet {
+/**
+ * Logic of the first-start setup. The page itself is rendered by
+ * <code>/WEB-INF/jsp/endpoints/setup.jsp</code>.
+ */
+public final class SetupService {
+
+    private final ServletContext context;
+
+    public SetupService(ServletContext context) {
+        this.context = context;
+    }
 
     private String getHomeWebCom() {
         return getProperty("user.home") + getProperty("file.separator") + ".homewebcom";
@@ -34,7 +41,12 @@ public class SetupServlet extends HttpServlet {
         return getHomeWebCom() + getProperty("file.separator") + "config";
     }
 
-    private boolean isSetupComplete() {
+    /**
+     * Checks whether the setup has already been completed.
+     *
+     * @return <code>true</code> if the setup has been completed
+     */
+    public boolean isSetupComplete() {
         var configFile = new File(getConfigDir() + getProperty("file.separator") + "config.json");
         var markerFile = new File(getConfigDir() + getProperty("file.separator") + ".setup_complete");
         return markerFile.exists() && configFile.exists();
@@ -72,7 +84,6 @@ public class SetupServlet extends HttpServlet {
     }
 
     private void copyServletResources(String basePath, File targetDir) throws IOException {
-        var context = getServletContext();
         var paths = new String[]{"config", "data", "htdocs", "pictures", "templates"};
         for (var path : paths) {
             var resourcePath = basePath + "/" + path;
@@ -92,33 +103,6 @@ public class SetupServlet extends HttpServlet {
         }
     }
 
-    private String readResource(String path) {
-        try {
-            var context = getServletContext();
-            var is = context.getResourceAsStream(path);
-            if (is == null) {
-                return "";
-            }
-            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            logError(e);
-            return "";
-        }
-    }
-
-    private String escape(String value) {
-        if (value == null) {
-            return "";
-        }
-        var result = value;
-        result = result.replace("&", "&");
-        result = result.replace("<", "<");
-        result = result.replace(">", ">");
-        result = result.replace("\"", "" + "");
-        result = result.replace("'", "'");
-        return result;
-    }
-
     private String escapeSql(String value) {
         if (value == null) {
             return "";
@@ -128,105 +112,6 @@ public class SetupServlet extends HttpServlet {
                     .replace("\"", "\\\"")
                     .replace("\n", "\\n")
                     .replace("\r", "\\r");
-    }
-
-    private void render(HttpServletRequest request, HttpServletResponse response, String title, String body) throws IOException {
-        response.setContentType("text/html; charset=UTF-8");
-        response.setCharacterEncoding("UTF-8");
-        var pw = response.getWriter();
-        pw.print("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>");
-        pw.print(escape(title));
-        pw.print("</title><style>");
-        pw.print("*{box-sizing:border-box;margin:0;padding:0;}");
-        pw.print("body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}");
-        pw.print(".setup-container{background:rgba(255,255,255,0.95);border-radius:20px;box-shadow:0 25px 80px rgba(0,0,0,0.4);max-width:900px;width:100%;overflow:hidden;}");
-        pw.print(".setup-header{background:linear-gradient(135deg,#e94560 0%,#c23152 100%);color:white;padding:40px;text-align:center;}");
-        pw.print(".setup-header h1{font-size:2.5em;margin-bottom:10px;text-shadow:2px 2px 4px rgba(0,0,0,0.3);}");
-        pw.print(".setup-header p{opacity:0.9;font-size:1.1em;}");
-        pw.print(".setup-body{padding:40px;}");
-        pw.print(".error-message{background:#ffe6e6;color:#c23152;padding:15px 20px;border-radius:10px;margin-bottom:25px;border-left:4px solid #e94560;}");
-        pw.print(".section{margin-bottom:35px;}");
-        pw.print(".section-title{font-size:1.3em;color:#16213e;margin-bottom:20px;padding-bottom:10px;border-bottom:2px solid #e94560;display:flex;align-items:center;gap:10px;}");
-        pw.print(".section-title .icon{font-size:1.5em;}");
-        pw.print(".form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}");
-        pw.print("@media(max-width:600px){.form-grid{grid-template-columns:1fr;}}");
-        pw.print(".form-group{display:flex;flex-direction:column;}");
-        pw.print(".form-group label{font-weight:600;color:#333;margin-bottom:6px;font-size:0.95em;}");
-        pw.print(".form-group input,.form-group select{padding:12px 15px;border:2px solid #ddd;border-radius:8px;font-size:1em;transition:border-color 0.3s;}");
-        pw.print(".form-group input:focus,.form-group select:focus{outline:none;border-color:#e94560;}");
-        pw.print(".form-group .hint{font-size:0.8em;color:#888;margin-top:4px;}");
-        pw.print(".btn-submit{background:linear-gradient(135deg,#e94560 0%,#c23152 100%);color:white;border:none;padding:15px 40px;font-size:1.1em;border-radius:10px;cursor:pointer;font-weight:600;display:block;margin:30px auto 0;transition:transform 0.2s,box-shadow 0.2s;}");
-        pw.print(".btn-submit:hover{transform:translateY(-2px);box-shadow:0 8px 25px rgba(233,69,96,0.4);}");
-        pw.print(".footer{text-align:center;padding:20px;color:#666;font-size:0.9em;border-top:1px solid #eee;}");
-        pw.print("</style></head><body>");
-        pw.print("<div class=\"setup-container\"><div class=\"setup-header\"><h1>⚙️ HWebChat Setup</h1><p>Welcome to the automatic configuration of your chat server</p></div>");
-        pw.print("<div class=\"setup-body\">");
-        pw.print(body);
-        pw.print("</div>");
-        pw.print("<div class=\"footer\">HWebChat Community Edition | (c) 2005-2026 by Andreas Pschorn</div>");
-        pw.print("</div></body></html>");
-    }
-
-    private String renderSetupForm(String error, String dbType, String sqlitePath,
-                                   String dbHost, String dbPort, String dbName, String dbUser, String dbPassword, String dbPrefix,
-                                   String smtpHost, String smtpPort, String smtpUser, String smtpPassword, String smtpFrom,
-                                   String smtpAuth, String smtpStarttls, String smtpSslFactory,
-                                   String adminUser, String adminPassword, String adminRealm,
-                                   String firstUserNick, String firstUserPassword, String firstUserEmail,
-                                   String charset, String timeZone, String skin, String room) {
-        var sb = new StringBuilder();
-        if (error != null && !error.isEmpty()) {
-            sb.append("<div class=\"error-message\">⚠️ ").append(escape(error)).append("</div>");
-        }
-        sb.append("<form method=\"POST\" action=\"\">");
-        sb.append("<div class=\"section\"><div class=\"section-title\"><span class=\"icon\">🗄️</span> Database</div><div class=\"form-grid\">");
-        sb.append("<div class=\"form-group\"><label for=\"db_type\">Database type *</label><select id=\"db_type\" name=\"db_type\"><option value=\"mysql\"").append("mysql".equals(dbType) ? " selected" : "").append(">MySQL</option><option value=\"postgresql\"").append("postgresql".equals(dbType) ? " selected" : "").append(">PostgreSQL</option><option value=\"sqlite\"").append("sqlite".equals(dbType) ? " selected" : "").append(">SQLite</option></select></div>");
-        sb.append("<div class=\"form-group db-server\"><label for=\"db_host\">Database host *</label><input type=\"text\" id=\"db_host\" name=\"db_host\" value=\"").append(escape(dbHost)).append("\"></div>");
-        sb.append("<div class=\"form-group db-server\"><label for=\"db_port\">Database port *</label><input type=\"text\" id=\"db_port\" name=\"db_port\" value=\"").append(escape(dbPort)).append("\"></div>");
-        sb.append("<div class=\"form-group db-server\"><label for=\"db_name\">Database name *</label><input type=\"text\" id=\"db_name\" name=\"db_name\" value=\"").append(escape(dbName)).append("\"></div>");
-        sb.append("<div class=\"form-group db-server\"><label for=\"db_user\">Database user *</label><input type=\"text\" id=\"db_user\" name=\"db_user\" value=\"").append(escape(dbUser)).append("\"></div>");
-        sb.append("<div class=\"form-group db-server\"><label for=\"db_password\">Database password *</label><input type=\"password\" id=\"db_password\" name=\"db_password\" value=\"").append(escape(dbPassword)).append("\"></div>");
-        sb.append("<div class=\"form-group db-sqlite\"><label for=\"sqlite_path\">SQLite database file</label><input type=\"text\" id=\"sqlite_path\" name=\"sqlite_path\" value=\"").append(escape(sqlitePath)).append("\"><div class=\"hint\">Leave blank to use ~/.homewebcom/data/hwebchat.sqlite</div></div>");
-        sb.append("<div class=\"form-group\"><label for=\"db_prefix\">Table prefix</label><input type=\"text\" id=\"db_prefix\" name=\"db_prefix\" value=\"").append(escape(dbPrefix)).append("\"></div>");
-        sb.append("</div></div>");
-        sb.append("<div class=\"section\"><div class=\"section-title\"><span class=\"icon\">📧</span> E-Mail / SMTP</div><div class=\"form-grid\">");
-        sb.append("<div class=\"form-group\"><label for=\"smtp_host\">SMTP host *</label><input type=\"text\" id=\"smtp_host\" name=\"smtp_host\" value=\"").append(escape(smtpHost)).append("\" required></div>");
-        sb.append("<div class=\"form-group\"><label for=\"smtp_port\">SMTP port *</label><input type=\"text\" id=\"smtp_port\" name=\"smtp_port\" value=\"").append(escape(smtpPort)).append("\" required></div>");
-        sb.append("<div class=\"form-group\"><label for=\"smtp_user\">SMTP user</label><input type=\"text\" id=\"smtp_user\" name=\"smtp_user\" value=\"").append(escape(smtpUser)).append("\"></div>");
-        sb.append("<div class=\"form-group\"><label for=\"smtp_password\">SMTP password</label><input type=\"password\" id=\"smtp_password\" name=\"smtp_password\" value=\"").append(escape(smtpPassword)).append("\"></div>");
-        sb.append("<div class=\"form-group\"><label for=\"smtp_from\">Sender address *</label><input type=\"email\" id=\"smtp_from\" name=\"smtp_from\" value=\"").append(escape(smtpFrom)).append("\" required></div>");
-        sb.append("</div></div>");
-        sb.append("<div class=\"section\"><div class=\"section-title\"><span class=\"icon\">⚙️</span> SMTP options</div><div class=\"form-grid\">");
-        sb.append("<div class=\"form-group\"><label for=\"smtp_auth\">Authentication</label><select id=\"smtp_auth\" name=\"smtp_auth\"><option value=\"true\"").append("true".equals(smtpAuth) ? " selected" : "").append(">On</option><option value=\"false\"").append("false".equals(smtpAuth) ? " selected" : "").append(">Off</option></select></div>");
-        sb.append("<div class=\"form-group\"><label for=\"smtp_starttls\">STARTTLS</label><select id=\"smtp_starttls\" name=\"smtp_starttls\"><option value=\"true\"").append("true".equals(smtpStarttls) ? " selected" : "").append(">On</option><option value=\"false\"").append("false".equals(smtpStarttls) ? " selected" : "").append(">Off</option></select></div>");
-        sb.append("<div class=\"form-group\"><label for=\"smtp_ssl_factory\">SSL socket factory</label><input type=\"text\" id=\"smtp_ssl_factory\" name=\"smtp_ssl_factory\" value=\"").append(escape(smtpSslFactory)).append("\"></div>");
-        sb.append("</div></div>");
-        sb.append("<div class=\"section\"><div class=\"section-title\"><span class=\"icon\">🔐</span> Administration console</div><div class=\"form-grid\">");
-        sb.append("<div class=\"form-group\"><label for=\"admin_user\">Console username *</label><input type=\"text\" id=\"admin_user\" name=\"admin_user\" value=\"").append(escape(adminUser)).append("\" required></div>");
-        sb.append("<div class=\"form-group\"><label for=\"admin_password\">Console password *</label><input type=\"password\" id=\"admin_password\" name=\"admin_password\" value=\"").append(escape(adminPassword)).append("\" required></div>");
-        sb.append("<div class=\"form-group\"><label for=\"admin_realm\">Console realm</label><input type=\"text\" id=\"admin_realm\" name=\"admin_realm\" value=\"").append(escape(adminRealm)).append("\"></div>");
-        sb.append("</div></div>");
-        sb.append("<div class=\"section\"><div class=\"section-title\"><span class=\"icon\">👤</span> First user</div><div class=\"form-grid\">");
-        sb.append("<div class=\"form-group\"><label for=\"first_user_nick\">Username *</label><input type=\"text\" id=\"first_user_nick\" name=\"first_user_nick\" value=\"").append(escape(firstUserNick)).append("\" required></div>");
-        sb.append("<div class=\"form-group\"><label for=\"first_user_password\">Password *</label><input type=\"password\" id=\"first_user_password\" name=\"first_user_password\" value=\"").append(escape(firstUserPassword)).append("\" required></div>");
-        sb.append("<div class=\"form-group\"><label for=\"first_user_email\">E-mail *</label><input type=\"email\" id=\"first_user_email\" name=\"first_user_email\" value=\"").append(escape(firstUserEmail)).append("\" required></div>");
-        sb.append("</div></div>");
-        sb.append("<div class=\"section\"><div class=\"section-title\"><span class=\"icon\">🌐</span> General settings</div><div class=\"form-grid\">");
-        sb.append("<div class=\"form-group\"><label for=\"charset\">Charset</label><select id=\"charset\" name=\"charset\"><option value=\"UTF-8\"").append("UTF-8".equals(charset) ? " selected" : "").append(">UTF-8</option><option value=\"ISO-8859-1\"").append("ISO-8859-1".equals(charset) ? " selected" : "").append(">ISO-8859-1</option></select></div>");
-        sb.append("<div class=\"form-group\"><label for=\"timezone\">Timezone</label><select id=\"timezone\" name=\"timezone\">");
-        sb.append("<option value=\"CET\"").append("CET".equals(timeZone) ? " selected" : "").append(">CET (UTC+1)</option>");
-        sb.append("<option value=\"UTC\"").append("UTC".equals(timeZone) ? " selected" : "").append(">UTC (UTC+0)</option>");
-        sb.append("<option value=\"EET\"").append("EET".equals(timeZone) ? " selected" : "").append(">EET (UTC+2)</option>");
-        sb.append("<option value=\"EST\"").append("EST".equals(timeZone) ? " selected" : "").append(">EST (UTC-5)</option>");
-        sb.append("<option value=\"PST\"").append("PST".equals(timeZone) ? " selected" : "").append(">PST (UTC-8)</option>");
-        sb.append("</select></div>");
-        sb.append("<div class=\"form-group\"><label for=\"skin\">Default skin</label><input type=\"text\" id=\"skin\" name=\"skin\" value=\"").append(escape(skin)).append("\"></div>");
-        sb.append("<div class=\"form-group\"><label for=\"room\">Default room</label><input type=\"text\" id=\"room\" name=\"room\" value=\"").append(escape(room)).append("\"></div>");
-        sb.append("</div></div>");
-        sb.append("<button type=\"submit\" class=\"btn-submit\">🚀 Complete setup and start chat</button>");
-        sb.append("</form>");
-        sb.append("<script>(function(){var type=document.getElementById('db_type');function update(){var sqlite=type.value==='sqlite';document.querySelectorAll('.db-server').forEach(function(e){e.hidden=sqlite;e.querySelector('input').required=!sqlite;});document.querySelectorAll('.db-sqlite').forEach(function(e){e.hidden=!sqlite;});}type.addEventListener('change',update);update();})();</script>");
-        return sb.toString();
     }
 
     private Connection openDatabaseConnection(SqlDialect.Type type, String dbHost, String dbPort, String dbName,
@@ -425,43 +310,6 @@ public class SetupServlet extends HttpServlet {
         lines.add("{\"name\":\"password\",\"value\":\"" + escapeJson(smtpPassword) + "\",\"description\":\"SMTP password\"},");
         lines.add("{\"name\":\"from-mail-address\",\"value\":\"" + escapeJson(smtpFrom) + "\",\"description\":\"Sender address\"},");
         lines.add("{\"name\":\"use_auth\",\"value\":\"true\",\"description\":\"Use authentication\"},");
-        lines.add("{\"name\":\"path_console\",\"value\":\"console\",\"description\":\"Console page\"},");
-        lines.add("{\"name\":\"path_console_index\",\"value\":\"console\",\"description\":\"Console index page\"},");
-        lines.add("{\"name\":\"path_start\",\"value\":\"/\",\"description\":\"Start page path\"},");
-        lines.add("{\"name\":\"path_login\",\"value\":\"login\",\"description\":\"Login page\"},");
-        lines.add("{\"name\":\"path_login_chat\",\"value\":\"login_chat\",\"description\":\"Login page!\"},");
-        lines.add("{\"name\":\"path_output\",\"value\":\"content\",\"description\":\"Output page\"},");
-        lines.add("{\"name\":\"path_chat\",\"value\":\"/HWebChat_Community_Edition/Chat\",\"description\":\"Chat WebSocket path\"},");
-        lines.add("{\"name\":\"path_reg_form\",\"value\":\"register\",\"description\":\"Registration page\"},");
-        lines.add("{\"name\":\"path_hwebchat\",\"value\":\"/HWebChat_Community_Edition/Start\",\"description\":\"Start page path\"},");
-        lines.add("{\"name\":\"path_account\",\"value\":\"account\",\"description\":\"Account page\"},");
-        lines.add("{\"name\":\"path_account_com\",\"value\":\"account\",\"description\":\"Account Community Page\"},");
-        lines.add("{\"name\":\"path_captcha\",\"value\":\"captcha\",\"description\":\"Captcha page\"},");
-        lines.add("{\"name\":\"path_help\",\"value\":\"help\",\"description\":\"Help page\"},");
-        lines.add("{\"name\":\"path_emot\",\"value\":\"emot\",\"description\":\"Emoticon page\"},");
-        lines.add("{\"name\":\"path_image\",\"value\":\"image\",\"description\":\"Image page\"},");
-        lines.add("{\"name\":\"path_profile\",\"value\":\"profile\",\"description\":\"Profile page\"},");
-        lines.add("{\"name\":\"path_message\",\"value\":\"read_message\",\"description\":\"Message page\"},");
-        lines.add("{\"name\":\"path_password\",\"value\":\"password\",\"description\":\"Password page\"},");
-        lines.add("{\"name\":\"path_link\",\"value\":\"link\",\"description\":\"Link page\"},");
-        lines.add("{\"name\":\"path_file\",\"value\":\"file/\",\"description\":\"Files path\"},");
-        lines.add("{\"name\":\"path_memory\",\"value\":\"memory\",\"description\":\"Memory page\"},");
-        lines.add("{\"name\":\"path_logout\",\"value\":\"logout\",\"description\":\"Logout page\"},");
-        lines.add("{\"name\":\"path_board\",\"value\":\"board\",\"description\":\"Forum\"},");
-        lines.add("{\"name\":\"path_webchat\",\"value\":\"webchat_stats\",\"description\":\"API path\"},");
-        lines.add("{\"name\":\"path_stats\",\"value\":\"stats\",\"description\":\"Statistics page path\"},");
-        lines.add("{\"name\":\"path_toplist\",\"value\":\"top\",\"description\":\"Toplist path\"},");
-        lines.add("{\"name\":\"path_upload\",\"value\":\"/HWebChat_Community_Edition/UploadFile\",\"description\":\"Image upload path\"},");
-        lines.add("{\"name\":\"path_account\",\"value\":\"account\",\"description\":\"Account page\"},");
-        lines.add("{\"name\":\"path_account_com\",\"value\":\"account_com\",\"description\":\"Account Community Page\"},");
-        lines.add("{\"name\":\"path_reg_edit\",\"value\":\"reg_edit\",\"description\":\"Account management page\"},");
-        lines.add("{\"name\":\"path_privchat\",\"value\":\"privchat\",\"description\":\"Private chat page\"},");
-        lines.add("{\"name\":\"path_napping\",\"value\":\"napping\",\"description\":\"Napping page\"},");
-        lines.add("{\"name\":\"path_napping_form\",\"value\":\"napping_form\",\"description\":\"Napping form page\"},");
-        lines.add("{\"name\":\"path_chat_napping\",\"value\":\"/HWebChat_Community_Edition/Chat\",\"description\":\"Chat WebSocket path\"},");
-        lines.add("{\"name\":\"path_chat_start\",\"value\":\"lobby\",\"description\":\"Chat start page\"},");
-        lines.add("{\"name\":\"path_login_frame\",\"value\":\"chat\",\"description\":\"Login page\"},");
-        lines.add("{\"name\":\"path_logout_com\",\"value\":\"logout_com\",\"description\":\"Logout page\"},");
         lines.add("{\"name\":\"guest\",\"value\":\"1\",\"description\":\"Enable guests\"},");
         lines.add("{\"name\":\"guest_prefix\",\"value\":\"Gast\",\"description\":\"Guest prefix\"},");
         lines.add("{\"name\":\"only_registered_users\",\"value\":\"0\",\"description\":\"Registered users only\"},");
@@ -547,14 +395,22 @@ public class SetupServlet extends HttpServlet {
         return value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
     }
 
-    private void doSetup(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    /**
+     * Performs the setup with the submitted form values.
+     *
+     * @param request the request with the form values
+     * @return an error message to show next to the form, or
+     * <code>null</code> if the setup succeeded
+     * @throws IOException if the default files cannot be copied
+     * @throws IllegalArgumentException if a value is not acceptable at all
+     */
+    public String run(HttpServletRequest request) throws IOException {
         var dbTypeValue = request.getParameter("db_type");
         SqlDialect.Type dbType;
         try {
             dbType = SqlDialect.Type.fromConfig(dbTypeValue);
         } catch (IllegalArgumentException e) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Unsupported database type.");
-            return;
+            throw new IllegalArgumentException("Unsupported database type.", e);
         }
         var sqlitePath = request.getParameter("sqlite_path");
         if (sqlitePath == null || sqlitePath.isBlank()) {
@@ -571,8 +427,7 @@ public class SetupServlet extends HttpServlet {
             dbPrefix = "";
         }
         if (!dbPrefix.matches("[A-Za-z0-9_]{0,20}")) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "The database prefix may contain only letters, numbers, and underscores (up to 20 characters).");
-            return;
+            throw new IllegalArgumentException("The database prefix may contain only letters, numbers, and underscores (up to 20 characters).");
         }
         var smtpHost = request.getParameter("smtp_host");
         var smtpPort = request.getParameter("smtp_port");
@@ -598,25 +453,11 @@ public class SetupServlet extends HttpServlet {
             smtpHost == null || smtpHost.isEmpty() || smtpPort == null || smtpPort.isEmpty() || smtpFrom == null || smtpFrom.isEmpty() ||
             adminUser == null || adminUser.isEmpty() || adminPassword == null || adminPassword.isEmpty() ||
             firstUserNick == null || firstUserNick.isEmpty() || firstUserPassword == null || firstUserPassword.isEmpty() || firstUserEmail == null || firstUserEmail.isEmpty()) {
-            render(request, response, "Setup", renderSetupForm("Please fill in all required fields.", dbType.name().toLowerCase(java.util.Locale.ROOT), sqlitePath,
-                dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix,
-                smtpHost, smtpPort, smtpUser, smtpPassword, smtpFrom,
-                smtpAuth != null ? smtpAuth : "true", smtpStarttls != null ? smtpStarttls : "true", smtpSslFactory != null ? smtpSslFactory : "javax.net.ssl.SSLSocketFactory",
-                adminUser, adminPassword, adminRealm != null ? adminRealm : "Console",
-                firstUserNick, firstUserPassword, firstUserEmail,
-                charset, timeZone, skin, room));
-            return;
+            return "Please fill in all required fields.";
         }
 
         if (!testDatabaseConnection(dbType, dbHost, dbPort, dbName, dbUser, dbPassword, sqlitePath)) {
-            render(request, response, "Setup", renderSetupForm("Database connection failed. Please check your credentials.", dbType.name().toLowerCase(java.util.Locale.ROOT), sqlitePath,
-                dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix,
-                smtpHost, smtpPort, smtpUser, smtpPassword, smtpFrom,
-                smtpAuth != null ? smtpAuth : "true", smtpStarttls != null ? smtpStarttls : "true", smtpSslFactory != null ? smtpSslFactory : "javax.net.ssl.SSLSocketFactory",
-                adminUser, adminPassword, adminRealm != null ? adminRealm : "Console",
-                firstUserNick, firstUserPassword, firstUserEmail,
-                charset, timeZone, skin, room));
-            return;
+            return "Database connection failed. Please check your credentials.";
         }
 
         var homeWebCom = getHomeWebCom();
@@ -648,14 +489,7 @@ public class SetupServlet extends HttpServlet {
                                    smtpAuth != null ? smtpAuth : "true", smtpStarttls != null ? smtpStarttls : "true", smtpSslFactory != null ? smtpSslFactory : "javax.net.ssl.SSLSocketFactory",
                                    firstUserEmail);
         } catch (MessagingException e) {
-            render(request, response, "Setup", renderSetupForm("SMTP test failed: " + e.getMessage(), dbType.name().toLowerCase(java.util.Locale.ROOT), sqlitePath,
-                dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix,
-                smtpHost, smtpPort, smtpUser, smtpPassword, smtpFrom,
-                smtpAuth != null ? smtpAuth : "true", smtpStarttls != null ? smtpStarttls : "true", smtpSslFactory != null ? smtpSslFactory : "javax.net.ssl.SSLSocketFactory",
-                adminUser, adminPassword, adminRealm != null ? adminRealm : "Console",
-                firstUserNick, firstUserPassword, firstUserEmail,
-                charset, timeZone, skin, room));
-            return;
+            return "SMTP test failed: " + e.getMessage();
         }
         markSetupComplete();
         if (Bootstrap.boot != null) {
@@ -673,36 +507,6 @@ public class SetupServlet extends HttpServlet {
             }
         }
 
-        var contextPath = request.getContextPath();
-        var chatUrl = contextPath + "/Start";
-        var body = "<h1 style=\"color: #10b981;\">✅ Setup completed successfully!</h1>";
-        body += "<p style=\"margin: 20px 0; color: #666;\">The chat server has been configured successfully. Database tables have been created.</p>";
-        body += "<p style=\"margin: 20px 0; color: #666;\">The first user <strong>" + escape(firstUserNick) + "</strong> has been created.</p>";
-        body += "<p style=\"margin: 20px 0;\"><a href=\"" + chatUrl + "\" style=\"background: #e94560; color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold;\">Go to chat →</a></p>";
-        render(request, response, "Setup completed", body);
-    }
-
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        if (isSetupComplete()) {
-            render(request, response, "Setup already completed", "<h1>Setup already completed</h1><p>Configuration has already been performed. The chat is available at <a href=\"" + request.getContextPath() + "/Start\">" + request.getContextPath() + "/Start</a>.</p>");
-            return;
-        }
-        render(request, response, "Setup", renderSetupForm(null, "sqlite", "",
-            "localhost", "3306", "hwebchat", "user", "password", "hwc_",
-            "smtp.example.org", "465", "foo@bar", "password", "foo@bar",
-            "true", "true", "javax.net.ssl.SSLSocketFactory",
-            "admin", "admin", "Console",
-            "", "", "",
-            "UTF-8", "CET", "native", "Lobby"));
-    }
-
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        if (isSetupComplete()) {
-            render(request, response, "Setup already completed", "<h1>Setup already completed</h1><p>Configuration has already been performed.</p>");
-            return;
-        }
-        doSetup(request, response);
+        return null;
     }
 }

@@ -6,8 +6,8 @@
     software    "coolchat" or "version" for <meta name="software">, empty for none
     contenttype "true" for the http-equiv content-type <meta>
     fonts       "true" to preload the emoji fonts
-    styles      comma separated style sheets: "@bootstrap", "@fa4", "@fa6", "@prism" or a key of paths.json
-    scripts     comma separated scripts: "@popper", "@bootstrap", "@prism" or a key of paths.json
+    styles      comma separated style sheets: "@bootstrap", "@fa4", "@fa6", "@prism" or a fixed path key
+    scripts     comma separated scripts: "@popper", "@bootstrap", "@prism" or a fixed path key
     embedded    "true" to hide the navigation bar when the page is shown inside the chat
 --%><script>if(window.frameElement && window.frameElement.classList.contains('chat-panel-iframe')){document.documentElement.classList.add('chat-panel-embedded');}</script><style>html.chat-panel-embedded body > nav.navbar{display:none!important;}html.chat-panel-embedded body{padding-top:0!important;}</style>
 <c:if test="${param.charset eq 'true'}">  <meta charset="UTF-8">
@@ -23,8 +23,8 @@
 </c:choose>
 <c:if test="${param.contenttype eq 'true'}">  <meta content="text/html; charset=UTF-8" http-equiv="content-type">
 </c:if>  <meta name="viewport" content="width=device-width, initial-scale=1">
-<c:if test="${param.fonts eq 'true'}">  <link rel="preload" href="file/fonts/TwitterColorEmoji-SVGinOT.ttf" as="font">
-  <link rel="preload" href="file/fonts/NotoColorEmoji.ttf" as="font">
+<c:if test="${param.fonts eq 'true'}">  <link rel="preload" href="${path_file}fonts/TwitterColorEmoji-SVGinOT.ttf" as="font">
+  <link rel="preload" href="${path_file}fonts/NotoColorEmoji.ttf" as="font">
 </c:if>
 <c:forTokens items="${param.styles}" delims="," var="style">
 <c:choose>
@@ -38,7 +38,7 @@
   <link rel="stylesheet" href="https://prismjs.com/plugins/line-numbers/prism-line-numbers.css">
   <link rel="stylesheet" media="screen" href="${path_file}prism-live.css" type="text/css">
 </c:when>
-<c:otherwise>  <link rel="stylesheet" href="${paths[style]}" type="text/css">
+<c:otherwise>  <link rel="stylesheet" href="${paths[style]}" type="text/css" data-hwc-theme>
 </c:otherwise>
 </c:choose>
 </c:forTokens>

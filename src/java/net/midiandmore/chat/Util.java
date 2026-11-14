@@ -445,8 +445,8 @@ public final class Util implements Software {
         value = value.replaceAll("\\[quote\\](.*?)\\[\\/quote\\]", "<blockquote>$1</blockquote>");
         value = value.replaceAll("\\[code\\](.*?)\\[\\/code\\]", "<pre>$1</pre>");
         value = value.replaceAll("\\[color=(.*?)\\](.*?)\\[\\/color\\]", "<span style=\"color: #$1\">$2</span>");
-        value = value.replaceAll("\\[url=(.*?)\\](.*?)\\[\\/url\\]", "<a href=\"" + conf.getString("path_hwebchat") + "?page=" + conf.getString("path_link") + "&url=$1\" target=\"_blank\">$2</a>");
-        value = value.replaceAll("\\[url\\](.*?)\\[\\/url\\]", "<a href=\"" + conf.getString("path_hwebchat") + "?page=" + conf.getString("path_link") + "&url=$1\" target=\"_blank\">$1</a>");
+        value = value.replaceAll("\\[url=(.*?)\\](.*?)\\[\\/url\\]", "<a href=\"" + Web.contextPath() + "/link.jsp?url=$1\" target=\"_blank\">$2</a>");
+        value = value.replaceAll("\\[url\\](.*?)\\[\\/url\\]", "<a href=\"" + Web.contextPath() + "/link.jsp?url=$1\" target=\"_blank\">$1</a>");
         value = value.replaceAll("\\[img\\](.*?)\\[\\/img\\]", "<img src=\"$1\" alt=\"Bild\" class=\"img-fluid\">");
         value = value.replaceAll("\\[email\\](.*?)\\[\\/email\\]", "<a href=\"mailto:$1\">$1</a>");
         value = value.replaceAll("\\[(.*?)\\](.*?)\\[\\/(.*?)\\]", "$2");
@@ -667,10 +667,8 @@ public final class Util implements Software {
             for (var part : parsedText) {
                 if (part.startsWith("http://") || part.startsWith("https://") || part.startsWith("ftp://") || part.startsWith("irc://")) {
                     sb.append("<a href=");
-                    sb.append(conf.getString("path_hwebchat"));
-                    sb.append("?page=");
-                    sb.append(conf.getString("path_link"));
-                    sb.append("&url=");
+                    sb.append(Web.contextPath());
+                    sb.append("/link.jsp?url=");
                     sb.append(encodeHtml(parseIdn(part).replace("&amp;", "&")));
                     sb.append(" target=_blank>");
                     sb.append(part);
@@ -707,7 +705,7 @@ public final class Util implements Software {
                 text = text.replace(key.toUpperCase(), p.get(key));
             }
         }
-        text = text.replace("%path_file%", conf.getString("path_file"));
+        text = text.replace("%path_file%", Web.contextPath() + "/file/");
         return text;
     }
 
@@ -718,14 +716,12 @@ public final class Util implements Software {
      * @return
      */
     protected String replacePaths(String text) {
-        var conf = Bootstrap.boot.getConfig();
-        var db = conf.getDb();
-        var p = db.getPaths();
-        for (var key : p.keySet()) {
-            text = text.replaceAll("%PATH_\\[" + key + "\\]%", replaceNoCookies(p.get(key)));
+        text = FixedPaths.normalizeLegacyQuery(text, FixedPaths::get);
+        for (var entry : FixedPaths.all().entrySet()) {
+            text = text.replace("%PATH_[" + entry.getKey() + "]%", replaceNoCookies(entry.getValue()));
         }
         text = text.replaceAll("%PATH_\\[(.*?)\\]%", "");
-        return text;
+        return replaceFilePaths(text);
     }
 
     /**
@@ -735,42 +731,10 @@ public final class Util implements Software {
      * @return
      */
     protected String replaceFilePaths(String text) {
-        var conf = Bootstrap.boot.getConfig();
-        text = replacePath(text, "%path_account%", conf.getString("path_account"));
-        text = replacePath(text, "%path_account_com%", conf.getString("path_account_com"));
-        text = replacePath(text, "%path_message%", conf.getString("path_message"));
-        text = replacePath(text, "%path_chat%", conf.getString("path_chat"));
-        text = replacePath(text, "%path_profile%", conf.getString("path_profile"));
-        text = replacePath(text, "%path_emot%", conf.getString("path_emot"));
-        text = replacePath(text, "%path_help%", conf.getString("path_help"));
-        text = replacePath(text, "%path_output%", conf.getString("path_output"));
-        text = replacePath(text, "%path_start%", conf.getString("path_start"));
-        text = replacePath(text, "%path_image%", conf.getString("path_image"));
-        text = replacePath(text, "%path_memory%", conf.getString("path_memory"));
-        text = replacePath(text, "%path_captcha%", conf.getString("path_captcha"));
-        text = replacePath(text, "%path_register%", conf.getString("path_reg_form"));
-        text = replacePath(text, "%path_password%", conf.getString("path_password"));
-        text = replacePath(text, "%path_login%", conf.getString("path_login"));
-        text = replacePath(text, "%path_logout%", conf.getString("path_logout"));
-        text = replacePath(text, "%path_link%", conf.getString("path_link"));
-        text = replacePath(text, "%path_file%", conf.getString("path_file"));
-        text = replacePath(text, "%path_toplist%", conf.getString("path_toplist"));
-        text = replacePath(text, "%path_webchat%", conf.getString("path_webchat"));
-        text = replacePath(text, "%path_hwebchat%", conf.getString("path_hwebchat"));
-        text = replacePath(text, "%path_chat%", conf.getString("path_chat"));
-        text = replacePath(text, "%path_login_chat%", conf.getString("path_login_chat"));
-        text = replacePath(text, "%path_upload%", conf.getString("path_upload"));
-        text = replacePath(text, "%path_console_index%", conf.getString("path_console"));
-        text = replacePath(text, "%path_board%", conf.getString("path_board"));
-        text = replacePath(text, "%path_stats%", conf.getString("path_stats"));
-        return text;
-    }
-
-    private String replacePath(String text, String placeholder, String value) {
-        if (value == null) {
-            return text.replace(placeholder, "");
+        for (var entry : FixedPaths.placeholders(Web.contextPath()).entrySet()) {
+            text = text.replace("%" + entry.getKey() + "%", entry.getValue());
         }
-        return text.replace(placeholder, value);
+        return text;
     }
 
     /**
@@ -1162,8 +1126,7 @@ public final class Util implements Software {
      * @return
      */
     protected String shortUri(String uri) {
-        var conf = Bootstrap.boot.getConfig();
-        return uri.substring(conf.getString("path_file").length(), uri.length());
+        return uri.substring("file/".length());
     }
 
     /**
@@ -1237,7 +1200,7 @@ public final class Util implements Software {
      * @param status Der Status
      * @return
      */
-    protected View parseHelp(View view, int status, String lang) {
+    protected java.util.Map<String, String> getHelpTexts(int status, String lang) {
         var conf = Bootstrap.boot.getConfig();
         var db = conf.getDb();
         var help = db.getHelp();
@@ -1263,7 +1226,7 @@ public final class Util implements Software {
             }
         });
         texts.put("fun", sb.toString());
-        return view.set("help", texts);
+        return texts;
     }
 
     /**

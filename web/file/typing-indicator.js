@@ -7,8 +7,7 @@
     indicator.className = 'typing-indicator';
     indicator.setAttribute('role', 'status');
     indicator.setAttribute('aria-live', 'polite');
-    indicator.style.cssText = 'flex:0 0 auto;padding:2px 12px;color:#666;font-size:0.85em;';
-    indicator.hidden = true;
+    indicator.style.cssText = 'flex:0 0 auto;box-sizing:border-box;height:1.6em;line-height:1.6em;padding:0 12px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;color:#666;font-size:0.85em;visibility:hidden;';
     postFrame.parentNode.insertBefore(indicator, postFrame);
 
     var people = new Map();
@@ -21,7 +20,7 @@
 
     function render() {
         var entries = Array.from(people.values());
-        indicator.hidden = entries.length === 0;
+        indicator.style.visibility = entries.length === 0 ? 'hidden' : 'visible';
         indicator.textContent = '';
         entries.slice(0, 5).forEach(function (entry, index) {
             if (index > 0) indicator.appendChild(document.createTextNode(', '));

@@ -1,1 +1,0 @@
-<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><%@ taglib prefix="t" tagdir="/WEB-INF/tags" %><t:layout design="frames"><center><div id="logo_top"></div></center></t:layout>

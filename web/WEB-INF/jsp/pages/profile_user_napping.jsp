@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><%@ taglib prefix="t" tagdir="/WEB-INF/tags" %><t:layout design="napping_profile"><div class="profile-page">
   <div class="profile-header mb-4">
     <div class="d-flex align-items-center gap-3 mb-3">
-      <img src="${path_hwebchat}?page=image&nick=${user}" class="profile-avatar rounded-circle shadow-sm flex-shrink-0" alt="${user}" width="120" height="120">
+      <img src="${page_base}/image.jsp?nick=${user}" class="profile-avatar rounded-circle shadow-sm flex-shrink-0" alt="${user}" width="120" height="120">
       <div class="flex-grow-1 min-w-0">
         <h1 class="profile-name h3 mb-2" style="color: #${color};">${user}</h1>
         <div class="d-flex flex-wrap gap-2 mb-2">

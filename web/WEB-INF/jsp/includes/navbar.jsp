@@ -2,13 +2,13 @@
   Navigation bar of the layouts.
   Parameters:
     variant  "guest", "community", "community_reg" (main navigation), "console" (administration) or "brand" (logo only)
-    home     brand variant: key of the link target in paths.json, empty for "#"
+    home     brand variant: key of the fixed link target, empty for "#"
     navclass brand variant: additional CSS classes of the <nav> element
 --%><c:choose>
 <c:when test="${param.variant eq 'brand'}"><nav class="navbar navbar-expand-lg navbar-dark ${param.navclass}">
   <div class="container-fluid">
     <a class="navbar-brand" href="${empty param.home ? '#' : paths[param.home]}">
-      <img src="file/gfx/logo.svg" alt="HWebChat" style="height: 40px;">
+      <img src="${path_file}gfx/logo.svg" alt="HWebChat" style="height: 40px;">
     </a>
   </div>
 </nav>
@@ -16,7 +16,7 @@
 <c:when test="${param.variant eq 'console'}"><nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
   <div class="container-fluid">
     <a class="navbar-brand" href="${paths.config_index}">
-      <img src="file/gfx/logo.svg" alt="HWebChat" style="height: 40px;">
+      <img src="${path_file}gfx/logo.svg" alt="HWebChat" style="height: 40px;">
     </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="${com.design_toggle_navigation}">
       <span class="navbar-toggler-icon"></span>
@@ -36,13 +36,12 @@
             <a class="dropdown-item" href="${paths.config_help}">${com.design_admin_help}</a>
             <a class="dropdown-item" href="${paths.config_fun}">${com.design_admin_fun}</a>
             <a class="dropdown-item" href="${paths.config_emot}">${com.design_admin_emoticons}</a>
-            <a class="dropdown-item" href="${paths.config_path}">${com.design_admin_paths}</a>
             <a class="dropdown-item" href="${paths.config_mime}">${com.design_admin_mime}</a>
             <a class="dropdown-item" href="${paths.config_users}">${com.design_admin_users}</a>
             <a class="dropdown-item" href="${paths.config_rooms}">${com.design_admin_rooms}</a>
           </div>
         </li>
-        <li class="nav-item"><a class="nav-link" href="<c:out value="${path_hwebchat}?page=${path_console_index}&service=news"/>"><i class="fa fa-newspaper-o" aria-hidden="true"></i> <fmt:message key="news.manage"/></a></li>
+        <li class="nav-item"><a class="nav-link" href="<c:out value="${page_base}/console.jsp?service=news"/>"><i class="fa fa-newspaper-o" aria-hidden="true"></i> <fmt:message key="news.manage"/></a></li>
       </ul>
     </div>
   </div>
@@ -51,7 +50,7 @@
 <c:otherwise><c:set var="community" value="${param.variant ne 'guest'}"/><c:set var="registered" value="${param.variant eq 'community_reg'}"/><nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
   <div class="container-fluid">
     <a class="navbar-brand" href="${community ? paths.index_com : paths.index}">
-      <img src="file/gfx/logo.svg" alt="HWebChat" style="height: 40px;">
+      <img src="${path_file}gfx/logo.svg" alt="HWebChat" style="height: 40px;">
     </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="${com.design_toggle_navigation}">
       <span class="navbar-toggler-icon"></span>
@@ -105,7 +104,7 @@
         </li>
 </c:if></c:when>
 <c:otherwise>        <li class="nav-item">
-          <a class="nav-link" href="${paths.login}&skin=${skin}"><i class="fa fa-sign-in"></i> ${com.design_nav_guest}</a>
+          <a class="nav-link" href="${paths.login}?skin=${skin}"><i class="fa fa-sign-in"></i> ${com.design_nav_guest}</a>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="loginDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

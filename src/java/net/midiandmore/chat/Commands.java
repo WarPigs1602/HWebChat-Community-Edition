@@ -436,7 +436,7 @@ public class Commands implements Software {
             staff.append("<span class=\"chat-info-card-empty\">This chat has no VIP's...</span>");
         }
 
-        var homepageLink = "<a href=\"" + getMaster().getConfig().getString("path_hwebchat") + "?page=" + getMaster().getConfig().getString("path_link") + "&url=https://" + SERVER_HOMEPAGE + "\" target=\"_blank\">" + SERVER_HOMEPAGE + "</a>";
+        var homepageLink = "<a href=\"" + Web.contextPath() + "/link.jsp?url=https://" + SERVER_HOMEPAGE + "\" target=\"_blank\">" + SERVER_HOMEPAGE + "</a>";
         var backend = "Running on system: <b>" + getProperty("os.name") + " (" + getProperty("os.version") + ", " + getProperty("os.arch") + ")</b><br>"
                 + "Java version: <b>" + getProperty("java.version") + " (" + getProperty("java.vendor") + ")</b><br>"
                 + "Running on container: <b>" + u.getServerInfo() + "</b>";

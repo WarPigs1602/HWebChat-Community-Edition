@@ -95,8 +95,6 @@ public final class Config {
             getDb().setCmd(loadDataFromJSON("cmdcfg.json", "name", "status"));
             out.printf("Done.\r\n* Loading smilies ");
             getDb().setSmilies(loadDataFromJSON("emot.json", "name", "emot"));
-            out.printf("Done.\r\n* Loading paths ");
-            getDb().setPaths(loadDataFromJSON("paths.json", "name", "path"));
             out.printf("Done.\r\n* Loading fun commands ");
             getDb().setFun(loadDataFromJSON("fun.json", "command", "content", "description"));
             out.printf("Done.\r\n* Loading host-list for styles ");

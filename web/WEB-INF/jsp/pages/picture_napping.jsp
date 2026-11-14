@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><%@ taglib prefix="t" tagdir="/WEB-INF/tags" %><t:layout design="napping_account"><h1>${SERVER_SOFTWARE} <fmt:message key="common.profile_picture"/></h1>
 
 
-<form action="UploadFile" method="post" enctype="multipart/form-data"><input type="hidden" name="upload_context" value="chat">  
+<form action="${page_base}/upload.jsp" method="post" enctype="multipart/form-data"><input type="hidden" name="upload_context" value="chat">
   <input type="hidden" name="service" value="password">
   <input type="hidden" name="data" value="change">
   <input type="hidden" name="owner" value="${owner}">
@@ -10,7 +10,7 @@
   </p>
   <p>
   <input type="file" name="file" size="50" class="form-control-file mb-2"/>
-  <a href="${path_hwebchat}?page=account&service=picture_del&data=delete&skin=${skin}"><fmt:message key="common.click_here_to_delete_an"/>!</a>
+  <a href="${page_base}/account.jsp?service=picture_del&amp;data=delete&amp;skin=${skin}"><fmt:message key="common.click_here_to_delete_an"/>!</a>
   </p>
   <p class="form-section-title">
     <fmt:message key="common.and_already_done_2"/>

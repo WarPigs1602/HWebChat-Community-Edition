@@ -16,7 +16,7 @@
   function reloadStyles(doc) {
     var links = doc.querySelectorAll('link[rel="stylesheet"]');
     Array.prototype.forEach.call(links, function (link) {
-      if (link.href.indexOf('service=style') < 0) {
+      if (!link.hasAttribute('data-hwc-theme')) {
         return;
       }
       var url = new URL(link.href, doc.baseURI);
