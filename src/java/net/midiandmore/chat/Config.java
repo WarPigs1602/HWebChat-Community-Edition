@@ -157,16 +157,16 @@ public final class Config {
                 for (var key : missing) {
                     var json = Json.createObjectBuilder();
                     json.add("name", key);
-                    json.add("value", defaultValues.get(key));
-                    json.add("description", "");
+                    json.add("value", defaultValues.get(key)[0]);
+                    json.add("description", defaultValues.get(key)[1]);
                     content += ",\n" + json.build().toString();
                 }
                 content += "\n]";
-                try (var writer = new FileWriter(confFile)) {
+                try (var writer = new FileWriter(confFile, java.nio.charset.StandardCharsets.UTF_8)) {
                     writer.write(content);
                 }
                 for (var key : missing) {
-                    getP().setProperty(key, defaultValues.get(key));
+                    getP().setProperty(key, defaultValues.get(key)[0]);
                 }
                 out.printf("Added %d missing configuration fields: %s\r\n", missing.size(), String.join(", ", missing));
             }
@@ -175,8 +175,21 @@ public final class Config {
         }
     }
 
-    private java.util.Map<String, String> loadDefaults() {
-        var map = new java.util.HashMap<String, String>();
+    private java.util.Map<String, String[]> loadDefaults() {
+        var map = new java.util.LinkedHashMap<String, String[]>();
+        var context = Bootstrap.servletContext;
+        if (context != null) {
+            try (var is = context.getResourceAsStream("/default-homewebcom/config/config.json")) {
+                if (is != null) {
+                    readDefaults(is, map);
+                    if (!map.isEmpty()) {
+                        return map;
+                    }
+                }
+            } catch (Exception e) {
+                logError(e);
+            }
+        }
         var possiblePaths = new java.util.ArrayList<String>();
         var classLoader = getClass().getClassLoader();
         var resource = classLoader.getResource("default-homewebcom/config/config.json");
@@ -201,22 +214,23 @@ public final class Config {
                 if (!file.exists()) {
                     continue;
                 }
-                InputStream is = new FileInputStream(file);
-                var rdr = createReader(is);
-                var results = rdr.readArray();
-                for (int i = 0; i < results.size(); i++) {
-                    var jobj = results.getJsonObject(i);
-                    var name = jobj.getString("name");
-                    var value = jobj.getString("value");
-                    map.put(name, value);
+                try (InputStream is = new FileInputStream(file)) {
+                    readDefaults(is, map);
                 }
-                is.close();
                 return map;
             } catch (Exception e) {
                 logError(e);
             }
         }
         return map;
+    }
+
+    private void readDefaults(InputStream is, java.util.Map<String, String[]> map) {
+        var results = createReader(is).readArray();
+        for (int i = 0; i < results.size(); i++) {
+            var jobj = results.getJsonObject(i);
+            map.putIfAbsent(jobj.getString("name"), new String[]{jobj.getString("value"), jobj.getString("description", "")});
+        }
     }
 
     /*

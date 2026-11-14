@@ -47,6 +47,7 @@ final class ViewFactory {
             var ut = Bootstrap.boot.getUtil();
             return view.expand(ut.replaceFilePaths(ut.replaceNoCookies(raw)));
         }));
+        values.put("legal", new Texts(key -> conf.getString("legal." + key)));
         values.put("com", new Texts(key -> view.expand(db.getCommand(key, lang))));
         values.put("nick", request.nick());
         values.put("sid", request.sid());

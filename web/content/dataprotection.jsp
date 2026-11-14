@@ -1,12 +1,12 @@
-<%@ page contentType="text/html; charset=UTF-8" session="false" import="net.midiandmore.chat.Web" %><% Web.start(application); if (!Web.begin("document", request, response)) { return; } %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><%@ taglib prefix="t" tagdir="/WEB-INF/tags" %><t:layout design="start"><h1>
+<%@ page contentType="text/html; charset=UTF-8" session="false" import="net.midiandmore.chat.Web" %><% Web.start(application); if (!Web.begin("document", request, response)) { return; } %><%@ taglib prefix="c" uri="jakarta.tags.core" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><%@ taglib prefix="t" tagdir="/WEB-INF/tags" %><t:layout design="start"><h1>
 <fmt:message key="doc.dataprotection.data_protection"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message>
 </h1>
 <h3 id="dsg-general-intro"></h3><p><fmt:message key="doc.dataprotection.this_data_protection_declaration_clarifies"/>). <br>
 <br>
-</p><h3 id="dsg-general-controller"><fmt:message key="doc.dataprotection.accountable_person"/></h3><p><span class="tsmcontroller"><fmt:message key="common.andreas_pschorn"/><br>
-<fmt:message key="common.on_l_nde_4"/><br>
-84453 Mühldorf am Inn<br>
-<a href="mailto:admin@hwebchat.de">admin@hwebchat.de</a></span></p><h3 id="dsg-general-datatype"><fmt:message key="doc.dataprotection.types_of_data_processed"/></h3><p>-<fmt:message key="doc.dataprotection.stock_data_e_g_personal"/>).<br>
+</p><h3 id="dsg-general-controller"><fmt:message key="doc.dataprotection.accountable_person"/></h3><p><span class="tsmcontroller"><c:out value="${legal.name}"/><br>
+<c:out value="${legal.street}"/><br>
+<c:out value="${legal.zip}"/> <c:out value="${legal.city}"/><br>
+<a href="mailto:<c:out value="${legal.email}"/>"><c:out value="${legal.email}"/></a></span></p><h3 id="dsg-general-datatype"><fmt:message key="doc.dataprotection.types_of_data_processed"/></h3><p>-<fmt:message key="doc.dataprotection.stock_data_e_g_personal"/>).<br>
 -<fmt:message key="doc.dataprotection.contact_details_e_g_e"/>).<br>
 -<fmt:message key="doc.dataprotection.content_data_e_g_text"/>).<br>
 -<fmt:message key="doc.dataprotection.usage_data_e_g_visited"/>).<br>

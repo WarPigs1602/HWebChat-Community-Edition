@@ -38,6 +38,7 @@ public final class Web {
     public static synchronized void start(ServletContext context) throws ServletException {
         JspTemplates.init(context);
         contextPath = context.getContextPath();
+        Bootstrap.servletContext = context;
         if (master != null) {
             return;
         }

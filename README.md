@@ -147,7 +147,7 @@ Templates/config under `~/.homewebcom` are **not** inside the WAR — edit them 
 
 | Path | Purpose |
 |------|---------|
-| `~/.homewebcom/config/config.json` | Main settings (SQL, timeouts, status levels, …) |
+| `~/.homewebcom/config/config.json` | Main settings (SQL, timeouts, status levels, …); `legal.name`, `legal.street`, `legal.zip`, `legal.city`, `legal.phone`, `legal.email` fill the imprint and privacy pages (empty phone = hidden) |
 | `~/.homewebcom/config/hosts.json` | Virtual Host → skin |
 | `~/.homewebcom/config/commands.json` | Chat command texts |
 | `~/.homewebcom/templates/native/`, `native_en/` | Plain scripts and stylesheets (the page templates are JSPs in the WAR) |

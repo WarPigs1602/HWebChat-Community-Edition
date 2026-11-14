@@ -146,7 +146,7 @@ Templates/Config unter `~/.homewebcom` liegen **nicht** im WAR — dort live edi
 
 | Pfad | Zweck |
 |------|--------|
-| `~/.homewebcom/config/config.json` | Haupteinstellungen (SQL, Timeouts, Status-Level, …) |
+| `~/.homewebcom/config/config.json` | Haupteinstellungen (SQL, Timeouts, Status-Level, …); `legal.name`, `legal.street`, `legal.zip`, `legal.city`, `legal.phone`, `legal.email` füllen Impressum und Datenschutz (leere Telefonnummer = ausgeblendet) |
 | `~/.homewebcom/config/hosts.json` | Virtual Host → Skin |
 | `~/.homewebcom/config/commands.json` | Texte der Chat-Befehle |
 | `~/.homewebcom/templates/native/`, `native_en/` | Reine Skripte und Stylesheets (die Seiten-Templates sind JSPs im WAR) |

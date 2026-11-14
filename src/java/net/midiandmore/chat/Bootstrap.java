@@ -64,6 +64,9 @@ public final class Bootstrap implements Software {
      *
      */
     protected static Bootstrap boot;
+
+    /** Servlet context of the web application, used to read the bundled defaults. */
+    protected static jakarta.servlet.ServletContext servletContext;
     private Captcha captcha;
     private ChatManager chatManager;
     private ChatServices chatServices;

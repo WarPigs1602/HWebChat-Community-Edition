@@ -283,7 +283,8 @@ public final class SetupService {
                                          String smtpHost, String smtpPort, String smtpUser, String smtpPassword, String smtpFrom,
                                          String smtpAuth, String smtpStarttls, String smtpSslFactory,
                                          String adminUser, String adminPassword, String adminRealm,
-                                         String charset, String timeZone, String skin, String room) {
+                                         String charset, String timeZone, String skin, String room,
+                                         String legalName, String legalStreet, String legalZip, String legalCity, String legalPhone, String legalEmail) {
         var lines = new ArrayList<String>();
         lines.add("[");
         lines.add("{\"name\":\"sql.type\",\"value\":\"" + dbType.name().toLowerCase(java.util.Locale.ROOT) + "\",\"description\":\"Database type\"},");
@@ -300,6 +301,12 @@ public final class SetupService {
         lines.add("{\"name\":\"admin_username\",\"value\":\"" + escapeJson(adminUser) + "\",\"description\":\"Admin console username\"},");
         lines.add("{\"name\":\"admin_password\",\"value\":\"" + escapeJson(adminPassword) + "\",\"description\":\"Admin console password\"},");
         lines.add("{\"name\":\"admin_realm\",\"value\":\"" + escapeJson(adminRealm) + "\",\"description\":\"Admin console realm\"},");
+        lines.add("{\"name\":\"legal.name\",\"value\":\"" + escapeJson(legalName) + "\",\"description\":\"Imprint and privacy policy: responsible person\"},");
+        lines.add("{\"name\":\"legal.street\",\"value\":\"" + escapeJson(legalStreet) + "\",\"description\":\"Imprint and privacy policy: street and number\"},");
+        lines.add("{\"name\":\"legal.zip\",\"value\":\"" + escapeJson(legalZip) + "\",\"description\":\"Imprint and privacy policy: postal code\"},");
+        lines.add("{\"name\":\"legal.city\",\"value\":\"" + escapeJson(legalCity) + "\",\"description\":\"Imprint and privacy policy: city\"},");
+        lines.add("{\"name\":\"legal.phone\",\"value\":\"" + escapeJson(legalPhone) + "\",\"description\":\"Imprint: phone number (empty = not shown)\"},");
+        lines.add("{\"name\":\"legal.email\",\"value\":\"" + escapeJson(legalEmail) + "\",\"description\":\"Imprint and privacy policy: e-mail address\"},");
         lines.add("{\"name\":\"mail.smtp.host\",\"value\":\"" + escapeJson(smtpHost) + "\",\"description\":\"SMTP host\"},");
         lines.add("{\"name\":\"mail.smtp.port\",\"value\":\"" + escapeJson(smtpPort) + "\",\"description\":\"SMTP port\"},");
         lines.add("{\"name\":\"mail.smtp.auth\",\"value\":\"" + escapeJson(smtpAuth) + "\",\"description\":\"SMTP authentication\"},");
@@ -447,12 +454,20 @@ public final class SetupService {
         var timeZone = request.getParameter("timezone");
         var skin = request.getParameter("skin");
         var room = request.getParameter("room");
+        var legalName = request.getParameter("legal_name");
+        var legalStreet = request.getParameter("legal_street");
+        var legalZip = request.getParameter("legal_zip");
+        var legalCity = request.getParameter("legal_city");
+        var legalPhone = request.getParameter("legal_phone");
+        var legalEmail = request.getParameter("legal_email");
 
         if ((dbType != SqlDialect.Type.SQLITE && (dbHost == null || dbHost.isEmpty() || dbPort == null || dbPort.isEmpty() || dbName == null || dbName.isEmpty() ||
             dbUser == null || dbUser.isEmpty() || dbPassword == null || dbPassword.isEmpty())) ||
             smtpHost == null || smtpHost.isEmpty() || smtpPort == null || smtpPort.isEmpty() || smtpFrom == null || smtpFrom.isEmpty() ||
             adminUser == null || adminUser.isEmpty() || adminPassword == null || adminPassword.isEmpty() ||
-            firstUserNick == null || firstUserNick.isEmpty() || firstUserPassword == null || firstUserPassword.isEmpty() || firstUserEmail == null || firstUserEmail.isEmpty()) {
+            firstUserNick == null || firstUserNick.isEmpty() || firstUserPassword == null || firstUserPassword.isEmpty() || firstUserEmail == null || firstUserEmail.isEmpty() ||
+            legalName == null || legalName.isBlank() || legalStreet == null || legalStreet.isBlank() || legalZip == null || legalZip.isBlank() ||
+            legalCity == null || legalCity.isBlank() || legalEmail == null || legalEmail.isBlank()) {
             return "Please fill in all required fields.";
         }
 
@@ -479,7 +494,8 @@ public final class SetupService {
             charset != null ? charset : "UTF-8",
             timeZone != null ? timeZone : "CET",
             skin != null ? skin : "native",
-            room != null ? room : "Lobby"
+            room != null ? room : "Lobby",
+            legalName, legalStreet, legalZip, legalCity, legalPhone != null ? legalPhone : "", legalEmail
         );
         saveConfigFile(configJson);
         saveMailFile(smtpHost, smtpPort, smtpUser, smtpPassword, smtpFrom,

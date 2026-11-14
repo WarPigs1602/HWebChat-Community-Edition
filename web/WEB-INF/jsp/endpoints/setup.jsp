@@ -51,6 +51,12 @@
 <c:set var="timezone" value="${posted ? param.timezone : 'CET'}"/>
 <c:set var="skin" value="${posted ? param.skin : 'native'}"/>
 <c:set var="room" value="${posted ? param.room : 'Lobby'}"/>
+<c:set var="legalName" value="${posted ? param.legal_name : ''}"/>
+<c:set var="legalStreet" value="${posted ? param.legal_street : ''}"/>
+<c:set var="legalZip" value="${posted ? param.legal_zip : ''}"/>
+<c:set var="legalCity" value="${posted ? param.legal_city : ''}"/>
+<c:set var="legalPhone" value="${posted ? param.legal_phone : ''}"/>
+<c:set var="legalEmail" value="${posted ? param.legal_email : ''}"/>
 <c:url var="startUrl" value="/start.jsp"/>
 <!DOCTYPE html>
 <html lang="en">
@@ -134,6 +140,14 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 <div class="form-group"><label for="first_user_nick">Username *</label><input type="text" id="first_user_nick" name="first_user_nick" value="<c:out value="${firstUserNick}"/>" required></div>
 <div class="form-group"><label for="first_user_password">Password *</label><input type="password" id="first_user_password" name="first_user_password" value="<c:out value="${firstUserPassword}"/>" required></div>
 <div class="form-group"><label for="first_user_email">E-mail *</label><input type="email" id="first_user_email" name="first_user_email" value="<c:out value="${firstUserEmail}"/>" required></div>
+</div></div>
+<div class="section"><div class="section-title"><span class="icon">📜</span> Imprint and privacy policy</div><div class="form-grid">
+<div class="form-group"><label for="legal_name">Responsible person *</label><input type="text" id="legal_name" name="legal_name" value="<c:out value="${legalName}"/>" required></div>
+<div class="form-group"><label for="legal_street">Street and number *</label><input type="text" id="legal_street" name="legal_street" value="<c:out value="${legalStreet}"/>" required></div>
+<div class="form-group"><label for="legal_zip">Postal code *</label><input type="text" id="legal_zip" name="legal_zip" value="<c:out value="${legalZip}"/>" required></div>
+<div class="form-group"><label for="legal_city">City *</label><input type="text" id="legal_city" name="legal_city" value="<c:out value="${legalCity}"/>" required></div>
+<div class="form-group"><label for="legal_phone">Phone</label><input type="text" id="legal_phone" name="legal_phone" value="<c:out value="${legalPhone}"/>"><div class="hint">Leave blank to hide it in the imprint</div></div>
+<div class="form-group"><label for="legal_email">E-mail *</label><input type="email" id="legal_email" name="legal_email" value="<c:out value="${legalEmail}"/>" required></div>
 </div></div>
 <div class="section"><div class="section-title"><span class="icon">🌐</span> General settings</div><div class="form-grid">
 <div class="form-group"><label for="charset">Charset</label><select id="charset" name="charset"><option value="UTF-8"${charset eq 'UTF-8' ? ' selected' : ''}>UTF-8</option><option value="ISO-8859-1"${charset eq 'ISO-8859-1' ? ' selected' : ''}>ISO-8859-1</option></select></div>
