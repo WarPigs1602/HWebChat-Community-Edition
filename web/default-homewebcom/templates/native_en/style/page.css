@@ -1586,3 +1586,87 @@ a.text-dark:focus {
   border-color: var(--hwc-border);
   color: var(--hwc-dark);
 }
+
+#pagecontent .forum-category-card > .card-header {
+  background: #1f2937;
+  color: #e5e7eb;
+}
+
+.forum-category-description {
+  background: #273449;
+  border-color: var(--hwc-border) !important;
+}
+
+.forum-page .alert-light {
+  color: var(--hwc-dark);
+  background: #273449;
+  border-color: var(--hwc-border);
+}
+
+.forum-page .page-link {
+  color: #93c5fd;
+  background: #1f2937;
+  border-color: #4b5563;
+}
+
+.forum-page .page-link:hover,
+.forum-page .page-link:focus {
+  color: #fff;
+  background: #334155;
+  border-color: #64748b;
+}
+
+.forum-page .page-item.active .page-link {
+  color: #fff;
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.forum-page .page-item.disabled .page-link {
+  color: #9ca3af;
+  background: #273449;
+  border-color: #4b5563;
+}
+
+.forum-page .btn-outline-secondary,
+.forum-form-card .btn-outline-secondary {
+  color: #cbd5e1;
+  border-color: #94a3b8;
+}
+
+.forum-page .btn-outline-secondary:hover,
+.forum-form-card .btn-outline-secondary:hover {
+  color: #111827;
+  background: #cbd5e1;
+  border-color: #cbd5e1;
+}
+
+.forum-page .btn-outline-primary {
+  color: #93c5fd;
+  border-color: #93c5fd;
+}
+
+.forum-page .btn-outline-primary:hover {
+  color: #111827;
+  background: #93c5fd;
+}
+
+.forum-page .btn-outline-success {
+  color: #86efac;
+  border-color: #86efac;
+}
+
+.forum-page .btn-outline-success:hover {
+  color: #111827;
+  background: #86efac;
+}
+
+.forum-page .btn-outline-danger {
+  color: #fca5a5;
+  border-color: #fca5a5;
+}
+
+.forum-page .btn-outline-danger:hover {
+  color: #111827;
+  background: #fca5a5;
+}

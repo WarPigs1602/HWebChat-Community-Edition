@@ -416,7 +416,7 @@ public class Commands implements Software {
                 i++;
             }
         } else {
-            admins.append("<span style=\"color:#6c757d; font-style:italic;\">This chat has no administrative users (please add an administrator in the admin console)...</span>");
+            admins.append("<span class=\"chat-info-card-empty\">This chat has no administrative users (please add an administrator in the admin console)...</span>");
         }
         var staff = new StringBuilder();
         if (!staffTable.isEmpty()) {
@@ -433,7 +433,7 @@ public class Commands implements Software {
                 i++;
             }
         } else {
-            staff.append("<span style=\"color:#6c757d; font-style:italic;\">This chat has no VIP's...</span>");
+            staff.append("<span class=\"chat-info-card-empty\">This chat has no VIP's...</span>");
         }
 
         var homepageLink = "<a href=\"" + getMaster().getConfig().getString("path_hwebchat") + "?page=" + getMaster().getConfig().getString("path_link") + "&url=https://" + SERVER_HOMEPAGE + "\" target=\"_blank\">" + SERVER_HOMEPAGE + "</a>";
@@ -446,33 +446,33 @@ public class Commands implements Software {
                 + "The current time is: <b>" + ut.getTime(currentTimeMillis()) + " " + ut.getCurrentUsTimeZone() + "</b><br>"
                 + "The current runtime is: <b>" + ut.getCalculatedTime(currentTimeMillis(), getMaster().getStartTime()) + "</b>";
 
-        var sectionStyle = "padding:0.6rem 0.85rem;border-top:1px solid #e3e9f2;";
-        var labelStyle = "display:flex;align-items:center;gap:0.4rem;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#0d6efd;margin-bottom:0.35rem;";
-        var bodyStyle = "color:#0b2e59;line-height:1.5;";
+        var sectionStyle = "padding:0.6rem 0.85rem;";
+        var labelStyle = "display:flex;align-items:center;gap:0.4rem;font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.35rem;";
+        var bodyStyle = "line-height:1.5;";
 
         var card = new StringBuilder();
-        card.append("<div class=\"chat-info-card\" style=\"margin:0.5rem 0;border:1px solid #b6d4fe;border-radius:0.75rem;background:#ffffff;box-shadow:0 1px 3px rgba(13,110,253,0.08);overflow:hidden;\">");
+        card.append("<div class=\"chat-info-card\" style=\"margin:0.5rem 0;border-radius:0.75rem;box-shadow:0 1px 3px rgba(13,110,253,0.08);overflow:hidden;\">");
         // Header
-        card.append("<div class=\"chat-info-card-header\" style=\"display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.85rem;background:linear-gradient(90deg,#0d6efd 0%,#0a58ca 100%);color:#ffffff;\">");
+        card.append("<div class=\"chat-info-card-header\" style=\"display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.85rem;\">");
         card.append("<span aria-hidden=\"true\" style=\"font-size:1.05rem;\">&#8505;</span>");
         card.append("<span style=\"font-weight:700;font-size:0.95rem;\">").append(SERVER_SOFTWARE).append("</span>");
         card.append("<span style=\"margin-left:auto;font-size:0.75rem;background:rgba(255,255,255,0.18);padding:0.1rem 0.45rem;border-radius:0.4rem;\">").append(SERVER_VERSION).append("-").append(SERVER_STATUS).append("</span>");
         card.append("</div>");
         // Copyright / homepage
-        card.append("<div style=\"padding:0.55rem 0.85rem;font-size:0.82rem;color:#495057;background:#f6f9ff;\">");
+        card.append("<div class=\"chat-info-card-copyright\" style=\"padding:0.55rem 0.85rem;font-size:0.82rem;\">");
         card.append("&copy;").append(String.valueOf(SERVER_YEAR)).append(" by <a href=\"mailto:").append(SERVER_MAIL).append("\">").append(SERVER_VENDOR).append("</a> &middot; All rights reserved.<br>");
         card.append(homepageLink);
         card.append("</div>");
         // Backend
-        card.append("<div style=\"").append(sectionStyle).append("\"><div style=\"").append(labelStyle).append("\"><span aria-hidden=\"true\">&#128421;</span>Backend</div><div style=\"").append(bodyStyle).append("\">").append(backend).append("</div></div>");
+        card.append("<div class=\"chat-info-card-section\" style=\"").append(sectionStyle).append("\"><div class=\"chat-info-card-label\" style=\"").append(labelStyle).append("\"><span aria-hidden=\"true\">&#128421;</span>Backend</div><div class=\"chat-info-card-body\" style=\"").append(bodyStyle).append("\">").append(backend).append("</div></div>");
         // Frontend
-        card.append("<div style=\"").append(sectionStyle).append("\"><div style=\"").append(labelStyle).append("\"><span aria-hidden=\"true\">&#128187;</span>Frontend</div><div style=\"").append(bodyStyle).append("\">").append(frontend).append("</div></div>");
+        card.append("<div class=\"chat-info-card-section\" style=\"").append(sectionStyle).append("\"><div class=\"chat-info-card-label\" style=\"").append(labelStyle).append("\"><span aria-hidden=\"true\">&#128187;</span>Frontend</div><div class=\"chat-info-card-body\" style=\"").append(bodyStyle).append("\">").append(frontend).append("</div></div>");
         // Time
-        card.append("<div style=\"").append(sectionStyle).append("\"><div style=\"").append(labelStyle).append("\"><span aria-hidden=\"true\">&#128337;</span>Time</div><div style=\"").append(bodyStyle).append("\">").append(time).append("</div></div>");
+        card.append("<div class=\"chat-info-card-section\" style=\"").append(sectionStyle).append("\"><div class=\"chat-info-card-label\" style=\"").append(labelStyle).append("\"><span aria-hidden=\"true\">&#128337;</span>Time</div><div class=\"chat-info-card-body\" style=\"").append(bodyStyle).append("\">").append(time).append("</div></div>");
         // Admin
-        card.append("<div style=\"").append(sectionStyle).append("\"><div style=\"").append(labelStyle).append("\"><span aria-hidden=\"true\">&#128081;</span>Admin</div><div style=\"").append(bodyStyle).append("\">").append(admins).append("</div></div>");
+        card.append("<div class=\"chat-info-card-section\" style=\"").append(sectionStyle).append("\"><div class=\"chat-info-card-label\" style=\"").append(labelStyle).append("\"><span aria-hidden=\"true\">&#128081;</span>Admin</div><div class=\"chat-info-card-body\" style=\"").append(bodyStyle).append("\">").append(admins).append("</div></div>");
         // VIP
-        card.append("<div style=\"").append(sectionStyle).append("\"><div style=\"").append(labelStyle).append("\"><span aria-hidden=\"true\">&#11088;</span>VIP</div><div style=\"").append(bodyStyle).append("\">").append(staff).append("</div></div>");
+        card.append("<div class=\"chat-info-card-section\" style=\"").append(sectionStyle).append("\"><div class=\"chat-info-card-label\" style=\"").append(labelStyle).append("\"><span aria-hidden=\"true\">&#11088;</span>VIP</div><div class=\"chat-info-card-body\" style=\"").append(bodyStyle).append("\">").append(staff).append("</div></div>");
         card.append("</div>");
         cm.sendToOne(card.toString(), nick);
     }

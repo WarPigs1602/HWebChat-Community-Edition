@@ -1749,6 +1749,9 @@ public class ChatServices {
                     default ->
                         profile.getOrDefault("gender_n", "");
                 };
+                for (var label : labels.entrySet()) {
+                    label.setValue(text.expand(label.getValue()));
+                }
                 text.set("profile", labels);
                 text = text.set("sex", buf);
                 text = text.set("user", db.getData(user, "nick2"));
