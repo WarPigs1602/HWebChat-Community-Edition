@@ -14,5 +14,5 @@
 <a href="${page_base}/password.jsp?skin=native&amp;owner=Source"><fmt:message key="doc.test.forget_the_password"/></a>
 </p>
 <p class="users">
-<script type="text/javascript" src="${page_base}/content/script_rooms_napping.jsp?skin=native"></script>
+<script type="text/javascript" src="${page_base}/content/room_napping.js?skin=native"></script>
 </p></t:layout>

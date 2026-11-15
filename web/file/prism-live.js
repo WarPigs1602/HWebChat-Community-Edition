@@ -22,16 +22,11 @@ var $ = Bliss, $$ = Bliss.$;
 var ready = Promise.resolve();
 
 if (CURRENT_URL) {
-	// Tiny dynamic loader. Use e.g. ?load=css,markup,javascript to load components
+	// Tiny dynamic loader. Components must be provided separately (Prism + themes/CSS).
+	// Keep this a no-op by default: the app includes required assets explicitly.
 	var load = CURRENT_URL.searchParams.get("load");
-
-	if (load !== null) {
-		var files = ["../prism-live.css"];
-
-		if (load) {
-			files.push(...load.split(/,/).map(c => /\./.test(c)? c : `prism-live-${c}.js`));
-		}
-
+	if (load && load !== "none") {
+		var files = load.split(/,/).map(c => /\./.test(c) ? c : `prism-live-${c}.js`);
 		ready = Promise.all(files.map(url => $.load(url, CURRENT_URL)));
 	}
 }
@@ -926,5 +921,4 @@ $.ready().then(() => {
 });
 
 })();
-let foo = bar();
 

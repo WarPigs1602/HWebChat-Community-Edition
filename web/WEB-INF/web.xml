@@ -30,6 +30,14 @@
         </cookie-config>
     </session-config>
     <filter>
+        <filter-name>ContentAsset</filter-name>
+        <filter-class>net.midiandmore.chat.ContentAssetFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>ContentAsset</filter-name>
+        <url-pattern>/content/*</url-pattern>
+    </filter-mapping>
+    <filter>
         <filter-name>ConsolePath</filter-name>
         <filter-class>net.midiandmore.chat.ConsolePathFilter</filter-class>
     </filter>

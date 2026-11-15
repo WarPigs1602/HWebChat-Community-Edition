@@ -51,7 +51,7 @@
 <c:when test="${script eq '@prism'}">  <script src="https://blissfuljs.com/bliss.shy.min.js"></script>
   <script src="https://prismjs.com/prism.js"></script>
   <script src="https://prismjs.com/plugins/line-numbers/prism-line-numbers.js"></script>
-  <script src="${path_file}prism-live.js?load=css,html,javascript"></script>
+  <script src="${path_file}prism-live.js"></script>
 </c:when>
 <c:otherwise>  <script src="${paths[script]}"></script>
 </c:otherwise>
