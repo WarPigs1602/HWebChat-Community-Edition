@@ -63,7 +63,12 @@
   <jsp:param name="home" value="${l_navhome}"/>
   <jsp:param name="navclass" value="${l_navclass}"/>
 </jsp:include>
-</c:if><c:if test="${l_cookie eq 'true'}"><jsp:include page="/WEB-INF/jsp/includes/cookie-notice.jsp"/>
+</c:if><c:if test="${l_cookie eq 'true'}">  <div id="cookie-warning" class="alert alert-warning alert-dismissible fade show" role="alert" style="display:none; margin-top: 10px;">
+    <strong><fmt:message key="layout.start.cookie_notice"/></strong> <fmt:message key="layout.start.this_website_uses_cookies_to"/>.
+    <button type="button" class="close" onclick="document.cookie='cookie_accepted=1;path=/;max-age='+60*60*24*365;document.getElementById('cookie-warning').style.display='none';">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
 </c:if><c:choose><c:when test="${not empty l_wrapper}"><div ${l_wrapper}>
   ${content}
 </div>

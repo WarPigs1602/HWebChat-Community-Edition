@@ -65,6 +65,10 @@ public final class Bootstrap implements Software {
      */
     protected static Bootstrap boot;
 
+    public static Bootstrap getBoot() {
+        return boot;
+    }
+
     /** Servlet context of the web application, used to read the bundled defaults. */
     protected static jakarta.servlet.ServletContext servletContext;
     private Captcha captcha;
@@ -170,10 +174,6 @@ public final class Bootstrap implements Software {
             if (!picturesDir.exists()) {
                 picturesDir.mkdirs();
             }
-            var templatesDir = new java.io.File(homeWebCom + getProperty("file.separator") + "templates");
-            if (!templatesDir.exists()) {
-                templatesDir.mkdirs();
-            }
             copyDefaultContent(homeWebCom);
             out.printf("* First start detected - setup required.\r\n");
             out.printf("* Setup directories created. Please visit /setup.jsp to complete configuration.\r\n");
@@ -210,7 +210,7 @@ public final class Bootstrap implements Software {
     private void copyDefaultContent(String homeWebCom) {
         var context = getClass().getClassLoader();
         var fs = getProperty("file.separator");
-        var paths = new String[]{"config", "data", "htdocs", "pictures", "templates"};
+        var paths = new String[]{"config", "data", "htdocs", "pictures"};
         for (var path : paths) {
             var resourcePath = "/default-homewebcom/" + path;
             var url = context.getResource(resourcePath);
@@ -266,7 +266,7 @@ public final class Bootstrap implements Software {
      *
      * @param e Exception
      */
-    protected static void logError(Exception e) {
+    public static void logError(Exception e) {
         LOG.log(WARNING, "Error:", e);
     }
 
@@ -293,7 +293,7 @@ public final class Bootstrap implements Software {
      *
      * @return ChatServices-Klasse
      */
-    protected ChatServices getChatServices() {
+    public ChatServices getChatServices() {
         return chatServices;
     }
 
@@ -310,7 +310,7 @@ public final class Bootstrap implements Software {
      *
      * @return
      */
-    protected Commands getCommands() {
+    public Commands getCommands() {
         return commands;
     }
 
@@ -326,7 +326,7 @@ public final class Bootstrap implements Software {
      *
      * @return
      */
-    protected Config getConfig() {
+    public Config getConfig() {
         return config;
     }
 
@@ -358,7 +358,7 @@ public final class Bootstrap implements Software {
      *
      * @return
      */
-    protected Util getUtil() {
+    public Util getUtil() {
         return util;
     }
 
@@ -390,7 +390,7 @@ public final class Bootstrap implements Software {
      *
      * @return
      */
-    protected ChatManager getChatManager() {
+    public ChatManager getChatManager() {
         return chatManager;
     }
 

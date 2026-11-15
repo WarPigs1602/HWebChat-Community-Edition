@@ -321,7 +321,7 @@ public final class UsersCommunity {
     /**
      * @param timeoutTimer the timeoutTimer to set
      */
-    protected void setTimeoutTimer(int timeoutTimer) {
+    public void setTimeoutTimer(int timeoutTimer) {
         this.timeoutTimer = timeoutTimer;
     }
 

@@ -14,7 +14,6 @@
     <build>
         <directory>../../target</directory>
         <sourceDirectory>../../src/java</sourceDirectory>
-        <testSourceDirectory>../../src/test/java</testSourceDirectory>
         <resources>
             <resource>
                 <directory>../../src/resources</directory>
@@ -44,12 +43,6 @@
     </build>
     
     <dependencies>       
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <scope>test</scope>
-            <version>4.13.2</version>
-        </dependency>  
         <dependency>
             <groupId>jakarta.platform</groupId>
             <artifactId>jakarta.jakartaee-web-api</artifactId>
@@ -156,12 +149,6 @@
             <groupId>org.glassfish.web</groupId>
             <artifactId>jakarta.servlet.jsp.jstl</artifactId>
             <version>3.0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tomcat.embed</groupId>
-            <artifactId>tomcat-embed-jasper</artifactId>
-            <version>11.0.29</version>
-            <scope>test</scope>
         </dependency>
         <!-- https://mvnrepository.com/artifact/jakarta.websocket/jakarta.websocket-api -->
         <dependency>

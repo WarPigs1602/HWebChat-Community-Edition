@@ -1,1 +1,0 @@
-<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><li class="page-item"><a class="page-link" href="${paths.board}&pid=${pid}&id=${id}&p=${page}">${page}</a></li>

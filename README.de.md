@@ -61,7 +61,7 @@ cd HWebChat-Community-Edition
 Alternativ das aktuelle Release direkt herunterladen:
 
 ```text
-https://github.com/WarPigs1602/HWebChat-Community-Edition/releases/download/261115/HWebChat_Community_Edition.war
+https://github.com/WarPigs1602/HWebChat-Community-Edition/releases/download/261116/HWebChat_Community_Edition.war
 ```
 
 Danach weiter mit Schritt 3 (Auf Tomcat deployen).
@@ -82,7 +82,6 @@ Artefakt:
 Weitere Varianten:
 
 ```bash
-mvn clean package -DskipTests   # ohne Tests
 mvn clean compile               # nur kompilieren
 mvn -o package                  # offline (lokales Repo)
 ```
@@ -104,6 +103,11 @@ Nach dem Deploy typischer Context-Pfad:
 ```text
 http://localhost:8080/HWebChat_Community_Edition/
 ```
+
+Für eine kurzfristige Fehlersuche kann Tomcat mit der JVM-Option
+`-Dhwebchat.showStackTrace=true` gestartet werden. Dann zeigt die 500-Seite
+vorhandene Stacktraces an. Diese können vertrauliche Informationen enthalten:
+nicht auf öffentlich erreichbaren Servern aktivieren und danach wieder abschalten.
 
 ### 4. Erststart-Setup
 
@@ -146,10 +150,9 @@ Templates/Config unter `~/.homewebcom` liegen **nicht** im WAR — dort live edi
 
 | Pfad | Zweck |
 |------|--------|
-| `~/.homewebcom/config/config.json` | Haupteinstellungen (SQL, Timeouts, Status-Level, …); `legal.name`, `legal.street`, `legal.zip`, `legal.city`, `legal.phone`, `legal.email` füllen Impressum und Datenschutz (leere Telefonnummer = ausgeblendet) |
+| `~/.homewebcom/config/config.json` | Haupteinstellungen (SQL, Timeouts, Status-Level, …); `legal.name`, `legal.street`, `legal.zip`, `legal.city`, `legal.phone`, `legal.email` füllen Impressum und Datenschutz (leere Telefonnummer = ausgeblendet); `console.path` legt die Adresse der Adminkonsole relativ zum Context fest (Standard `console.jsp`; die Standardadresse ist dann nicht mehr erreichbar) |
 | `~/.homewebcom/config/hosts.json` | Virtual Host → Skin |
 | `~/.homewebcom/config/commands.json` | Texte der Chat-Befehle |
-| `~/.homewebcom/templates/native/`, `native_en/` | Reine Skripte und Stylesheets (die Seiten-Templates sind JSPs im WAR) |
 
 Der Setup-Assistent unterstützt alle drei Datenbank-Backends. SQLite ist die Voreinstellung. Für eine manuelle Konfiguration setzt `sql.type` den Wert `sqlite`, `mysql` oder `postgresql`. PostgreSQL verwendet `sql.host` (`host:port`), `sql.db`, `sql.user` und `sql.pw`; `pgcrypto` muss in der Datenbank installiert sein (der Setup-Assistent versucht, die Erweiterung anzulegen). SQLite verwendet `sql.path` und standardmäßig `~/.homewebcom/data/hwebchat.sqlite`; `sql.user` und `sql.pw` werden ignoriert.
 
@@ -168,7 +171,7 @@ Die Navigationsleiste bietet ein dunkles Alternativdesign zum hellen Standard (�
 ## Entwicklung
 
 - **Package:** `net.midiandmore.chat`
-- **Einstiegsseite:** `/start.jsp`; weitere Seiten sind direkt erreichbar, z. B. `/login.jsp`, `/login_chat.jsp`, `/account.jsp`, `/account_com.jsp`, `/board.jsp`, `/profile.jsp`, `/register.jsp`, `/news.jsp` und `/console.jsp`.
+- **Einstiegsseite:** `/start.jsp`; weitere Seiten sind direkt erreichbar, z. B. `/login.jsp`, `/login_chat.jsp`, `/account.jsp`, `/account_com.jsp`, `/board.jsp`, `/profile.jsp`, `/register.jsp`, `/news.jsp` und `/console.jsp` (konfigurierbar über `console.path`).
 - **Inhalte:** Dokumente, Skripte und Stylesheets sind die JSPs unter `/content/`, z. B. `/content/rules.jsp`, `/content/script_chat.jsp` und `/content/style_page.jsp`; jede JSP enthält ihr Template. Dokumente nur für angemeldete Community-Nutzer werden mit `community=true` aufgerufen, z. B. `/content/rules_com.jsp?community=true`; ohne Community-Sitzung erscheint die Timeout-Seite. Skripte und Stylesheets ohne eigenes Template (jQuery, Bootstrap, …) liefert die jeweilige JSP aus dem Skin aus. Die frühere Adresse `/content.jsp?service=...&doc=...` und die `community_`-JSPs entfallen; eigene Links müssen angepasst werden.
 - Dienste ohne jemals vorhandenen Inhalt (`chatstream`, `fader`, `refreshstream`, `refresh_error`) haben keinen Endpunkt und antworten mit der 404-Seite. Eigene Dokument-, Skript- oder Stylesheet-Vorlagen benötigen einen entsprechenden JSP-Endpunkt unter `/content/`.
 - **Setup-Assistent:** `/setup.jsp` (Logik in `SetupService`)
@@ -206,7 +209,7 @@ Standard sind deutsche UI/Templates. Englisch steht über dieselben JSP-Template
 - Werte werden per EL gelesen, es gibt kein `%Platzhalter%`-Ersetzen mehr: `${nick}`, `${sid}`, `${skin}`, `${paths.login}` (fest vorgegebener Pfad), `${com.design_nav_start}` (commands.json), `${help.away}`, `${profile.hobby}`, `${SERVER_SOFTWARE}`, … Seitenspezifische Werte setzt Java mit `view.set("name", wert)` auf dem `View` aus `getTemplate(...)`; ein `View` kann Wert eines anderen `View` sein und sieht dann dessen Werte.
 - Texte stehen in den Resource Bundles `src/resources/i18n/messages.properties` (Deutsch, Standard) und `messages_en.properties` und werden mit `<fmt:message key="…"/>` ausgegeben. Meldungen mit Werten nutzen `{0}`, `{1}`, … und `<fmt:param value="${…}"/>` (in solchen Meldungen `'` als `''` und `{` als `'{'` schreiben). Eine weitere Sprache entsteht mit `messages_<lang>.properties` und denselben Schlüsseln.
 - Zeichenketten in JSON-Konfigurationsdateien und den festen Pfadvorgaben können weiterhin `%name%`, `%PATH_[name]%` und `%com[name]%` verwenden; diese werden beim Lesen aufgelöst. Parameterlose JSP-Pfade enden nicht mit `?`; bestehende Konfigurationen, die Parameter mit `&` anhängen, bleiben kompatibel.
-- Templates unter `~/.homewebcom/templates` werden nicht mehr verwendet, außer für die reinen Skripte und Stylesheets (jQuery, Bootstrap, …) in `native` / `native_en`. Das Layout ändert man in den JSPs im WAR (bzw. mit einem angepassten WAR).
+- Alle Templates, Skripte und Stylesheets (jQuery, Bootstrap, …) sind JSPs im WAR; aus `~/.homewebcom/templates` wird nichts mehr gelesen. Das Layout ändert man in den JSPs im WAR (bzw. mit einem angepassten WAR).
 - Öffentliche Seiten im Web-Root: `index.jsp` (Welcome-Datei, leitet auf `start.jsp` weiter) sowie `404.jsp` und `500.jsp` (Fehlerseiten); sie nutzen die oben beschriebene Spracherkennung.
 
 **Erststart-Setup?**  

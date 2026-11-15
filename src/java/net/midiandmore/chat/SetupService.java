@@ -84,7 +84,7 @@ public final class SetupService {
     }
 
     private void copyServletResources(String basePath, File targetDir) throws IOException {
-        var paths = new String[]{"config", "data", "htdocs", "pictures", "templates"};
+        var paths = new String[]{"config", "data", "htdocs", "pictures"};
         for (var path : paths) {
             var resourcePath = basePath + "/" + path;
             var realPath = context.getRealPath(resourcePath);
@@ -282,7 +282,7 @@ public final class SetupService {
                                          String dbHost, String dbPort, String dbName, String dbUser, String dbPassword, String dbPrefix,
                                          String smtpHost, String smtpPort, String smtpUser, String smtpPassword, String smtpFrom,
                                          String smtpAuth, String smtpStarttls, String smtpSslFactory,
-                                         String adminUser, String adminPassword, String adminRealm,
+                                         String adminUser, String adminPassword, String adminRealm, String consolePath,
                                          String charset, String timeZone, String skin, String room,
                                          String legalName, String legalStreet, String legalZip, String legalCity, String legalPhone, String legalEmail) {
         var lines = new ArrayList<String>();
@@ -301,6 +301,7 @@ public final class SetupService {
         lines.add("{\"name\":\"admin_username\",\"value\":\"" + escapeJson(adminUser) + "\",\"description\":\"Admin console username\"},");
         lines.add("{\"name\":\"admin_password\",\"value\":\"" + escapeJson(adminPassword) + "\",\"description\":\"Admin console password\"},");
         lines.add("{\"name\":\"admin_realm\",\"value\":\"" + escapeJson(adminRealm) + "\",\"description\":\"Admin console realm\"},");
+        lines.add("{\"name\":\"console.path\",\"value\":\"" + escapeJson(consolePath) + "\",\"description\":\"Admin console path relative to the context\"},");
         lines.add("{\"name\":\"legal.name\",\"value\":\"" + escapeJson(legalName) + "\",\"description\":\"Imprint and privacy policy: responsible person\"},");
         lines.add("{\"name\":\"legal.street\",\"value\":\"" + escapeJson(legalStreet) + "\",\"description\":\"Imprint and privacy policy: street and number\"},");
         lines.add("{\"name\":\"legal.zip\",\"value\":\"" + escapeJson(legalZip) + "\",\"description\":\"Imprint and privacy policy: postal code\"},");
@@ -447,6 +448,7 @@ public final class SetupService {
         var adminUser = request.getParameter("admin_user");
         var adminPassword = request.getParameter("admin_password");
         var adminRealm = request.getParameter("admin_realm");
+        var consolePath = request.getParameter("console_path");
         var firstUserNick = request.getParameter("first_user_nick");
         var firstUserPassword = request.getParameter("first_user_password");
         var firstUserEmail = request.getParameter("first_user_email");
@@ -491,6 +493,7 @@ public final class SetupService {
             smtpHost, smtpPort, smtpUser, smtpPassword, smtpFrom,
             smtpAuth != null ? smtpAuth : "true", smtpStarttls != null ? smtpStarttls : "true", smtpSslFactory != null ? smtpSslFactory : "javax.net.ssl.SSLSocketFactory",
             adminUser, adminPassword, adminRealm != null ? adminRealm : "Console",
+            FixedPaths.consolePath(consolePath),
             charset != null ? charset : "UTF-8",
             timeZone != null ? timeZone : "CET",
             skin != null ? skin : "native",

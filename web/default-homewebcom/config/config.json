@@ -1,6 +1,7 @@
 [
 {"name":"admin_password","value":"passwort","description":"Das Passwort der Adminkonsole"},
 {"name":"admin_realm","value":"Console","description":"Der Realm der Adminkonsole"},
+{"name":"console.path","value":"console.jsp","description":"Pfad der Adminkonsole relativ zum Context (z. B. console.jsp oder admin)"},
 {"name":"admin_username","value":"Admin","description":"Der Benutzername der Adminkonsole"},
 {"name":"allowed_chars","value":"[\\w\\d_\\-äöüÄÖÜß@]*","description":"Die erlaubten Zeichen f&uuml; den Chatter"},
 {"name":"board_re","value":"Re: ","description":"Antwortzeile f&uuml;r das Forum!"},

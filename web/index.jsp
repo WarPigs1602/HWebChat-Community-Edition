@@ -1,5 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" session="false" %>
-<%@ include file="/WEB-INF/jsp/includes/lang.jspf" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" session="false" %><%@ taglib prefix="c" uri="jakarta.tags.core" %><%@ taglib prefix="fn" uri="jakarta.tags.functions" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><c:choose><c:when test="${not empty cookie.lang.value}"><c:set var="requestedLang" value="${cookie.lang.value}"/></c:when><c:when test="${not empty param.lang}"><c:set var="requestedLang" value="${param.lang}"/></c:when><c:when test="${fn:startsWith(fn:toLowerCase(header['Accept-Language']), 'de')}"><c:set var="requestedLang" value="de"/></c:when><c:otherwise><c:set var="requestedLang" value="en"/></c:otherwise></c:choose><c:set var="lang" value="${fn:toLowerCase(requestedLang) eq 'de' ? 'de' : 'en'}" scope="request"/><fmt:setLocale value="${lang}" scope="request"/><fmt:setBundle basename="i18n.messages" scope="request"/>
 <c:url var="startUrl" value="/start.jsp">
     <c:if test="${not empty param.lang}"><c:param name="lang" value="${param.lang}"/></c:if>
 </c:url>

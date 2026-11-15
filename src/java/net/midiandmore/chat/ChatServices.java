@@ -104,7 +104,7 @@ public class ChatServices {
         return request.isSecure() ? "https" : "http";
     }
 
-    String stripHash(String value) {
+    public String stripHash(String value) {
         if (value != null && value.startsWith("#")) {
             return value.substring(1);
         }
@@ -408,7 +408,7 @@ public class ChatServices {
      * @param request
      * @return
      */
-    protected View getConsole(String template, HttpServletRequest request, Map<String, String> map) {
+    public View getConsole(String template, HttpServletRequest request, Map<String, String> map) {
         var sid = map.getOrDefault("sid", "");
         if (sid.isBlank()) {
             sid = (String) request.getAttribute("sid");
@@ -425,7 +425,7 @@ public class ChatServices {
      * @param request
      * @return
      */
-    protected View getTemplate(String template, HttpServletRequest request, Map<String, String> map) {
+    public View getTemplate(String template, HttpServletRequest request, Map<String, String> map) {
         var sid = map.getOrDefault("sid", "");
         var cm = Bootstrap.boot.getChatManager();
         var ut = Bootstrap.boot.getUtil();
@@ -461,7 +461,7 @@ public class ChatServices {
      * @param template Der Templatename
      * @param out Die Output-Klasse
      */
-    protected void printTemplate(String template, HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
+    public void printTemplate(String template, HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
         Bootstrap.boot.getUtil().submitContent(getTemplate(template, request, map).toString(), response);
     }
 
@@ -511,35 +511,6 @@ public class ChatServices {
         response.setHeader("Vary", "Cookie");
         response.setHeader("Cache-Control", "no-cache");
         return css;
-    }
-
-    /**
-     * Delivers a script or style sheet that is a file of the skin and not a
-     * JSP.
-     *
-     * @param style <code>true</code> for a style sheet, <code>false</code> for a script
-     * @param name the name of the file without extension
-     */
-    void nativeAsset(boolean style, String name, HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
-        if (setupRequired(request, response)) {
-            return;
-        }
-        var map = requestValues(request, response);
-        var lang = readLang(request, map);
-        var db = Bootstrap.boot.getConfig().getDb();
-        var content = style ? db.getStyle(name, "native", lang) : db.getScript(name, "native", lang);
-        response.setContentType(style ? "text/css" : "text/javascript");
-        if (content.toLowerCase().startsWith("error")) {
-            response.setStatus(404);
-            content = "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>Error: The requested "
-                    + (style ? "style" : "script") + " '" + name + "' does not exist!</b></p><hr><address>"
-                    + Software.SERVER_SOFTWARE + " " + Software.SERVER_VERSION + "-" + Software.SERVER_STATUS
-                    + "</address></body><html>";
-        } else if (style) {
-            content = processStyleSheet(content, request, response);
-        }
-        Bootstrap.boot.getUtil().submitContent(content, response);
     }
 
     /**
@@ -646,27 +617,25 @@ public class ChatServices {
         try {
             var counts = db.getHomepageCounts();
             var latest = new NewsRepository(db, boot.getConfig().getP().getProperty("sql.prefix", "")).latest();
-            var homepageExtra = getTemplate("homepage_extra", request, map)
+            var homepageNick = community == null ? "" : org.owasp.encoder.Encode.forHtmlContent(community.getName());
+            var page = getTemplate(pageTemplate, request, map)
                     .set("homepage_chatters", org.owasp.encoder.Encode.forHtmlContent(cm.getUserSizeInChat()))
                     .set("homepage_rooms", org.owasp.encoder.Encode.forHtmlContent(String.valueOf(cm.getRooms().size())))
                     .set("homepage_registered", org.owasp.encoder.Encode.forHtmlContent(String.valueOf(counts.registered())))
-                    .set("homepage_messages", org.owasp.encoder.Encode.forHtmlContent(String.valueOf(counts.messages())));
-            View homepageNews = null;
+                    .set("homepage_messages", org.owasp.encoder.Encode.forHtmlContent(String.valueOf(counts.messages())))
+                    .set("homepage_nick", homepageNick);
             if (latest.isPresent()) {
                 var article = latest.get();
-                homepageNews = getTemplate("homepage_news", request, map)
+                page = page
                         .set("homepage_news_title", org.owasp.encoder.Encode.forHtmlContent(article.title()))
                         .set("homepage_news_author", org.owasp.encoder.Encode.forHtmlContent(article.author()))
                         .set("homepage_news_published", org.owasp.encoder.Encode.forHtmlContent(util.getTime(article.published())))
                         .set("homepage_news_body", org.owasp.encoder.Encode.forHtmlContent(article.body()))
                         .set("homepage_news_url", org.owasp.encoder.Encode.forHtmlAttribute(
                                 request.getContextPath() + "/news.jsp"));
+            } else {
+                page = page.set("homepage_news_url", "");
             }
-            homepageExtra = homepageExtra.set("homepage_news", homepageNews);
-            var homepageNick = community == null ? "" : org.owasp.encoder.Encode.forHtmlContent(community.getName());
-            var page = getTemplate(pageTemplate, request, map)
-                    .set("homepage_extra", homepageExtra)
-                    .set("homepage_nick", homepageNick);
             util.submitContent(page, response);
         } catch (java.sql.SQLException ex) {
             logError(ex);
@@ -675,11 +644,11 @@ public class ChatServices {
         }
     }
 
-    void news(HttpServletRequest request, HttpServletResponse response, Map<String, String> map, boolean admin) {
+    public void news(HttpServletRequest request, HttpServletResponse response, Map<String, String> map, boolean admin) {
         var conf = Bootstrap.boot.getConfig();
         var util = Bootstrap.boot.getUtil();
         var lang = readLang(request, map);
-        var consoleUrl = request.getContextPath() + "/console.jsp?service=news";
+        var consoleUrl = request.getContextPath() + "/" + Web.consolePath() + "?service=news";
         try {
             var repository = new NewsRepository(conf.getDb(), conf.getP().getProperty("sql.prefix", ""));
             if (admin && "POST".equalsIgnoreCase(request.getMethod())) {

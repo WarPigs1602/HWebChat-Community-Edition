@@ -1,1 +1,0 @@
-<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><span class="badge badge-danger"><i class="fa fa-ban"></i> <fmt:message key="page.boards_thread_banned.banned"/></span>

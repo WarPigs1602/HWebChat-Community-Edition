@@ -761,7 +761,7 @@ public class Commands implements Software {
      * @param input Das Ziel und der Grund (Mit Wildcards)
      * @param nick Der Chatternick
      */
-    protected void ban(String input, String nick) {
+    public void ban(String input, String nick) {
         resetIdleTime(nick);
         var cm = getMaster().getChatManager();
         var ut = getMaster().getUtil();

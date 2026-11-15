@@ -1,2 +1,4 @@
-<%@ include file="/WEB-INF/jsp/includes/route.jspf" %>
+<%@ page session="false" trimDirectiveWhitespaces="true" import="net.midiandmore.chat.Web" %><%
+    Web.start(application);
+%>
 <% response.sendError(404); %>

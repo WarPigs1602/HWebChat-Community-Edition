@@ -28,7 +28,7 @@ final class ViewFactory {
         var conf = Bootstrap.boot.getConfig();
         var db = conf.getDb();
         var cm = Bootstrap.boot.getChatManager();
-        values.putAll(FixedPaths.placeholders(Web.contextPath()));
+        values.putAll(FixedPaths.placeholders(Web.contextPath(), Web.consolePath()));
         values.put("page_base", Web.contextPath());
         values.put("SERVER_SOFTWARE", Software.SERVER_SOFTWARE);
         values.put("SERVER_VERSION", Software.SERVER_VERSION);

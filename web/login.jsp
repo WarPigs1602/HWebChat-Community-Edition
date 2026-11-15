@@ -107,6 +107,7 @@
         }
         Web.view("page", request, pageValues);
         request.setAttribute("templatePage", "/WEB-INF/jsp/pages/" + template + ".jsp");
+        request.setAttribute("loginTemplate", template);
     } else {
         String sessionNick = (String) session.getAttribute("nick");
         if (session.isNew() || sessionNick == null || !Web.hasCommunityUser(sessionNick)) {
@@ -147,4 +148,113 @@
                 request, response, values);
         return;
     }
-%><jsp:include page="${templatePage}"/>
+%><c:choose>
+<c:when test="${loginTemplate eq 'timeout'}"><t:layout design="start"><h1>${SERVER_SOFTWARE}-Timeout</h1>
+
+
+<p>
+<fmt:message key="page.timeout.your_session_expired_because_of"/>...
+</p>
+</t:layout></c:when>
+<c:when test="${loginTemplate eq 'chars'}"><t:layout design="start"><h1>
+<fmt:message key="common.error_2"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message>
+</h1>
+<p>
+<fmt:message key="common.please_for_your_nickname"/> <span style="font-weight: bold;">${nick}</span> <fmt:message key="common.only_use_alphanumeric_characters"/>
+</p>
+</t:layout></c:when>
+<c:when test="${loginTemplate eq 'guest'}"><t:layout design="start"><h1>
+<fmt:message key="common.error_2"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message>
+</h1>
+<p>
+<fmt:message key="common.the_nickname_is_only_registered"/>!
+</p></t:layout></c:when>
+<c:when test="${loginTemplate eq 'nick'}"><t:layout design="start"><h1><fmt:message key="common.error_2"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1>
+
+
+<p>
+<fmt:message key="common.your_nickname_must_be_at"/>
+</p>
+</t:layout></c:when>
+<c:when test="${loginTemplate eq 'command'}"><t:layout design="start"><h1>
+<fmt:message key="common.error_2"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message>
+</h1>
+<p>
+<fmt:message key="common.your_nickname"/> <span style="font-weight: bold;">${nick}</span> <fmt:message key="common.corresponds_to_a_chat_command"/>
+</p>
+</t:layout></c:when>
+<c:when test="${loginTemplate eq 'pwd'}"><t:layout design="start"><h1><fmt:message key="common.error_2"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1>
+
+
+<p>
+<fmt:message key="common.the_login_for_the_name"/> <span style="font-weight: bold;">${nick}</span> <fmt:message key="common.failed_because_of_a_wrong"/>
+</p>
+</t:layout></c:when>
+<c:when test="${loginTemplate eq 'banned'}"><t:layout design="start"><h1>
+<fmt:message key="common.error_2"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message>
+</h1>
+<p>
+<fmt:message key="common.your_nickname_or_your_ip_3"/>
+</p>
+<p>
+<fmt:message key="common.the_reason_given_to_you"/> <span style="font-weight: bold">${reason}</span> 
+</p>
+<p>
+<table>
+<tr>
+<td style="text-align: left; font-weight: bold;">
+<fmt:message key="common.this_can_have_several_causes"/>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<fmt:message key="common.you_have_disturbed_the_chat"/>!<br>
+<fmt:message key="common.you_have_violated_applicable_law"/>!<br>
+<fmt:message key="common.you_have_done_unwanted_advertising"/>!<br>
+<fmt:message key="common.you_have_repeatedly_flooded_the"/>!<br>
+<fmt:message key="common.you_have_become_a_victim"/>)
+</td>
+</tr>
+</table>
+</p>
+<p>
+<fmt:message key="common.please_try_again_later"/>!
+</p></t:layout></c:when>
+<c:when test="${loginTemplate eq 'banned_temp'}"><t:layout design="start"><h1>
+<fmt:message key="common.error_2"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message>
+</h1>
+<p>
+<fmt:message key="common.your_nickname_or_your_ip_4"/>!
+</p>
+<p>
+<table>
+<tr>
+<td style="text-align: left; font-weight: bold;">
+<fmt:message key="common.this_can_have_several_causes"/>
+</td>
+</tr>
+<tr>
+<td style="text-align: left;">
+<fmt:message key="common.you_have_disturbed_the_chat"/>!<br>
+<fmt:message key="common.you_have_violated_applicable_law"/>!<br>
+<fmt:message key="common.you_have_done_unwanted_advertising"/>!<br>
+<fmt:message key="common.you_have_not_followed_the"/>!<br>
+<fmt:message key="common.you_have_built_too_many"/>)!<br>
+</td>
+</tr>
+</table>
+</p>
+<p>
+<fmt:message key="common.please_try_again_later"/>!
+</p></t:layout></c:when>
+<c:when test="${loginTemplate eq 'reg'}"><t:layout design="start"><h1><fmt:message key="common.error_2"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1>
+
+
+<p style="font-weight: bold;">
+<fmt:message key="common.in_order_to_enter_this"/>
+</p>
+<p>
+<fmt:message key="common.choose_to_log_in_as"/>!
+</p>
+</t:layout></c:when>
+</c:choose>

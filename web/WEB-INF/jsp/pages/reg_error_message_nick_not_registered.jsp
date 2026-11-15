@@ -1,1 +1,0 @@
-<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><fmt:message key="page.reg_error_message_nick_not_registered.your_nickname_is_not_registered"/>

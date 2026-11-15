@@ -41,7 +41,7 @@
             <a class="dropdown-item" href="${paths.config_rooms}">${com.design_admin_rooms}</a>
           </div>
         </li>
-        <li class="nav-item"><a class="nav-link" href="<c:out value="${page_base}/console.jsp?service=news"/>"><i class="fa fa-newspaper-o" aria-hidden="true"></i> <fmt:message key="news.manage"/></a></li>
+        <li class="nav-item"><a class="nav-link" href="<c:out value="${paths.config_news}"/>"><i class="fa fa-newspaper-o" aria-hidden="true"></i> <fmt:message key="news.manage"/></a></li>
       </ul>
     </div>
   </div>

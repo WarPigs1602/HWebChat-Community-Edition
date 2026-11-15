@@ -65,7 +65,7 @@ public final class Config {
     /**
      * L&auml;dt die Chatkonfiguration
      */
-    protected void hash() {
+    public void hash() {
         try {
             out.printf("* Loading Properties: ");
             setFs(getProperty("file.separator"));
@@ -334,7 +334,7 @@ public final class Config {
      * @param obj2 Die zweite Konfiguration
      * @return Die Properties der DAtei
      */
-    protected void saveDataToJSON(String file, TreeMap<String, String[]> ar, String name, String value, String description) {
+    public void saveDataToJSON(String file, TreeMap<String, String[]> ar, String name, String value, String description) {
         FileWriter is = null;
         var conf = getProperty("config.dir");
         if (conf == null) {
@@ -387,7 +387,7 @@ public final class Config {
      * @param obj2 Die zweite Konfiguration
      * @return Die Properties der DAtei
      */
-    protected void saveDataToJSON(String file, TreeMap<String, String> ar, String name, String value) {
+    public void saveDataToJSON(String file, TreeMap<String, String> ar, String name, String value) {
         FileWriter is = null;
         var conf = getProperty("config.dir");
         if (conf == null) {
@@ -440,7 +440,7 @@ public final class Config {
      * @param obj2 Die zweite Konfiguration
      * @return Die Properties der DAtei
      */
-    protected TreeMap<String, String[]> loadDataFromJSON(String file, String obj, String obj2, String obj3) {
+    public TreeMap<String, String[]> loadDataFromJSON(String file, String obj, String obj2, String obj3) {
         var ar = new TreeMap<String, String[]>();
         try {
             var conf = getProperty("config.dir");
@@ -483,7 +483,7 @@ public final class Config {
      * @param obj2 Die zweite Konfiguration
      * @return Die Properties der DAtei
      */
-    protected TreeMap<String, String> loadDataFromJSON(String file, String obj, String obj2) {
+    public TreeMap<String, String> loadDataFromJSON(String file, String obj, String obj2) {
         var ar = new TreeMap<String, String>();
         try {
             var conf = getProperty("config.dir");
@@ -555,7 +555,7 @@ public final class Config {
      * @param key Der Konfigurations-Key
      * @return Der Konfigurationsparameter als String
      */
-    protected String getString(String key) {
+    public String getString(String key) {
         return getP().getProperty(key);
     }
 
@@ -565,7 +565,7 @@ public final class Config {
      * @param key Der Konfigurations-Key
      * @return Der Parameter als Integer
      */
-    protected int getInt(String key) {
+    public int getInt(String key) {
         return Integer.valueOf(getString(key));
     }
 
@@ -575,7 +575,7 @@ public final class Config {
      * @param key Der Konfigurations-Key
      * @return Der Parameter als Long
      */
-    protected long getLong(String key) {
+    public long getLong(String key) {
         return Long.valueOf(getString(key));
     }
 
@@ -656,7 +656,7 @@ public final class Config {
      *
      * @return Die Datenbank
      */
-    protected Database getDb() {
+    public Database getDb() {
         return db;
     }
 

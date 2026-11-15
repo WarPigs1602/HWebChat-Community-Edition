@@ -498,7 +498,7 @@ public final class ChatManager {
      *
      * @param name
      */
-    protected synchronized void quit(String name) {
+    public synchronized void quit(String name) {
         var ut = getMaster().getUtil();
         var conf = getMaster().getConfig();
         var db = conf.getDb();
@@ -610,7 +610,7 @@ public final class ChatManager {
      *
      * @param nick Der Nick
      */
-    protected void removeFriend(String nick) {
+    public void removeFriend(String nick) {
         getUsers().values().forEach((u) -> {
             var friends = u.getFriends();
             if (friends.contains(nick.toLowerCase())) {
@@ -899,7 +899,7 @@ public final class ChatManager {
         return "en";
     }
 
-    protected String getCommand(String nick, String commandName) {
+    public String getCommand(String nick, String commandName) {
         var db = getMaster().getConfig().getDb();
         return db.getCommand(commandName, getUserLang(nick));
     }
@@ -1357,7 +1357,7 @@ public final class ChatManager {
      * @param connectionId Die Sessionid
      * @return
      */
-    protected String getNameFromId(String connectionId) {
+    public String getNameFromId(String connectionId) {
         return getConnectionIds().get(connectionId);
     }
 
@@ -1367,7 +1367,7 @@ public final class ChatManager {
      * @param connectionId Die Sessionid
      * @return
      */
-    protected boolean isValidConnectionId(String connectionId) {
+    public boolean isValidConnectionId(String connectionId) {
         return getNameFromId(connectionId) != null;
     }
 
@@ -1377,7 +1377,7 @@ public final class ChatManager {
      * @param name Der Nick-Name
      * @return
      */
-    protected Users getUser(String name) {
+    public Users getUser(String name) {
         return getUsers().get(name.toLowerCase());
     }
 
@@ -1387,7 +1387,7 @@ public final class ChatManager {
      * @param name Der Nickname
      * @return
      */
-    protected boolean isOnline(String name) {
+    public boolean isOnline(String name) {
         return getUsers().containsKey(name.toLowerCase());
     }
 

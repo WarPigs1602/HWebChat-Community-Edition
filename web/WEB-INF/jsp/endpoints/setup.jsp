@@ -43,6 +43,7 @@
 <c:set var="smtpSslFactory" value="${posted and param.smtp_ssl_factory ne null ? param.smtp_ssl_factory : 'javax.net.ssl.SSLSocketFactory'}"/>
 <c:set var="adminUser" value="${posted ? param.admin_user : 'admin'}"/>
 <c:set var="adminPassword" value="${posted ? param.admin_password : 'admin'}"/>
+<c:set var="consolePath" value="${posted and param.console_path ne null ? param.console_path : 'console.jsp'}"/>
 <c:set var="adminRealm" value="${posted and param.admin_realm ne null ? param.admin_realm : 'Console'}"/>
 <c:set var="firstUserNick" value="${posted ? param.first_user_nick : ''}"/>
 <c:set var="firstUserPassword" value="${posted ? param.first_user_password : ''}"/>
@@ -135,6 +136,7 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 <div class="form-group"><label for="admin_user">Console username *</label><input type="text" id="admin_user" name="admin_user" value="<c:out value="${adminUser}"/>" required></div>
 <div class="form-group"><label for="admin_password">Console password *</label><input type="password" id="admin_password" name="admin_password" value="<c:out value="${adminPassword}"/>" required></div>
 <div class="form-group"><label for="admin_realm">Console realm</label><input type="text" id="admin_realm" name="admin_realm" value="<c:out value="${adminRealm}"/>"></div>
+<div class="form-group"><label for="console_path">Console path</label><input type="text" id="console_path" name="console_path" value="<c:out value="${consolePath}"/>" pattern="[A-Za-z0-9_.\-]+(/[A-Za-z0-9_.\-]+)*"><div class="hint">Relative to the web application, e.g. console.jsp or admin</div></div>
 </div></div>
 <div class="section"><div class="section-title"><span class="icon">👤</span> First user</div><div class="form-grid">
 <div class="form-group"><label for="first_user_nick">Username *</label><input type="text" id="first_user_nick" name="first_user_nick" value="<c:out value="${firstUserNick}"/>" required></div>

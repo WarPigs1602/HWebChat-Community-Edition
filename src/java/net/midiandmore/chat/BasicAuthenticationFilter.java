@@ -27,6 +27,14 @@ public class BasicAuthenticationFilter {
     
     protected String message = "";
 
+    public boolean hasError() {
+        return error;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
     public void init(Bootstrap boot) throws ServletException {
         username = boot.getConfig().getP().getProperty("admin_username");
         password = boot.getConfig().getP().getProperty("admin_password");

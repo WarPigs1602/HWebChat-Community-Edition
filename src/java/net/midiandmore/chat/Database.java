@@ -433,106 +433,6 @@ public class Database {
      }
      */
     /**
-     * Liest Die Templates aus (urspr&uuml;nglich in SQL-Datenbank abgespeichert
-     * deswegen nicht in der Config-Klasse)
-     *
-     * @param style Das Design
-     * @param type Der Template-Typ
-     * @param file Der Dateiname
-     * @return Den Inhalt
-     */
-    private String readFile(String style, String type, String file, String extension, String lang) {
-        if (lang != null && lang.equalsIgnoreCase("en") && style != null && !style.endsWith("_en")) {
-            style = style + "_en";
-        }
-        String text = null;
-        var sb = new StringBuilder();
-        if (file.contains("/") || file.contains("\\") || file.contains(".") || file.contains(":") || file.contains("\"") || file.contains("'") || file.contains("%") || file.contains("$")) {
-            sb.append("Error: The requested file '");
-            sb.append(file);
-            sb.append("' contains invalid content!\r\n");
-            text = sb.toString();
-        } else {
-            var base = getProperty("homewebcom.dir", getProperty("user.home"));
-            var fs = getProperty("file.separator");
-            sb.append(base);
-            sb.append(fs);
-            sb.append(".homewebcom");
-            sb.append(fs);
-            sb.append("templates");
-            sb.append(fs);
-            sb.append(style);
-            sb.append(fs);
-            sb.append(type);
-            sb.append(fs);
-            sb.append(file);
-            sb.append(".");
-            sb.append(extension);
-            var fn = sb.toString();
-            var target = new File(fn);
-            try {
-                var fis = new FileInputStream(target);
-                var br = new BufferedReader(new InputStreamReader(fis, Charset.forName(getMaster().getConfig().getString("charset"))));
-                sb = new StringBuilder();
-                String str = null;
-                while ((str = br.readLine()) != null) {
-                    sb.append(str);
-                    sb.append("\r\n");
-                }
-                text = sb.toString();
-            } catch (FileNotFoundException fnfe) {
-                sb = new StringBuilder();
-                sb.append("Error: The requested page '");
-                sb.append(type);
-                sb.append("' '");
-                sb.append(file);
-                sb.append("' on style '");
-                sb.append(style);
-                sb.append("' does not exist!\r\n");
-                text = sb.toString();
-            } catch (IOException ioe) {
-                sb = new StringBuilder();
-                sb.append("Error because an IOException: ");
-                sb.append(ioe.getMessage());
-                text = sb.toString();
-            }
-        }
-        return text;
-    }
-
-            /**
-     * Ruft die Scripte ab (urspr&uuml;nglich in SQL-Datenbank abgespeichert
-     * deswegen nicht in der Config-Klasse)
-     *
-     * @param template Das Template
-     * @param skin Der Skin
-     * @return Das Script
-     */
-    protected String getScript(String template, String skin) {
-        return readFile(skin, "script", template, "js", null);
-    }
-
-    protected String getScript(String template, String skin, String lang) {
-        return readFile(skin, "script", template, "js", lang);
-    }
-
-    /**
-     * Ruft die Style-Sheets ab (urspr&uuml;nglich in SQL-Datenbank
-     * abgespeichert deswegen nicht in der Config-Klasse)
-     *
-     * @param template Das Template
-     * @param skin Der Skin
-     * @return Der Style-Sheet
-     */
-    protected String getStyle(String template, String skin) {
-        return readFile(skin, "style", template, "css", null);
-    }
-
-    protected String getStyle(String template, String skin, String lang) {
-        return readFile(skin, "style", template, "css", lang);
-    }
-
-    /**
      * Ruft die Commands ab (urspr&uuml;nglich in SQL-Datenbank abgespeichert
      * deswegen nicht in der Config-Klasse)
      *
@@ -580,7 +480,7 @@ public class Database {
      * @param nick Der Nick-Name oder der Host
      * @return Ist der Chatter gebannt?
      */
-    protected synchronized boolean isTimedBanned(String nick) {
+    public synchronized boolean isTimedBanned(String nick) {
         var ut = getMaster().getUtil();
         nick = nick.toLowerCase();
         var v = getTimedBanName();
@@ -607,7 +507,7 @@ public class Database {
      * @param nick Der Nick-Name oder der Host
      * @return Ist der Chatter gebannt?
      */
-    protected synchronized boolean isBanned(String nick) {
+    public synchronized boolean isBanned(String nick) {
         return !getBan(nick, "name").isBlank();
     }
 
@@ -617,7 +517,7 @@ public class Database {
      * @param nick Der Nick-Name oder der Host
      * @return Der Grund
      */
-    protected synchronized String getTimedBanReason(String nick) {
+    public synchronized String getTimedBanReason(String nick) {
         var ut = getMaster().getUtil();
         nick = nick.toLowerCase();
         var v = getTimedBanName();
@@ -644,7 +544,7 @@ public class Database {
      * @param nick Der Nick-Name oder der Host
      * @return Der Grund
      */
-    protected synchronized String getBanReason(String nick) {
+    public synchronized String getBanReason(String nick) {
         return getBan(nick, "reason");
     }
 
@@ -681,7 +581,7 @@ public class Database {
      * @param input Das Ziel
      * @return ISt das Bannen erfolgreich?
      */
-    protected synchronized boolean delBans(String nick, String input) {
+    public synchronized boolean delBans(String nick, String input) {
         var cm = getMaster().getChatManager();
         var ut = getMaster().getUtil();
         var nme = getBanList();
@@ -758,7 +658,7 @@ public class Database {
      * @param reason Der Grund
      * @param banner Derjenige der den Ban vergeben hat
      */
-    protected synchronized void addBan(String nick, String reason, String banner) {
+    public synchronized void addBan(String nick, String reason, String banner) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -862,7 +762,7 @@ public class Database {
      * @param nick Der Nick-Name
      * @return Ist der Chatter registriert?
      */
-    protected boolean isRegistered(String nick) {
+    public boolean isRegistered(String nick) {
         var flag = false;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -897,7 +797,7 @@ public class Database {
      * @param password Das Passwort
      * @return Ist DAs Passwort g&uuml;tig
      */
-    protected boolean checkPassword(String nick, String password) {
+    public boolean checkPassword(String nick, String password) {
         var flag = false;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -948,7 +848,7 @@ public class Database {
      * @param password Das Passwort
      * @return Ist DAs Passwort g&uuml;tig
      */
-    protected boolean checkPassword2(String nick, String password) {
+    public boolean checkPassword2(String nick, String password) {
         var flag = false;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -1039,7 +939,7 @@ public class Database {
      *
      * @param nick1 Der Nick-Name
      */
-    protected void delFriendsFromList(String nick1) {
+    public void delFriendsFromList(String nick1) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -1303,7 +1203,7 @@ public class Database {
      * @param nick2 Das Ziel
      * @param content Der Text-Inhalt
      */
-    protected void addRoom(String room, String topic, int locked, String lockReason, int standard, int allowSmilies) {
+    public void addRoom(String room, String topic, int locked, String lockReason, int standard, int allowSmilies) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -1331,7 +1231,7 @@ public class Database {
      * @param nick2 Das Ziel
      * @param content Der Text-Inhalt
      */
-    protected void addRoomData(String nick, String room, String page_title, String bg_color_1,
+    public void addRoomData(String nick, String room, String page_title, String bg_color_1,
             String bg_color_2, String color, String border_color, String link_color) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -1491,7 +1391,7 @@ public class Database {
      * @param month Der Monat
      * @param year Das Jahr
      */
-    protected void addNick(String gender, String nick, String mail, String color, String pwd, String question, String answer, String day, String month, String year) {
+    public void addNick(String gender, String nick, String mail, String color, String pwd, String question, String answer, String day, String month, String year) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -1529,7 +1429,7 @@ public class Database {
      * Startet einen Thread im Forum
      *
      */
-    protected long addThread(String topic, String content, long ref, long user, long board, String ip, long cat) {
+    public long addThread(String topic, String content, long ref, long user, long board, String ip, long cat) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -1561,7 +1461,7 @@ public class Database {
      * Startet einen Thread im Forum
      *
      */
-    protected void addBoards(String topic, String description, Long cat) {
+    public void addBoards(String topic, String description, Long cat) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -1582,7 +1482,7 @@ public class Database {
      * Startet einen Thread im Forum
      *
      */
-    protected void addBoardCat(String topic, String description) {
+    public void addBoardCat(String topic, String description) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -1654,7 +1554,7 @@ public class Database {
      * @param field Das Feld zum Updaten
      * @param value Der Text zum ersetzen
      */
-    protected void updateNick(String nick, String field, String value) {
+    public void updateNick(String nick, String field, String value) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -1677,7 +1577,7 @@ public class Database {
      * @param field Das Feld zum Updaten
      * @param value Der Text zum ersetzen
      */
-    protected void updateBoards(long cat, String field, String value) {
+    public void updateBoards(long cat, String field, String value) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -1699,7 +1599,7 @@ public class Database {
      * @param field Das Feld zum Updaten
      * @param value Der Text zum ersetzen
      */
-    protected void updateBoardCats(long cat, String field, String value) {
+    public void updateBoardCats(long cat, String field, String value) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -1721,7 +1621,7 @@ public class Database {
      * @param field Das Feld zum Updaten
      * @param value Der Text zum ersetzen
      */
-    protected void updateThread(long cat, String field, String value) {
+    public void updateThread(long cat, String field, String value) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -1766,7 +1666,7 @@ public class Database {
      * @param nick Der Nick
      * @param pwd Das Passwort
      */
-    protected void updatePassword(String nick, String pwd) {
+    public void updatePassword(String nick, String pwd) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -1864,7 +1764,7 @@ public class Database {
      * @param field Das Feld
      * @param value Die Daten
      */
-    protected void updateRoomData(String room, String field, String value) {
+    public void updateRoomData(String room, String field, String value) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -1884,7 +1784,7 @@ public class Database {
      *
      * @param room
      */
-    protected void delRoom(String room) {
+    public void delRoom(String room) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -1903,7 +1803,7 @@ public class Database {
      *
      * @param nick Der Nick
      */
-    protected void delNick(String nick) {
+    public void delNick(String nick) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -1943,7 +1843,7 @@ public class Database {
      * @param field Das Feld zum abfragen
      * @return Die Daten
      */
-    protected String getData(long id, String field) {
+    public String getData(long id, String field) {
         String dat = null;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -1971,7 +1871,7 @@ public class Database {
      * @param field Das Feld zum abfragen
      * @return Die Daten
      */
-    protected String getData(String nick, String field) {
+    public String getData(String nick, String field) {
         String dat = null;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -2053,7 +1953,7 @@ public class Database {
      * @param field Das Feld zum abfragen
      * @return Die Daten
      */
-    protected long countBoardTreads2(long id) {
+    public long countBoardTreads2(long id) {
         long dat = 0;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -2081,7 +1981,7 @@ public class Database {
      * @param field Das Feld zum abfragen
      * @return Die Daten
      */
-    protected long countBoardTreads3(long id) {
+    public long countBoardTreads3(long id) {
         long dat = 0;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -2109,7 +2009,7 @@ public class Database {
      * @param field Das Feld zum abfragen
      * @return Die Daten
      */
-    protected long countBoardTreads3(String search) {
+    public long countBoardTreads3(String search) {
         long dat = 0;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -2138,7 +2038,7 @@ public class Database {
      * @param field Das Feld zum abfragen
      * @return Die Daten
      */
-    protected long countBoardTreads(long id) {
+    public long countBoardTreads(long id) {
         long dat = 0;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -2166,7 +2066,7 @@ public class Database {
      * @param field Das Feld zum abfragen
      * @return Die Daten
      */
-    protected String getBoardRef(long cat, String field) {
+    public String getBoardRef(long cat, String field) {
         String dat = null;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -2194,7 +2094,7 @@ public class Database {
      * @param field Das Feld zum abfragen
      * @return Die Daten
      */
-    protected String getBoard(long cat, String field) {
+    public String getBoard(long cat, String field) {
         String dat = null;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -2229,7 +2129,7 @@ public class Database {
      * @param field Das Feld zum abfragen
      * @return Die Daten
      */
-    protected String getBoards(long id, String field) {
+    public String getBoards(long id, String field) {
         String dat = null;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -2255,7 +2155,7 @@ public class Database {
      *
      * @return Die Daten
      */
-    protected TreeMap<Long, Object[]> getBoardCat() {
+    public TreeMap<Long, Object[]> getBoardCat() {
         TreeMap<Long, Object[]> map = new TreeMap<>();
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -2286,7 +2186,7 @@ public class Database {
      *
      * @return Die Daten
      */
-    protected ArrayList<Object[]> getBoard(long cat) {
+    public ArrayList<Object[]> getBoard(long cat) {
         ArrayList<Object[]> map = new ArrayList<>();
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -2324,7 +2224,7 @@ public class Database {
      *
      * @return Die Daten
      */
-    protected ArrayList<Object[]> getBoardFromIdStripped(long ref, long page) {
+    public ArrayList<Object[]> getBoardFromIdStripped(long ref, long page) {
         long start = 0;
         long end = 0;
         if (page != 1) {
@@ -2371,7 +2271,7 @@ public class Database {
      *
      * @return Die Daten
      */
-    protected ArrayList<Object[]> getBoardFromIdStripped2(long ref, long page) {
+    public ArrayList<Object[]> getBoardFromIdStripped2(long ref, long page) {
         long start = 0;
         long end = 0;
         if (page != 1) {
@@ -2419,7 +2319,7 @@ public class Database {
      * @param id Die ID des Eintrags
      * @return Die Daten oder null
      */
-    protected Object[] getBoardThreadById(long id) {
+    public Object[] getBoardThreadById(long id) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -2455,7 +2355,7 @@ public class Database {
      *
      * @return Die Daten
      */
-    protected ArrayList<Object[]> searchBoard(long ref, long page, String search) {
+    public ArrayList<Object[]> searchBoard(long ref, long page, String search) {
         long start = 0;
         long end = 0;
         if (page != 1) {
@@ -2582,7 +2482,7 @@ public class Database {
      *
      * @return Die Daten
      */
-    protected TreeMap<Long, Object[]> getBoards(long cat) {
+    public TreeMap<Long, Object[]> getBoards(long cat) {
         TreeMap<Long, Object[]> map = new TreeMap<>();
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -2619,7 +2519,7 @@ public class Database {
      * @param field Das Feld zum abfragen
      * @return Die Daten
      */
-    protected String getBoardCat(long id, String field) {
+    public String getBoardCat(long id, String field) {
         String dat = null;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -2647,7 +2547,7 @@ public class Database {
      * @param field Das Feld zum abfragen
      * @return Die Daten
      */
-    protected TreeMap<String, String> getData(String field) {
+    public TreeMap<String, String> getData(String field) {
         String dat = null;
         TreeMap<String, String> map = new TreeMap<>();
         try {
@@ -2781,7 +2681,7 @@ public class Database {
      * @param field Das Feld zum abfragen
      * @return Daten als Long
      */
-    protected Long getLongData(String nick, String field) {
+    public Long getLongData(String nick, String field) {
         long dat = -1;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -2850,7 +2750,7 @@ public class Database {
      * @param room Der Raum
      * @return Exisitiert der Raum?
      */
-    protected boolean ownerExists(String name) {
+    public boolean ownerExists(String name) {
         // 06.08.10 Hier: Fortsetzung des SQL-Injection-Schutzes durchf&uuml;hren...
         // 07.08.10 Erledigt
 
@@ -2881,7 +2781,7 @@ public class Database {
      * @param room Der Raum
      * @return Exisitiert der Raum?
      */
-    protected boolean roomExists(String room) {
+    public boolean roomExists(String room) {
         // 06.08.10 Hier: Fortsetzung des SQL-Injection-Schutzes durchf&uuml;hren...
         // 07.08.10 Erledigt
 
@@ -2913,7 +2813,7 @@ public class Database {
      * @param field Das Feld
      * @return Die Raumdaten
      */
-    protected String getRoomData(String room, String field) {
+    public String getRoomData(String room, String field) {
         String dat = null;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -2940,7 +2840,7 @@ public class Database {
      * @param field Das Feld
      * @return Die Raumdaten
      */
-    protected String getRoomNameByOwner(String nick) {
+    public String getRoomNameByOwner(String nick) {
         String dat = null;
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
@@ -3300,7 +3200,7 @@ public class Database {
      *
      * @return Die Profil-Parameter
      */
-    protected TreeMap<String, String> getProfile() {
+    public TreeMap<String, String> getProfile() {
         return profile;
     }
 
@@ -3320,7 +3220,7 @@ public class Database {
      *
      * @return Die Profil-Parameter (en)
      */
-    protected TreeMap<String, String> getProfileEn() {
+    public TreeMap<String, String> getProfileEn() {
         return profile_en;
     }
 
@@ -3431,7 +3331,7 @@ public class Database {
         }
     }
 
-    protected void addGuestbookEntry(String owner, String sender, String text) {
+    public void addGuestbookEntry(String owner, String sender, String text) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();
@@ -3448,7 +3348,7 @@ public class Database {
         }
     }
 
-    protected ArrayList<String[]> getGuestbook(String owner) {
+    public ArrayList<String[]> getGuestbook(String owner) {
         var ut = getMaster().getUtil();
         var list = new ArrayList<String[]>();
         try {
@@ -3482,7 +3382,7 @@ public class Database {
         return list;
     }
 
-    protected void deleteGuestbookEntry(int id, String owner) {
+    public void deleteGuestbookEntry(int id, String owner) {
         try {
             if (getCon() == null || !getCon().isValid(1000)) {
                 connectDatabase();

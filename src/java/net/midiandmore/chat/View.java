@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
  * can be nested: a view used as the value of another view sees the values of
  * the surrounding views as well.
  */
-final class View implements CharSequence {
+public final class View implements CharSequence {
 
     private static final ThreadLocal<ArrayDeque<View>> ACTIVE = ThreadLocal.withInitial(ArrayDeque::new);
     private static final AtomicLong VERSION = new AtomicLong();
@@ -51,7 +51,7 @@ final class View implements CharSequence {
     /**
      * A view that renders to the given text.
      */
-    static View of(String text) {
+    public static View of(String text) {
         var view = new View("literal", "", "de", null);
         view.rendered = text == null ? "" : text;
         view.renderedVersion = Long.MAX_VALUE;
@@ -75,7 +75,7 @@ final class View implements CharSequence {
      *
      * @return this view
      */
-    View set(String key, Object value) {
+    public View set(String key, Object value) {
         values.put(key, value instanceof Number ? String.valueOf(value) : value);
         VERSION.incrementAndGet();
         return this;
@@ -167,7 +167,7 @@ final class View implements CharSequence {
      * <code>%com[name]%</code> tokens in strings that come from the JSON
      * configured text and fixed path definitions.
      */
-    String expand(String text) {
+    public String expand(String text) {
         if (text == null) {
             return "";
         }

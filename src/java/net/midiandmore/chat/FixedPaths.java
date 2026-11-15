@@ -19,18 +19,19 @@ final class FixedPaths {
             Map.entry("captcha", "%path_base%/captcha.jsp?cid=%reg_cid%&skin=%skin%"),
             Map.entry("chat_start", "%path_hwebchat%?page=%path_chat_start%&skin=%skin%&skin=%skin%"),
             Map.entry("clear_chat_window", "%path_hwebchat%?page=%path_input%&msg=/c&skin=%skin%"),
-            Map.entry("config_chat", "%path_base%/console.jsp?skin=%skin%&service=chat"),
-            Map.entry("config_cmd", "%path_base%/console.jsp?skin=%skin%&service=cmd"),
-            Map.entry("config_cmdrights", "%path_base%/console.jsp?skin=%skin%&service=cmdrights"),
-            Map.entry("config_emot", "%path_base%/console.jsp?skin=%skin%&service=emot"),
-            Map.entry("config_fun", "%path_base%/console.jsp?skin=%skin%&service=fun"),
-            Map.entry("config_help", "%path_base%/console.jsp?skin=%skin%&service=help"),
-            Map.entry("config_host", "%path_base%/console.jsp?skin=%skin%&service=host"),
-            Map.entry("config_index", "%path_base%/console.jsp?skin=%skin%"),
-            Map.entry("config_mail", "%path_base%/console.jsp?skin=%skin%&service=mail"),
-            Map.entry("config_mime", "%path_base%/console.jsp?skin=%skin%&service=mime"),
-            Map.entry("config_rooms", "%path_base%/console.jsp?skin=%skin%&service=room"),
-            Map.entry("config_users", "%path_base%/console.jsp?skin=%skin%&service=users"),
+            Map.entry("config_chat", "%path_console%?skin=%skin%&service=chat"),
+            Map.entry("config_cmd", "%path_console%?skin=%skin%&service=cmd"),
+            Map.entry("config_cmdrights", "%path_console%?skin=%skin%&service=cmdrights"),
+            Map.entry("config_emot", "%path_console%?skin=%skin%&service=emot"),
+            Map.entry("config_fun", "%path_console%?skin=%skin%&service=fun"),
+            Map.entry("config_help", "%path_console%?skin=%skin%&service=help"),
+            Map.entry("config_host", "%path_console%?skin=%skin%&service=host"),
+            Map.entry("config_index", "%path_console%?skin=%skin%"),
+            Map.entry("config_news", "%path_console%?service=news"),
+            Map.entry("config_mail", "%path_console%?skin=%skin%&service=mail"),
+            Map.entry("config_mime", "%path_console%?skin=%skin%&service=mime"),
+            Map.entry("config_rooms", "%path_console%?skin=%skin%&service=room"),
+            Map.entry("config_users", "%path_console%?skin=%skin%&service=users"),
             Map.entry("dataprotection", "%path_base%/content/dataprotection.jsp?skin=%skin%"),
             Map.entry("emot", "%path_base%/emot.jsp?skin=%skin%"),
             Map.entry("file", "%path_file%"),
@@ -126,7 +127,36 @@ final class FixedPaths {
             Map.entry("whois_chat", "%path_hwebchat%?page=%path_input%&msg=/wc&skin=%skin%")
     );
 
+    /** Default path of the admin console, relative to the context. */
+    static final String DEFAULT_CONSOLE_PATH = "console.jsp";
+
+    private static final Pattern CONSOLE_PATH = Pattern.compile("[A-Za-z0-9_.-]+(/[A-Za-z0-9_.-]+)*");
+
+    /**
+     * Normalizes the configured path of the admin console.
+     *
+     * @param configured the configured value (may start with a slash)
+     * @return the path without leading slash, or the default if the value is empty or not usable
+     */
+    static String consolePath(String configured) {
+        if (configured == null) {
+            return DEFAULT_CONSOLE_PATH;
+        }
+        var path = configured.strip();
+        while (path.startsWith("/")) {
+            path = path.substring(1);
+        }
+        if (!CONSOLE_PATH.matcher(path).matches() || path.contains("..")) {
+            return DEFAULT_CONSOLE_PATH;
+        }
+        return path;
+    }
+
     static Map<String, String> placeholders(String contextPath) {
+        return placeholders(contextPath, DEFAULT_CONSOLE_PATH);
+    }
+
+    static Map<String, String> placeholders(String contextPath, String consolePath) {
         return Map.ofEntries(
                 Map.entry("path_account", "account"),
                 Map.entry("path_account_com", "account_com"),
@@ -148,6 +178,7 @@ final class FixedPaths {
                 Map.entry("path_webchat", "webchat_stats"),
                 Map.entry("path_login_chat", "login_chat"),
                 Map.entry("path_console_index", "console"),
+                Map.entry("path_console", contextPath + "/" + consolePath),
                 Map.entry("path_board", "board"),
                 Map.entry("path_stats", "stats"),
                 Map.entry("path_chat", contextPath + "/Chat"),

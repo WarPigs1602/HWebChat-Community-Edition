@@ -1,7 +1,86 @@
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" session="false" %>
-<%@ include file="/WEB-INF/jsp/includes/lang.jspf" %>
-<% response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR); %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" session="false"
+         import="java.io.PrintWriter, java.io.StringWriter" %><%@ taglib prefix="c" uri="jakarta.tags.core" %><%@ taglib prefix="fn" uri="jakarta.tags.functions" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><c:choose><c:when test="${not empty cookie.lang.value}"><c:set var="requestedLang" value="${cookie.lang.value}"/></c:when><c:when test="${not empty param.lang}"><c:set var="requestedLang" value="${param.lang}"/></c:when><c:when test="${fn:startsWith(fn:toLowerCase(header['Accept-Language']), 'de')}"><c:set var="requestedLang" value="de"/></c:when><c:otherwise><c:set var="requestedLang" value="en"/></c:otherwise></c:choose><c:set var="lang" value="${fn:toLowerCase(requestedLang) eq 'de' ? 'de' : 'en'}" scope="request"/><fmt:setLocale value="${lang}" scope="request"/><fmt:setBundle basename="i18n.messages" scope="request"/>
+<%
+    response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+    response.setHeader("Cache-Control", "no-store");
+    Object error = request.getAttribute("jakarta.servlet.error.exception");
+    if (Boolean.getBoolean("hwebchat.showStackTrace") && error instanceof Throwable throwable) {
+        StringWriter trace = new StringWriter();
+        throwable.printStackTrace(new PrintWriter(trace));
+        pageContext.setAttribute("errorStackTrace", trace.toString());
+    }
+%>
 <c:set var="errorTitleKey" value="web.error500.title"/>
 <c:set var="errorHeadingKey" value="web.error500.heading"/>
 <c:set var="errorTextKey" value="web.error500.text"/>
-<%@ include file="/WEB-INF/jsp/includes/error-page.jspf" %>
+<!DOCTYPE html>
+<html lang="${lang}" data-theme="${cookie.theme.value eq 'dark' ? 'dark' : 'light'}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HWebChat - <fmt:message key="${errorTitleKey}"/></title>
+  <link rel="stylesheet" href="<c:url value="/file/bootstrap/css/bootstrap.min.css"/>">
+  <style>
+    :root {
+      --text: #212529;
+      --border: #dee2e6;
+      --surface: #fff;
+      --background: linear-gradient(180deg, #e9eef5 0%, #f0f2f5 40%, #eef1f6 100%);
+      --shadow: 0 0.25rem 0.75rem rgba(33, 37, 41, 0.08);
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --text: #e5e7eb;
+      --border: #374151;
+      --surface: #1f2937;
+      --background: linear-gradient(180deg, #0b1220 0%, #111827 40%, #111827 100%);
+      --shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.25);
+    }
+    body {
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--background);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    .navbar {
+      min-height: 56px;
+      padding: 0.35rem clamp(0.75rem, 2vw, 1.5rem);
+      border-bottom: 1px solid rgba(148, 163, 184, 0.28);
+      box-shadow: 0 6px 20px rgba(15, 23, 42, 0.18);
+    }
+    .navbar-brand img { height: 34px; }
+    #pagecontent {
+      width: min(1100px, calc(100% - 2rem));
+      margin: 1.5rem auto;
+      padding: 1.5rem;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      box-shadow: var(--shadow);
+    }
+    @media (max-width: 767.98px) {
+      #pagecontent { width: calc(100% - 1rem); padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark bg-dark">
+    <a class="navbar-brand" href="<c:url value="/"/>">
+      <img src="<c:url value="/file/gfx/logo.svg"/>" alt="HWebChat">
+    </a>
+  </nav>
+  <main id="pagecontent" class="container-fluid">
+    <h1><fmt:message key="${errorTitleKey}"/></h1>
+    <h2 class="h4"><fmt:message key="${errorHeadingKey}"/></h2>
+    <p><fmt:message key="${errorTextKey}"/></p>
+    <c:if test="${not empty pageScope.errorStackTrace}">
+      <details>
+        <summary><fmt:message key="web.error500.stacktrace"/></summary>
+        <pre style="white-space: pre-wrap; overflow-wrap: anywhere"><c:out value="${pageScope.errorStackTrace}"/></pre>
+      </details>
+    </c:if>
+    <a class="btn btn-primary" href="<c:url value="/"/>"><fmt:message key="web.error404.back"/></a>
+  </main>
+</body>
+</html>

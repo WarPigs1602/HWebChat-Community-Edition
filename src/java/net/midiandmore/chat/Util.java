@@ -167,7 +167,7 @@ public final class Util implements Software {
      * @param time Vorgegebene Uhrzeit in Millisekunden
      * @return
      */
-    protected String getTime(long time) {
+    public String getTime(long time) {
         var conf = Bootstrap.boot.getConfig();
         var db = conf.getDb();
         var dt = new Date(time);
@@ -260,7 +260,7 @@ public final class Util implements Software {
         return timeArray;
     }
 
-    protected String createRandomColor() {
+    public String createRandomColor() {
         var conf = Bootstrap.boot.getConfig();
         var blocked = new String[6];
         for (var i = 0; i < 6; i++) {
@@ -356,7 +356,7 @@ public final class Util implements Software {
      * @param e Die Exception
      * @return
      */
-    protected String getStackTrace(Exception e) {
+    public String getStackTrace(Exception e) {
         var sb = new StringBuilder();
         var ste = e.getStackTrace();
         for (var st : ste) {
@@ -396,7 +396,7 @@ public final class Util implements Software {
      * @param value Der Text zum parsen
      * @return
      */
-    protected String removeBb(String value) {
+    public String removeBb(String value) {
         value = value.replaceAll("\\[b\\](.*?)\\[\\/b\\]", "$1");
         value = value.replaceAll("\\[i\\](.*?)\\[\\/i\\]", "$1");
         value = value.replaceAll("\\[u\\](.*?)\\[\\/u\\]", "$1");
@@ -434,7 +434,7 @@ public final class Util implements Software {
      * @param value Der Text zum parsen
      * @return
      */
-    protected String parseBb(String value) {
+    public String parseBb(String value) {
         var conf = Bootstrap.boot.getConfig();
         value = value.replace("\n", "<br>\n");
         value = value.replaceAll("\\[b\\](.*?)\\[\\/b\\]", "<b>$1</b>");
@@ -471,7 +471,7 @@ public final class Util implements Software {
      * @param value Der Text zum parsen
      * @return
      */
-    protected String parseHtml(String value) {
+    public String parseHtml(String value) {
         value = StringEscapeUtils.escapeHtml4(value);
         return value.replace("\\/", "/");
     }
@@ -482,7 +482,7 @@ public final class Util implements Software {
      * @param value Der Text zum parsen
      * @return
      */
-    protected String parseHtmlReverse(String value) {
+    public String parseHtmlReverse(String value) {
         if (value.contains("&lt;")) {
             value = value.replace("&lt;", "<");
         }
@@ -731,7 +731,7 @@ public final class Util implements Software {
      * @return
      */
     protected String replaceFilePaths(String text) {
-        for (var entry : FixedPaths.placeholders(Web.contextPath()).entrySet()) {
+        for (var entry : FixedPaths.placeholders(Web.contextPath(), Web.consolePath()).entrySet()) {
             text = text.replace("%" + entry.getKey() + "%", entry.getValue());
         }
         return text;
@@ -771,7 +771,7 @@ public final class Util implements Software {
      * @param year Jahr
      * @return
      */
-    protected int getAge(String day, String month, String year) {
+    public int getAge(String day, String month, String year) {
         var format = new SimpleDateFormat("d.M.yyyy");
         format.setLenient(false);
         var sb = new StringBuilder();
@@ -863,7 +863,7 @@ public final class Util implements Software {
      * @param year Jahr
      * @return
      */
-    protected boolean isValidDate(String day, String month, String year) {
+    public boolean isValidDate(String day, String month, String year) {
         var format = new SimpleDateFormat("d.M.yyyy");
         format.setLenient(false);
         var sb = new StringBuilder();
@@ -959,7 +959,7 @@ public final class Util implements Software {
      * @param data der Text
      * @param out Die Output KLasse
      */
-    protected void submitContent(CharSequence data, HttpServletResponse out) {
+    public void submitContent(CharSequence data, HttpServletResponse out) {
         try {
 
             var pw = out.getWriter();
@@ -1049,7 +1049,7 @@ public final class Util implements Software {
      * @param request
      * @return
      */
-    protected String[] parseHost(String skin, HttpServletRequest request) {
+    public String[] parseHost(String skin, HttpServletRequest request) {
         var conf = Bootstrap.boot.getConfig();
         var db = conf.getDb();
         var host = request.getHeader("host");
@@ -1187,7 +1187,7 @@ public final class Util implements Software {
      * @param gender Das Geschlecht
      * @return
      */
-    protected View parseGender(View view, String gender) {
+    public View parseGender(View view, String gender) {
         return view.set("selected_no", gender.equals("m") || gender.equals("f") ? "" : " selected")
                 .set("selected_male", gender.equals("m") ? " selected" : "")
                 .set("selected_female", gender.equals("f") ? " selected" : "");
