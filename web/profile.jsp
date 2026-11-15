@@ -3,7 +3,8 @@
     private static final Pattern TOKEN = Pattern.compile("%(?:PATH_\\[([^\\]%]+)\\]|com\\[([^\\]%]+)\\]|([A-Za-z_][A-Za-z0-9_]*))%");
 
     private static String lookupMap(HttpServletRequest request, String map, String key) {
-        return request.getAttribute(map) instanceof Map<?, ?> values && values.get(key) != null ? String.valueOf(values.get(key)) : null;
+        Object values = request.getAttribute(map);
+        return values instanceof Map<?, ?> && ((Map<?, ?>) values).get(key) != null ? String.valueOf(((Map<?, ?>) values).get(key)) : null;
     }
 
     /** Resolves the %name%, %PATH_[name]% and %com[name]% tokens of the configured profile texts. */
@@ -12,17 +13,17 @@
             return "";
         }
         for (int pass = 0; pass < 6 && text.indexOf('%') >= 0; pass++) {
-            var legacy = LEGACY_QUERY.matcher(text);
-            var normalized = new StringBuilder();
+            Matcher legacy = LEGACY_QUERY.matcher(text);
+            StringBuilder normalized = new StringBuilder();
             while (legacy.find()) {
-                var path = lookupMap(request, "paths", legacy.group(2));
-                var replacement = path != null && !path.contains("?") ? legacy.group(1) + "?" : legacy.group();
+                String path = lookupMap(request, "paths", legacy.group(2));
+                String replacement = path != null && !path.contains("?") ? legacy.group(1) + "?" : legacy.group();
                 legacy.appendReplacement(normalized, Matcher.quoteReplacement(replacement));
             }
             legacy.appendTail(normalized);
             text = normalized.toString();
-            var matcher = TOKEN.matcher(text);
-            var sb = new StringBuilder();
+            Matcher matcher = TOKEN.matcher(text);
+            StringBuilder sb = new StringBuilder();
             boolean changed = false;
             while (matcher.find()) {
                 String replacement;
@@ -68,30 +69,30 @@
         return;
     }
     Map<String, String> map = Web.requestValues(request);
-        var user = map.getOrDefault("user", "");
-        var conf = Bootstrap.getBoot().getConfig();
-        var cm = Bootstrap.getBoot().getChatManager();
-        var ut = Bootstrap.getBoot().getUtil();
-        var sid = map.getOrDefault("sid", "");
-        var skin = map.getOrDefault("skin", "");
-        var owner = map.getOrDefault("owner", "");
+        String user = map.getOrDefault("user", "");
+        Config conf = Bootstrap.getBoot().getConfig();
+        ChatManager cm = Bootstrap.getBoot().getChatManager();
+        Util ut = Bootstrap.getBoot().getUtil();
+        String sid = map.getOrDefault("sid", "");
+        String skin = map.getOrDefault("skin", "");
+        String owner = map.getOrDefault("owner", "");
         skin = ut.parseHost(skin, request)[1];
-        var db = conf.getDb();
-        var reg = db.isRegistered(user);
-        var view = "";
+        Database db = conf.getDb();
+        boolean reg = db.isRegistered(user);
+        String view = "";
         String failure = null;
-        var session = request.getSession(false);
+        HttpSession session = request.getSession(false);
         sid = session != null ? (String) session.getAttribute("sid") : null;
         sid = sid != null ? sid : map.getOrDefault("sid", "");
-        var nick = session != null ? (String) session.getAttribute("nick") : null;
+        String nick = session != null ? (String) session.getAttribute("nick") : null;
         nick = nick != null ? nick : map.getOrDefault("nick", "");
-        var roomName = "";
+        String roomName = "";
         if (!owner.isBlank()) {
             roomName = db.getRoomNameByOwner(owner.toLowerCase());
         }
         if (!map.getOrDefault("guestbook", "").isBlank() && sid != null && cm.isValidConnectionId(sid)) {
-            var gbNick = cm.getNameFromId(sid);
-            var gbText = map.getOrDefault("guestbook_text", "").trim();
+            String gbNick = cm.getNameFromId(sid);
+            String gbText = map.getOrDefault("guestbook_text", "").trim();
             if (!gbText.isEmpty() && gbText.length() <= 1024) {
                 db.addGuestbookEntry(user, gbNick, gbText);
             }
@@ -109,21 +110,21 @@
             view = "unregistered";
         } else {
             try {
-                var lang = (String) request.getAttribute("lang");
-                var texts = lang != null && lang.equalsIgnoreCase("en") && db.getProfileEn() != null
+                String lang = (String) request.getAttribute("lang");
+                Map<String, String> texts = lang != null && lang.equalsIgnoreCase("en") && db.getProfileEn() != null
                         ? db.getProfileEn()
                         : db.getProfile();
-                var labels = new HashMap<String, String>();
-                var fields = new HashMap<String, String>();
-                var buf = db.getData(user, "city");
+                Map<String, String> labels = new HashMap<String, String>();
+                Map<String, String> fields = new HashMap<String, String>();
+                String buf = db.getData(user, "city");
                 fields.put("city", buf != null && !buf.equals("") ? buf : texts.getOrDefault("unknown", ""));
-                var stat = db.getLongData(user, "status").intValue();
-                var level = stat >= 10 ? 10 : stat >= 2 ? stat : 1;
+                int stat = db.getLongData(user, "status").intValue();
+                int level = stat >= 10 ? 10 : stat >= 2 ? stat : 1;
                 addField(labels, fields, texts, "status", "status",
                         Bootstrap.getBoot().getChatManager().getCommand(nick, "status_" + level));
                 addField(labels, fields, texts, "icq", "icq",
                         db.getLongData(user, "icq") != 0 ? db.getData(user, "icq") : null);
-                var plain = new String[][]{
+                String[][] plain = new String[][]{
                     {"homepage", "homepage", "homepage"}, {"hobby", "hobby", "hobby"},
                     {"description", "description", "description"}, {"slogan", "slogan", "slogan"},
                     {"signature", "signature", "signature"}, {"live", "skype", "live"},
@@ -138,10 +139,10 @@
                     {"visitors", "last_visitor", "visitors"}, {"fam_status", "fam_status", "fam_status"},
                     {"image_url", "image", "image_url"}
                 };
-                for (var field : plain) {
+                for (String[] field : plain) {
                     addField(labels, fields, texts, field[1], field[2], db.getData(user, field[0]));
                 }
-                var sex = switch (db.getData(user, "sex")) {
+                String sex = switch (db.getData(user, "sex")) {
                     case "m" ->
                         texts.getOrDefault("gender_m", "");
                     case "f" ->
@@ -149,7 +150,7 @@
                     default ->
                         texts.getOrDefault("gender_n", "");
                 };
-                for (var label : labels.entrySet()) {
+                for (Map.Entry<String, String> label : labels.entrySet()) {
                     label.setValue(expand(label.getValue(), fields, request));
                 }
                 request.setAttribute("profile", labels);
@@ -163,7 +164,7 @@
                 request.setAttribute("bday_month", orEmpty(db.getData(user, "bday_month")));
                 request.setAttribute("bday_year", orEmpty(db.getData(user, "bday_year")));
                 request.setAttribute("color", orEmpty(db.getData(user, "color")));
-                var isOwner = nick.equalsIgnoreCase(user);
+                boolean isOwner = nick.equalsIgnoreCase(user);
                 request.setAttribute("gbEntries", db.getGuestbook(user));
                 request.setAttribute("gbOwner", isOwner);
                 if (isOwner) {
