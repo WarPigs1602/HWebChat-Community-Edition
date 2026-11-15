@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" session="false" trimDirectiveWhitespaces="true" import="java.util.HashMap, java.util.Map, jakarta.servlet.http.HttpSession, net.midiandmore.chat.Web" %><%
+<%@ page contentType="text/html; charset=UTF-8" session="false" trimDirectiveWhitespaces="true" import="java.util.HashMap, java.util.Map, jakarta.servlet.http.HttpSession, net.midiandmore.chat.Web" %><%@ taglib prefix="c" uri="jakarta.tags.core" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><%@ taglib prefix="t" tagdir="/WEB-INF/tags" %><%
     Web.start(application);
     if (!Web.begin("page", request, response)) {
         return;
@@ -6,15 +6,17 @@
 
     Map<String, String> values = Web.requestValues(request);
     String nick = values.getOrDefault("nick", "");
+    nick = nick == null ? "" : nick.trim();
+    if (values.containsKey("nick")) {
+        values.put("nick", nick);
+    }
     String password = values.getOrDefault("pwd", "");
     String skin = values.getOrDefault("skin", "");
-    if (Web.isRegistered(nick)) {
+    if (!nick.isEmpty() && Web.isRegistered(nick)) {
         String registeredNick = Web.userData(nick, "nick2");
         if (!nick.equalsIgnoreCase(registeredNick)) {
             nick = registeredNick;
-            if (values.containsKey("nick")) {
-                values.put("nick", nick);
-            }
+            values.put("nick", nick);
         }
     }
 
@@ -36,25 +38,36 @@
 
     boolean online = false;
     if (!session.isNew()) {
-        nick = !nick.isBlank() ? nick : (String) session.getAttribute("nick");
+        if (nick.isEmpty()) {
+            String sessionNick = (String) session.getAttribute("nick");
+            nick = sessionNick == null ? "" : sessionNick.trim();
+        }
         online = true;
         password = !password.isBlank() ? password : (String) session.getAttribute("pwd");
         skin = !skin.isBlank() ? skin : (String) session.getAttribute("skin");
+    }
+    if (nick == null) {
+        nick = "";
     }
 
     boolean registered = Web.isRegistered(nick);
     String template = "";
     String reason = "";
-    if (session == null) {
-        template = "timeout";
-    } else if (nick == null || !nick.matches(Web.configValue("allowed_chars"))) {
+    boolean onlyRegistered = Web.configInt("only_registered_users") == 1;
+    boolean guestAllowed = Web.configInt("guest") == 1;
+    if (!nick.isEmpty() && !nick.matches(Web.configValue("allowed_chars"))) {
         template = "chars";
-    } else if (!online && nick.toLowerCase().startsWith(Web.configValue("guest_prefix").toLowerCase())) {
+    } else if (!online && !nick.isEmpty()
+            && nick.toLowerCase().startsWith(Web.configValue("guest_prefix").toLowerCase())) {
         template = "guest";
-    } else if (Web.configInt("guest") == 1 && !nick.isEmpty()
+    } else if (!registered && onlyRegistered && !(nick.isEmpty() && guestAllowed)) {
+        template = "reg";
+    } else if (nick.isEmpty() && !guestAllowed) {
+        template = "chars";
+    } else if (!nick.isEmpty() && guestAllowed
             && nick.length() < Web.configInt("min_nick_length")) {
         template = "nick";
-    } else if (Web.isCommandNick(nick)) {
+    } else if (!nick.isEmpty() && Web.isCommandNick(nick)) {
         template = "command";
     } else if (registered && !Web.checkPassword(nick, password)) {
         template = "pwd";
@@ -91,9 +104,6 @@
         } else if (Web.isTimedBanned(forwardedAddress) && ignoredBans) {
             template = "banned_temp";
             reason = Web.timedBanReason(forwardedAddress);
-        } else if (!registered && Web.configInt("guest") == 1 && !nick.isEmpty()
-                && Web.configInt("only_registered_users") == 1) {
-            template = "reg";
         }
     }
 

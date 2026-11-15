@@ -345,7 +345,7 @@
                 tpl = "nick_napping";
             } else if (!roomName.isBlank() && isCommandNick(nick)) {
                 tpl = "command_napping";
-            } else if (!roomName.isBlank() && !reg && !db.checkPassword(nick, pwd)) {
+            } else if (!roomName.isBlank() && reg && !db.checkPassword(nick, pwd)) {
                 tpl = "pwd_napping";
             } else if (!roomName.isBlank() && db.isBanned(nick) && (!reg || (reg && Integer.valueOf(db.getData(nick, "status")) < conf.getInt("ignore_ban_status")))) {
                 request.setAttribute("reason", db.getBanReason(nick));
