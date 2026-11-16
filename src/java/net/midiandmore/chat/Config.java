@@ -562,6 +562,11 @@ public final class Config {
         return getP().getProperty(key);
     }
 
+    public String getChatName() {
+        var name = getString("chat_name");
+        return name == null || name.isBlank() ? Software.SERVER_SOFTWARE : name.trim();
+    }
+
     /**
      * Liefert einen Konfigurationsparameter als Integer aus
      *

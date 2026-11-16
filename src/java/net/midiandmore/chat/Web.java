@@ -169,7 +169,8 @@ public final class Web {
         var articles = new ArrayList<Map<String, Object>>();
         for (var article : repository.list()) {
             articles.add(Map.of("title", article.title(), "author", article.author(),
-                    "published", formatTime(article.published()), "body", article.body()));
+                    "published", formatTime(article.published()),
+                    "body", Bootstrap.boot.getUtil().parseBb(Bootstrap.boot.getUtil().parseHtml(article.body()))));
         }
         return articles;
     }

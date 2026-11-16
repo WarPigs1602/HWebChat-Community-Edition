@@ -397,18 +397,30 @@ public final class Util implements Software {
      * @return
      */
     public String removeBb(String value) {
-        value = value.replaceAll("\\[b\\](.*?)\\[\\/b\\]", "$1");
-        value = value.replaceAll("\\[i\\](.*?)\\[\\/i\\]", "$1");
-        value = value.replaceAll("\\[u\\](.*?)\\[\\/u\\]", "$1");
-        value = value.replaceAll("\\[s\\](.*?)\\[\\/s\\]", "$1");
-        value = value.replaceAll("\\[center\\](.*?)\\[\\/center\\]", "$1");
-        value = value.replaceAll("\\[quote\\](.*?)\\[\\/quote\\]", "$1");
-        value = value.replaceAll("\\[code\\](.*?)\\[\\/code\\]", "$1");
-        value = value.replaceAll("\\[color=(.*?)\\](.*?)\\[\\/color\\]", "$2");
-        value = value.replaceAll("\\[url=(.*?)\\](.*?)\\[\\/url\\]", "$1");
-        value = value.replaceAll("\\[url=\\](.*?)\\[\\/url\\]", "$1");
-        value = value.replaceAll("\\[img\\](.*?)\\[\\/img\\]", "");
-        value = value.replaceAll("\\[email\\](.*?)\\[\\/email\\]", "$1");
+        if (value == null) return "";
+        value = value.replaceAll("(?is)\\[b\\](.*?)\\[/b\\]", "$1");
+        value = value.replaceAll("(?is)\\[i\\](.*?)\\[/i\\]", "$1");
+        value = value.replaceAll("(?is)\\[u\\](.*?)\\[/u\\]", "$1");
+        value = value.replaceAll("(?is)\\[s\\](.*?)\\[/s\\]", "$1");
+        value = value.replaceAll("(?is)\\[sup\\](.*?)\\[/sup\\]", "$1");
+        value = value.replaceAll("(?is)\\[sub\\](.*?)\\[/sub\\]", "$1");
+        value = value.replaceAll("(?is)\\[center\\](.*?)\\[/center\\]", "$1");
+        value = value.replaceAll("(?is)\\[left\\](.*?)\\[/left\\]", "$1");
+        value = value.replaceAll("(?is)\\[right\\](.*?)\\[/right\\]", "$1");
+        value = value.replaceAll("(?is)\\[justify\\](.*?)\\[/justify\\]", "$1");
+        value = value.replaceAll("(?is)\\[quote(?:=[^\\]]*)?\\](.*?)\\[/quote\\]", "$1");
+        value = value.replaceAll("(?is)\\[spoiler(?:=[^\\]]*)?\\](.*?)\\[/spoiler\\]", "$1");
+        value = value.replaceAll("(?is)\\[code\\](.*?)\\[/code\\]", "$1");
+        value = value.replaceAll("(?is)\\[color=[^\\]]*\\](.*?)\\[/color\\]", "$1");
+        value = value.replaceAll("(?is)\\[size=[^\\]]*\\](.*?)\\[/size\\]", "$1");
+        value = value.replaceAll("(?is)\\[url=([^\\]]*)\\](.*?)\\[/url\\]", "$2");
+        value = value.replaceAll("(?is)\\[url\\](.*?)\\[/url\\]", "$1");
+        value = value.replaceAll("(?is)\\[img\\](.*?)\\[/img\\]", "");
+        value = value.replaceAll("(?is)\\[email\\](.*?)\\[/email\\]", "$1");
+        value = value.replaceAll("(?is)\\[list(?:=[^\\]]*)?\\](.*?)\\[/list\\]", "$1");
+        value = value.replaceAll("(?i)\\[\\*\\]", "");
+        value = value.replaceAll("(?i)\\[hr\\]", "");
+        value = value.replaceAll("(?is)\\[[^\\]]+\\]", "");
         return value;
     }
 
@@ -435,21 +447,53 @@ public final class Util implements Software {
      * @return
      */
     public String parseBb(String value) {
-        var conf = Bootstrap.boot.getConfig();
+        if (value == null) return "";
+        value = value.replace("\r\n", "\n").replace("\r", "\n");
+        // protect [code] blocks
+        var codes = new java.util.ArrayList<String>();
+        var m = java.util.regex.Pattern.compile("(?is)\\[code\\](.*?)\\[/code\\]").matcher(value);
+        var sb = new StringBuffer();
+        while (m.find()) {
+            codes.add(m.group(1));
+            m.appendReplacement(sb, "%%BBCODE" + (codes.size() - 1) + "%%");
+        }
+        m.appendTail(sb);
+        value = sb.toString();
         value = value.replace("\n", "<br>\n");
-        value = value.replaceAll("\\[b\\](.*?)\\[\\/b\\]", "<b>$1</b>");
-        value = value.replaceAll("\\[i\\](.*?)\\[\\/i\\]", "<i>$1</i>");
-        value = value.replaceAll("\\[u\\](.*?)\\[\\/u\\]", "<span style=\"text-decoration:underline;\">$1</span>");
-        value = value.replaceAll("\\[s\\](.*?)\\[\\/s\\]", "<span style=\"text-decoration:line-trough;\">$1</span>");
-        value = value.replaceAll("\\[center\\](.*?)\\[\\/center\\]", "<p style=\"text-align:center;\">$1</p>");
-        value = value.replaceAll("\\[quote\\](.*?)\\[\\/quote\\]", "<blockquote>$1</blockquote>");
-        value = value.replaceAll("\\[code\\](.*?)\\[\\/code\\]", "<pre>$1</pre>");
-        value = value.replaceAll("\\[color=(.*?)\\](.*?)\\[\\/color\\]", "<span style=\"color: #$1\">$2</span>");
-        value = value.replaceAll("\\[url=(.*?)\\](.*?)\\[\\/url\\]", "<a href=\"" + Web.contextPath() + "/link.jsp?url=$1\" target=\"_blank\">$2</a>");
-        value = value.replaceAll("\\[url\\](.*?)\\[\\/url\\]", "<a href=\"" + Web.contextPath() + "/link.jsp?url=$1\" target=\"_blank\">$1</a>");
-        value = value.replaceAll("\\[img\\](.*?)\\[\\/img\\]", "<img src=\"$1\" alt=\"Bild\" class=\"img-fluid\">");
-        value = value.replaceAll("\\[email\\](.*?)\\[\\/email\\]", "<a href=\"mailto:$1\">$1</a>");
-        value = value.replaceAll("\\[(.*?)\\](.*?)\\[\\/(.*?)\\]", "$2");
+        for (int i = 0; i < 3; i++) {
+            value = value.replaceAll("(?is)\\[b\\](.*?)\\[/b\\]", "<strong>$1</strong>");
+            value = value.replaceAll("(?is)\\[i\\](.*?)\\[/i\\]", "<em>$1</em>");
+            value = value.replaceAll("(?is)\\[u\\](.*?)\\[/u\\]", "<span style=\"text-decoration:underline\">$1</span>");
+            value = value.replaceAll("(?is)\\[s\\](.*?)\\[/s\\]", "<span style=\"text-decoration:line-through\">$1</span>");
+            value = value.replaceAll("(?is)\\[sup\\](.*?)\\[/sup\\]", "<sup>$1</sup>");
+            value = value.replaceAll("(?is)\\[sub\\](.*?)\\[/sub\\]", "<sub>$1</sub>");
+            value = value.replaceAll("(?is)\\[center\\](.*?)\\[/center\\]", "<div style=\"text-align:center\">$1</div>");
+            value = value.replaceAll("(?is)\\[left\\](.*?)\\[/left\\]", "<div style=\"text-align:left\">$1</div>");
+            value = value.replaceAll("(?is)\\[right\\](.*?)\\[/right\\]", "<div style=\"text-align:right\">$1</div>");
+            value = value.replaceAll("(?is)\\[justify\\](.*?)\\[/justify\\]", "<div style=\"text-align:justify\">$1</div>");
+            value = value.replaceAll("(?is)\\[quote=([^\\]\\n<>]{1,80})\\](.*?)\\[/quote\\]", "<blockquote class=\"bb-quote\"><div class=\"bb-quote-author\">$1</div>$2</blockquote>");
+            value = value.replaceAll("(?is)\\[quote\\](.*?)\\[/quote\\]", "<blockquote class=\"bb-quote\">$1</blockquote>");
+            value = value.replaceAll("(?is)\\[spoiler(?:=([^\\]\\n<>]{0,80}))?\\](.*?)\\[/spoiler\\]", "<details class=\"bb-spoiler\"><summary>$1</summary><div>$2</div></details>");
+            value = value.replaceAll("(?is)\\[color=#?([0-9a-fA-F]{3,8}|[a-zA-Z]{3,20})\\](.*?)\\[/color\\]", "<span style=\"color:$1\">$2</span>");
+            value = value.replaceAll("(?is)\\[size=(\\d{1,3})\\](.*?)\\[/size\\]", "<span style=\"font-size:$1px\">$2</span>");
+            value = value.replaceAll("(?is)\\[url=([^\\]\\s\"'<>]+)\\](.*?)\\[/url\\]", "<a href=\"" + Web.contextPath() + "/link.jsp?url=$1\" target=\"_blank\" rel=\"noopener noreferrer\">$2</a>");
+            value = value.replaceAll("(?is)\\[url\\]([^\\]\\s\"'<>]+)\\[/url\\]", "<a href=\"" + Web.contextPath() + "/link.jsp?url=$1\" target=\"_blank\" rel=\"noopener noreferrer\">$1</a>");
+            value = value.replaceAll("(?is)\\[img\\]([^\\]\\s\"'<>]+)\\[/img\\]", "<img src=\"$1\" alt=\"\" class=\"img-fluid\">");
+            value = value.replaceAll("(?is)\\[email\\]([^\\]\\s\"'<>]+)\\[/email\\]", "<a href=\"mailto:$1\">$1</a>");
+            value = value.replaceAll("(?is)\\[list\\](.*?)\\[/list\\]", "<ul class=\"bb-list\">$1</ul>");
+            value = value.replaceAll("(?is)\\[list=1\\](.*?)\\[/list\\]", "<ol class=\"bb-list\">$1</ol>");
+            value = value.replaceAll("(?is)\\[list=a\\](.*?)\\[/list\\]", "<ol class=\"bb-list\" style=\"list-style-type:lower-alpha\">$1</ol>");
+        }
+        value = value.replaceAll("(?i)\\[\\*\\]\\s*", "<li>");
+        value = value.replaceAll("(?i)<li>(.*?)(?=(<li>|</ul>|</ol>|$))", "<li>$1</li>");
+        value = value.replaceAll("(?i)\\[hr\\]", "<hr>");
+        value = value.replaceAll("(?i)<summary>\\s*</summary>", "<summary>Spoiler</summary>");
+        value = value.replaceAll("(?is)\\[([a-z0-9]+)(?:=[^\\]]*)?\\](.*?)\\[/\\1\\]", "$2");
+        value = value.replaceAll("(?i)\\[/?[a-z][a-z0-9]*(?:=[^\\]]*)?\\]", "");
+        for (int i = 0; i < codes.size(); i++) {
+            var c = codes.get(i).replace("<br>\n", "\n").replace("<br>", "\n");
+            value = value.replace("%%BBCODE" + i + "%%", "<pre class=\"bb-code\">" + c + "</pre>");
+        }
         return value;
     }
 
@@ -460,8 +504,8 @@ public final class Util implements Software {
      * @return
      */
     protected String parseBbChat(String value) {
+        if (value == null) return "";
         value = value.replace("\n", "<br>\n");
-        value = removeBb(value);
         return value;
     }
 

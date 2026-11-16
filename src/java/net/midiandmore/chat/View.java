@@ -226,8 +226,8 @@ public final class View implements CharSequence {
     private String notFound() {
         missing = true;
         return "<html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>Error: The requested "
-                + type + " '" + name + "' does not exist!</b></p><hr><address>" + Software.SERVER_SOFTWARE + " "
-                + Software.SERVER_VERSION + "-" + Software.SERVER_STATUS + "</address></body><html>";
+                + type + " '" + name + "' does not exist!</b></p><hr><address>" + Bootstrap.boot.getConfig().getChatName() + " "
+                + Software.SERVER_VERSION + "</address></body><html>";
     }
 
     boolean isMissing() {

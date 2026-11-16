@@ -117,7 +117,7 @@ public class ChatServices {
             response.setCharacterEncoding("UTF-8");
             var view = new View("system", "setup_required", setupLang(request), new java.util.HashMap<>());
             view.set("setup_url", request.getContextPath() + "/setup.jsp")
-                    .set("SERVER_SOFTWARE", Software.SERVER_SOFTWARE)
+                    .set("SERVER_SOFTWARE", Bootstrap.boot.getConfig().getChatName())
                     .set("SERVER_YEAR", Software.SERVER_YEAR)
                     .set("SERVER_VENDOR", Software.SERVER_VENDOR);
             response.getWriter().print(view);
@@ -630,7 +630,7 @@ public class ChatServices {
                         .set("homepage_news_title", org.owasp.encoder.Encode.forHtmlContent(article.title()))
                         .set("homepage_news_author", org.owasp.encoder.Encode.forHtmlContent(article.author()))
                         .set("homepage_news_published", org.owasp.encoder.Encode.forHtmlContent(util.getTime(article.published())))
-                        .set("homepage_news_body", org.owasp.encoder.Encode.forHtmlContent(article.body()))
+                        .set("homepage_news_body", util.parseBb(util.parseHtml(article.body())))
                         .set("homepage_news_url", org.owasp.encoder.Encode.forHtmlAttribute(
                                 request.getContextPath() + "/news.jsp"));
             } else {
@@ -724,8 +724,8 @@ public class ChatServices {
                         .append(org.owasp.encoder.Encode.forHtmlContent(article.title())).append("</h2><p class=\"text-muted\">")
                         .append(org.owasp.encoder.Encode.forHtmlContent(article.author())).append(" · ")
                         .append(org.owasp.encoder.Encode.forHtmlContent(util.getTime(article.published())))
-                        .append("</p><div style=\"white-space:pre-wrap\">")
-                        .append(org.owasp.encoder.Encode.forHtmlContent(article.body())).append("</div>");
+                        .append("</p><div class=\"news-body\">")
+                        .append(util.parseBb(util.parseHtml(article.body()))).append("</div>");
                 if (admin) {
                     content.append("<details class=\"mt-3\"><summary>").append(I18n.get(lang, "news.edit"))
                             .append("</summary>").append(newsForm(consoleUrl, token, article, lang)).append("</details>");
@@ -749,6 +749,7 @@ public class ChatServices {
 
     private String newsForm(String url, String token, NewsRepository.Article article, String lang) {
         boolean edit = article != null;
+        var id = edit ? ("news-body-" + article.id()) : "news-body-new";
         var html = new StringBuilder("<form method=\"post\" class=\"mb-4\" action=\"")
                 .append(org.owasp.encoder.Encode.forHtmlAttribute(url))
                 .append("\"><input type=\"hidden\" name=\"csrf\" value=\"").append(token)
@@ -756,12 +757,50 @@ public class ChatServices {
         if (edit) html.append("<input type=\"hidden\" name=\"id\" value=\"").append(article.id()).append("\">");
         html.append("<label>").append(I18n.get(lang, "news.form.title")).append("<input class=\"form-control\" name=\"title\" maxlength=\"200\" required value=\"")
                 .append(org.owasp.encoder.Encode.forHtmlAttribute(edit ? article.title() : "")).append("\"></label>")
-                .append("<label class=\"d-block\">").append(I18n.get(lang, "news.form.text"))
-                .append("<textarea class=\"form-control\" name=\"body\" maxlength=\"20000\" rows=\"5\" required>")
+                .append("<label class=\"d-block mt-2\">").append(I18n.get(lang, "news.form.text")).append("</label>")
+                .append("<div class=\"btn-toolbar mb-2 flex-wrap\" role=\"toolbar\">")
+                .append("<div class=\"btn-group btn-group-sm mr-2 mb-1\">")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsBB('").append(id).append("','b')\"><b>B</b></button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsBB('").append(id).append("','i')\"><i>I</i></button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsBB('").append(id).append("','u')\"><u>U</u></button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsBB('").append(id).append("','s')\"><s>S</s></button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsBB('").append(id).append("','sup')\">x²</button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsBB('").append(id).append("','sub')\">x₂</button>")
+                .append("</div><div class=\"btn-group btn-group-sm mr-2 mb-1\">")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsBB('").append(id).append("','left')\">L</button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsBB('").append(id).append("','center')\">C</button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsBB('").append(id).append("','right')\">R</button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsBB('").append(id).append("','justify')\">J</button>")
+                .append("</div><div class=\"btn-group btn-group-sm mr-2 mb-1\">")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsQuote('").append(id).append("')\">Quote</button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsBB('").append(id).append("','spoiler')\">Spoiler</button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsBB('").append(id).append("','code')\">Code</button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsTag('").append(id).append("','[list]\\n[*]','\\n[/list]')\">List</button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsTag('").append(id).append("','[list=1]\\n[*]','\\n[/list]')\">1.</button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsTag('").append(id).append("','[hr]','')\">HR</button>")
+                .append("</div><div class=\"btn-group btn-group-sm mb-1\">")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsBB('").append(id).append("','url')\">Link</button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsBB('").append(id).append("','img')\">IMG</button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsBB('").append(id).append("','email')\">Mail</button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsColor('").append(id).append("')\">Color</button>")
+                .append("<button type=\"button\" class=\"btn btn-outline-secondary\" onclick=\"insertNewsSize('").append(id).append("')\">Size</button>")
+                .append("</div></div>")
+                .append("<textarea id=\"").append(id).append("\" class=\"form-control\" name=\"body\" maxlength=\"20000\" rows=\"10\" required>")
                 .append(org.owasp.encoder.Encode.forHtmlContent(edit ? article.body() : ""))
-                .append("</textarea></label><button class=\"btn btn-primary\" type=\"submit\">")
+                .append("</textarea><button class=\"btn btn-primary mt-2\" type=\"submit\">")
                 .append(I18n.get(lang, edit ? "news.form.save" : "news.form.publish"))
-                .append("</button></form>");
+                .append("</button>")
+                .append("<script>if(!window.insertNewsBB){window.insertNewsBB=function(id,tag){var a=document.getElementById(id);if(!a)return;var s=a.selectionStart,e=a.selectionEnd,v=a.value,sel=v.substring(s,e),ins;"
+                + "if(tag==='url'){var u=prompt('URL:','https://');if(u===null)return;u=u.trim()||'https://';ins='[url='+u+']'+(sel||u)+'[/url]';}"
+                + "else if(tag==='img'){var u=prompt('Bild-URL:','https://');if(u===null)return;u=u.trim();if(!u)return;ins='[img]'+u+'[/img]';}"
+                + "else if(tag==='email'){var u=prompt('E-Mail:','');if(u===null)return;u=u.trim();if(!u)return;ins='[email]'+u+'[/email]';}"
+                + "else{ins='['+tag+']'+sel+'[/'+tag+']';}"
+                + "a.value=v.substring(0,s)+ins+v.substring(e);a.focus();a.selectionStart=s;a.selectionEnd=s+ins.length;};"
+                + "window.insertNewsTag=function(id,b,aft){var a=document.getElementById(id);if(!a)return;var s=a.selectionStart,e=a.selectionEnd,v=a.value,sel=v.substring(s,e),ins=b+sel+aft;a.value=v.substring(0,s)+ins+v.substring(e);a.focus();a.selectionStart=s+b.length;a.selectionEnd=s+b.length+sel.length;};"
+                + "window.insertNewsQuote=function(id){var w=prompt('Zitat von (optional):','');if(w===null)return;w=(w||'').trim();window.insertNewsTag(id,w?'[quote='+w+']':'[quote]','[/quote]');};"
+                + "window.insertNewsSize=function(id){var z=prompt('Größe (px):','16');if(z===null)return;z=(z||'').replace(/[^0-9]/g,'')||'16';window.insertNewsTag(id,'[size='+z+']','[/size]');};"
+                + "window.insertNewsColor=function(id){var c=prompt('Farbe (hex ohne #):','ff0000');if(c===null)return;c=c.replace(/^#/,'').trim()||'ff0000';window.insertNewsTag(id,'[color='+c+']','[/color]');};}</script>")
+                .append("</form>");
         return html.toString();
     }
 

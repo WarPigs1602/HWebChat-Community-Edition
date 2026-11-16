@@ -21,7 +21,7 @@
       <article class="card mb-3"><div class="card-body">
         <h2 class="h4"><c:out value="${article.title}"/></h2>
         <p class="text-muted"><c:out value="${article.author}"/> &middot; <c:out value="${article.published}"/></p>
-        <div style="white-space: pre-wrap"><c:out value="${article.body}"/></div>
+        <div class="news-body">${article.body}</div>
       </div></article>
     </c:forEach></c:otherwise>
   </c:choose>

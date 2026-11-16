@@ -801,21 +801,33 @@
         pageContext.setAttribute("editorId", editorId);
 %><c:set var="bbToolbar"><div class="btn-toolbar mb-2" role="toolbar" aria-label="<fmt:message key="common.bb_code_toolbar"/>">
                 <div class="btn-group btn-group-sm mr-2" role="group" aria-label="<fmt:message key="common.text_formatting"/>">
-                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','b')" title="<fmt:message key="common.fat_fat"/>"><i class="fa fa-bold"></i></button>
-                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','i')" title="<fmt:message key="common.italics"/>"><i class="fa fa-italic"></i></button>
-                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','u')" title="<fmt:message key="common.underlined"/>"><i class="fa fa-underline"></i></button>
-                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','s')" title="<fmt:message key="common.crossed_out"/>"><i class="fa fa-strikethrough"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','b')" title="Fett"><i class="fa fa-bold"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','i')" title="Kursiv"><i class="fa fa-italic"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','u')" title="Unterstrichen"><i class="fa fa-underline"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','s')" title="Durchgestrichen"><i class="fa fa-strikethrough"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','sup')" title="Hochgestellt">x²</button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','sub')" title="Tiefgestellt">x₂</button>
                 </div>
-                <div class="btn-group btn-group-sm mr-2" role="group" aria-label="<fmt:message key="common.alignment_and_special_formatting"/>">
-                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','center')" title="<fmt:message key="common.centred"/>"><i class="fa fa-align-center"></i></button>
-                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','quote')" title="<fmt:message key="common.citation"/>"><i class="fa fa-quote-right"></i></button>
+                <div class="btn-group btn-group-sm mr-2" role="group" aria-label="Ausrichtung">
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','left')" title="Links"><i class="fa fa-align-left"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','center')" title="Zentriert"><i class="fa fa-align-center"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','right')" title="Rechts"><i class="fa fa-align-right"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','justify')" title="Blocksatz"><i class="fa fa-align-justify"></i></button>
+                </div>
+                <div class="btn-group btn-group-sm mr-2" role="group" aria-label="Spezial">
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBQuote('${editorId}')" title="Zitat"><i class="fa fa-quote-right"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','spoiler')" title="Spoiler"><i class="fa fa-eye-slash"></i></button>
                   <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','code')" title="Code"><i class="fa fa-code"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBTag('${editorId}','[list]\\n[*]','\\n[/list]')" title="Liste"><i class="fa fa-list-ul"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBTag('${editorId}','[list=1]\\n[*]','\\n[/list]')" title="Nummerierte Liste"><i class="fa fa-list-ol"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBTag('${editorId}','[hr]','')" title="Linie"><i class="fa fa-minus"></i></button>
                 </div>
                 <div class="btn-group btn-group-sm" role="group" aria-label="<fmt:message key="common.link_image_color"/>">
                   <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','url')" title="Link"><i class="fa fa-link"></i></button>
-                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','img')" title="<fmt:message key="common.picture"/>"><i class="fa fa-image"></i></button>
-                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','email')" title="<fmt:message key="common.e_mail"/>"><i class="fa fa-envelope"></i></button>
-                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBColor('${editorId}')" title="<fmt:message key="common.colour_2"/>"><i class="fa fa-tint"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','img')" title="Bild"><i class="fa fa-image"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBCode('${editorId}','email')" title="E-Mail"><i class="fa fa-envelope"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBColor('${editorId}')" title="Farbe"><i class="fa fa-tint"></i></button>
+                  <button type="button" class="btn btn-outline-secondary" onclick="insertBBSize('${editorId}')" title="Größe"><i class="fa fa-text-height"></i></button>
                 </div>
               </div></c:set><c:set var="threadList"><c:choose><c:when test="${empty threadRows}"><c:choose><c:when test="${listing}"><div class="alert alert-light text-center py-5" role="status">
   <i class="fa fa-comments-o fa-3x text-muted mb-3"></i>
@@ -1390,6 +1402,28 @@
         close = '[/' + tag + ']';
     }
     insertAtCursor(area, open, close);
+  };
+  window.insertBBTag = function(areaId, before, after) {
+    var textarea = document.getElementById(areaId);
+    if (!textarea) return;
+    var start = textarea.selectionStart, end = textarea.selectionEnd, val = textarea.value, sel = val.substring(start, end);
+    var ins = before + sel + after;
+    textarea.value = val.substring(0, start) + ins + val.substring(end);
+    textarea.focus();
+    textarea.selectionStart = start + before.length;
+    textarea.selectionEnd = start + before.length + sel.length;
+  };
+  window.insertBBQuote = function(areaId) {
+    var area = getArea(areaId); if (!area) return;
+    var who = prompt('Zitat von (optional):', '');
+    if (who === null) return; who = (who||'').trim();
+    insertAtCursor(area, who ? '[quote=' + who + ']' : '[quote]', '[/quote]');
+  };
+  window.insertBBSize = function(areaId) {
+    var area = getArea(areaId); if (!area) return;
+    var size = prompt('Schriftgröße (z.B. 12, 16, 20):', '16');
+    if (size === null) return; size = (size||'').replace(/[^0-9]/g,'') || '16';
+    insertAtCursor(area, '[size=' + size + ']', '[/size]');
   };
   window.insertBBColor = function(areaId) {
     var area = getArea(areaId);

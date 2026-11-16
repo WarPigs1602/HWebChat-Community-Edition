@@ -190,7 +190,6 @@ public class Commands implements Software {
                             text = text.replace("%nick%", ut.preReplace(u.getNewName()));
                             input = ut.parseHtml(input);
                             input = ut.replaceLinks(input);
-                            input = ut.parseBb(input);
                             input = ut.replaceSmilies(input);
                             text = text.replace("%content%", ut.preReplace(input));
                                 cm.sendToUser(text, nick, target);
@@ -437,7 +436,8 @@ public class Commands implements Software {
         }
 
         var homepageLink = "<a href=\"" + Web.contextPath() + "/link.jsp?url=https://" + SERVER_HOMEPAGE + "\" target=\"_blank\">" + SERVER_HOMEPAGE + "</a>";
-        var backend = "Running on system: <b>" + getProperty("os.name") + " (" + getProperty("os.version") + ", " + getProperty("os.arch") + ")</b><br>"
+        var backend = "Chatversion: <b>" + SERVER_VERSION + "</b><br>"
+                + "Running on system: <b>" + getProperty("os.name") + " (" + getProperty("os.version") + ", " + getProperty("os.arch") + ")</b><br>"
                 + "Java version: <b>" + getProperty("java.version") + " (" + getProperty("java.vendor") + ")</b><br>"
                 + "Running on container: <b>" + u.getServerInfo() + "</b>";
         var frontend = "Browser: <b>" + ut.getBrowser(ut.parseHtml(u.getUserAgent()), ut.parseHtml(u.getBrowser())) + "</b><br>"
@@ -455,8 +455,8 @@ public class Commands implements Software {
         // Header
         card.append("<div class=\"chat-info-card-header\" style=\"display:flex;align-items:center;gap:0.5rem;padding:0.55rem 0.85rem;\">");
         card.append("<span aria-hidden=\"true\" style=\"font-size:1.05rem;\">&#8505;</span>");
-        card.append("<span style=\"font-weight:700;font-size:0.95rem;\">").append(SERVER_SOFTWARE).append("</span>");
-        card.append("<span style=\"margin-left:auto;font-size:0.75rem;background:rgba(255,255,255,0.18);padding:0.1rem 0.45rem;border-radius:0.4rem;\">").append(SERVER_VERSION).append("-").append(SERVER_STATUS).append("</span>");
+        card.append("<span style=\"font-weight:700;font-size:0.95rem;\">").append(conf.getChatName()).append("</span>");
+        card.append("<span style=\"margin-left:auto;font-size:0.75rem;background:rgba(255,255,255,0.18);padding:0.1rem 0.45rem;border-radius:0.4rem;\">").append(SERVER_VERSION).append("</span>");
         card.append("</div>");
         // Copyright / homepage
         card.append("<div class=\"chat-info-card-copyright\" style=\"padding:0.55rem 0.85rem;font-size:0.82rem;\">");

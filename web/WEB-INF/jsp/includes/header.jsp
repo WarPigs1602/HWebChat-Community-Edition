@@ -18,7 +18,7 @@
 <c:choose>
 <c:when test="${param.software eq 'coolchat'}">  <meta content="CoolChat" name="software">
 </c:when>
-<c:when test="${param.software eq 'version'}">  <meta content="${SERVER_SOFTWARE} ${SERVER_VERSION}-${SERVER_STATUS}" name="software">
+<c:when test="${param.software eq 'version'}">  <meta content="${SERVER_SOFTWARE} ${SERVER_VERSION}" name="software">
 </c:when>
 </c:choose>
 <c:if test="${param.contenttype eq 'true'}">  <meta content="text/html; charset=UTF-8" http-equiv="content-type">

@@ -144,7 +144,7 @@ public final class Bootstrap implements Software {
      */
     protected void init() throws Exception {
         setStartTime(currentTimeMillis());
-        out.printf("%s %s-%s\r\n", SERVER_SOFTWARE, SERVER_VERSION, SERVER_STATUS);
+        out.printf("%s %s\r\n", SERVER_SOFTWARE, SERVER_VERSION);
         out.printf("Project: %s\r\n", SERVER_PROJECT_NAME);
         out.printf("(c) %s by %s\r\n", SERVER_YEAR, SERVER_VENDOR);
         out.printf("All rights reserved.\r\n\r\n");

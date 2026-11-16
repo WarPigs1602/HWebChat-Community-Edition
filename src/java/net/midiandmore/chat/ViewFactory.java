@@ -30,7 +30,7 @@ final class ViewFactory {
         var cm = Bootstrap.boot.getChatManager();
         values.putAll(FixedPaths.placeholders(Web.contextPath(), Web.consolePath()));
         values.put("page_base", Web.contextPath());
-        values.put("SERVER_SOFTWARE", Software.SERVER_SOFTWARE);
+        values.put("SERVER_SOFTWARE", conf.getChatName());
         values.put("SERVER_VERSION", Software.SERVER_VERSION);
         values.put("SERVER_STATUS", Software.SERVER_STATUS);
         values.put("SERVER_PROJECT_NAME", Software.SERVER_PROJECT_NAME);

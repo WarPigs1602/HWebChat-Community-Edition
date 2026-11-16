@@ -30,7 +30,7 @@ public interface Software {
     /**
      * 
      */
-    public static final String SERVER_STATUS       = "Alpha 1";
+    public static final String SERVER_STATUS       = "";
     /**
      * 
      */
@@ -38,7 +38,7 @@ public interface Software {
     /**
      * 
      */
-    public static final String SERVER_VERSION      = "1.9.1";
+    public static final String SERVER_VERSION      = "2.0.0.78";
     /**
      * 
      */
