@@ -48,6 +48,7 @@ final class ViewFactory {
             return view.expand(ut.replaceFilePaths(ut.replaceNoCookies(raw)));
         }));
         values.put("legal", new Texts(key -> conf.getString("legal." + key)));
+        values.put("modules", new Texts(key -> conf.isModuleEnabled(key) ? "1" : "0"));
         values.put("com", new Texts(key -> view.expand(db.getCommand(key, lang))));
         values.put("nick", request.nick());
         values.put("sid", request.sid());
@@ -65,6 +66,7 @@ final class ViewFactory {
         values.put("reg_count", (Supplier<String>) () -> String.valueOf(db.countChatter()));
         values.put("user_count", (Supplier<String>) () -> String.valueOf(cm.getUserSizeInChat()));
         values.put("user_count_community", (Supplier<String>) () -> String.valueOf(cm.getUsersCommunity().size()));
+        values.put("directChatLogin", conf.isModuleEnabled("chat") && conf.isModuleEnabled("direct_chat_login"));
         return view;
     }
 

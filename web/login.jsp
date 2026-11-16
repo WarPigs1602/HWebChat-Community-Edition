@@ -3,6 +3,14 @@
     if (!Web.begin("page", request, response)) {
         return;
     }
+    if (!Web.isModuleEnabled("chat")) {
+        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        return;
+    }
+    if (Web.isModuleEnabled("direct_chat_login")) {
+        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        return;
+    }
 
     Map<String, String> values = Web.requestValues(request);
     String nick = values.getOrDefault("nick", "");

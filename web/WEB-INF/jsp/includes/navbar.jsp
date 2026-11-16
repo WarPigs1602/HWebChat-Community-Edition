@@ -39,6 +39,7 @@
             <a class="dropdown-item" href="${paths.config_mime}">${com.design_admin_mime}</a>
             <a class="dropdown-item" href="${paths.config_users}">${com.design_admin_users}</a>
             <a class="dropdown-item" href="${paths.config_rooms}">${com.design_admin_rooms}</a>
+            <a class="dropdown-item" href="${paths.config_index}?service=modules">Modules</a>
           </div>
         </li>
         <li class="nav-item"><a class="nav-link" href="<c:out value="${paths.config_news}"/>"><i class="fa fa-newspaper-o" aria-hidden="true"></i> <fmt:message key="news.manage"/></a></li>
@@ -60,28 +61,28 @@
         <li class="nav-item active">
           <a class="nav-link" href="${community ? paths.index_com : paths.index}"><i class="fa fa-home"></i> ${com.design_nav_start}</a>
         </li>
-        <li class="nav-item">
+<c:if test="${modules.news ne '0'}">        <li class="nav-item">
           <a class="nav-link" href="${paths.news}"><i class="fa fa-bullhorn" aria-hidden="true"></i> ${com.design_nav_news}</a>
         </li>
-<c:if test="${registered}">        <li class="nav-item">
+</c:if><c:if test="${modules.board ne '0'}">        <li class="nav-item">
           <a class="nav-link" href="${paths.board}"><i class="fa fa-comments"></i> ${com.design_nav_forum}</a>
         </li>
 </c:if>        <li class="nav-item">
           <a class="nav-link" href="${registered ? paths.rules_com_reg : community ? paths.rules_com : paths.rules}"><i class="fa fa-info-circle"></i> ${com.design_nav_chattiquette}</a>
         </li>
-        <li class="nav-item">
+<c:if test="${modules.toplist ne '0'}">        <li class="nav-item">
           <a class="nav-link" href="${paths.toplist}"><i class="fa fa-trophy"></i> ${com.design_nav_toplist}</a>
         </li>
-        <li class="nav-item">
+</c:if><c:if test="${modules.stats ne '0'}">        <li class="nav-item">
           <a class="nav-link" href="${paths.stats}"><i class="fa fa-bar-chart"></i> <fmt:message key="common.statistics"/></a>
         </li>
-<c:if test="${community}">        <li class="nav-item">
+</c:if><c:if test="${community}">        <li class="nav-item">
           <a class="nav-link" href="${paths.logout}"><i class="fa fa-sign-out"></i> ${com.design_nav_logout}</a>
         </li>
 </c:if>      </ul>
       <ul class="navbar-nav">
 <c:choose>
-<c:when test="${community}">        <li class="nav-item dropdown">
+<c:when test="${community}"><c:if test="${modules.chat ne '0'}">        <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="chatDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <i class="fa fa-comments"></i> ${com.design_nav_chat}
           </a>
@@ -99,12 +100,12 @@
             </form>
           </div>
         </li>
-<c:if test="${registered}">        <li class="nav-item">
+</c:if><c:if test="${registered}">        <li class="nav-item">
           <a class="nav-link" href="${paths.account_com}"><i class="fa fa-user"></i> ${com.design_nav_account}</a>
         </li>
 </c:if></c:when>
-<c:otherwise>        <li class="nav-item">
-          <a class="nav-link" href="${paths.login}?skin=${skin}"><i class="fa fa-sign-in"></i> ${com.design_nav_guest}</a>
+<c:otherwise><c:set var="chatLoginAction" value="${directChatLogin ? paths.login_chat : paths.login}"/><c:if test="${modules.chat ne '0'}">        <li class="nav-item">
+          <a class="nav-link" href="${chatLoginAction}?skin=${skin}"><i class="fa fa-sign-in"></i> ${com.design_nav_guest}</a>
         </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="loginDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -113,7 +114,7 @@
           <div class="dropdown-menu dropdown-menu-right p-3 login-menu" aria-labelledby="loginDropdown">
             <h2 class="h6 login-menu-title"><i class="fa fa-sign-in" aria-hidden="true"></i> ${com.design_nav_login}</h2>
             <p class="login-menu-hint"><fmt:message key="layout.start.log_in_to_your_account"/></p>
-            <form method="POST" name="login" action="${paths.login}" target="_top" accept-charset="utf-8" class="login-menu-form">
+            <form method="POST" name="login" action="${chatLoginAction}" target="_top" accept-charset="utf-8" class="login-menu-form">
               <input name="skin" value="${skin}" type="hidden">
               <div class="form-group">
                 <label for="navbar-login-nick">${com.design_placeholder_nick}</label>
@@ -131,7 +132,7 @@
             </div>
           </div>
         </li>
-</c:otherwise>
+</c:if></c:otherwise>
 </c:choose>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="themeDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

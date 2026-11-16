@@ -4,7 +4,8 @@
       <h1><fmt:message key="page.start.welcome_to"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1>
     </div>
 
-    <aside class="start-login" aria-labelledby="start-login-title">
+<c:if test="${modules.chat ne '0'}">    <aside class="start-login" aria-labelledby="start-login-title">
+      <c:set var="chatLoginAction" value="${directChatLogin ? paths.login_chat : paths.login}"/>
       <div class="start-login-heading">
         <span class="start-login-icon"><i class="fa fa-sign-in" aria-hidden="true"></i></span>
         <div>
@@ -12,7 +13,7 @@
           <p><fmt:message key="page.start.welcome_back"/></p>
         </div>
       </div>
-      <form method="POST" name="login" action="${paths.login}" target="_top" accept-charset="utf-8">
+      <form method="POST" name="login" action="${chatLoginAction}" target="_top" accept-charset="utf-8">
         <input type="hidden" name="skin" value="${skin}">
         <div class="form-group">
           <label for="start-nick">Nickname</label>
@@ -28,9 +29,9 @@
         <a href="${paths.register}"><i class="fa fa-user-plus" aria-hidden="true"></i> <fmt:message key="page.start.create_an_account"/></a>
         <a href="${paths.password}"><i class="fa fa-key" aria-hidden="true"></i> <fmt:message key="page.start.forgot_password"/></a>
       </div>
-      <a class="start-guest-link" href="${paths.login}?skin=${skin}"><i class="fa fa-user-o" aria-hidden="true"></i> <fmt:message key="page.start.continue_as_a_guest"/></a>
+      <a class="start-guest-link" href="${chatLoginAction}?skin=${skin}"><i class="fa fa-user-o" aria-hidden="true"></i> <fmt:message key="page.start.continue_as_a_guest"/></a>
     </aside>
-  </section>
+</c:if>  </section>
   <section class="my-4" aria-labelledby="homepage-overview-title">
   <h2 class="h4" id="homepage-overview-title"><fmt:message key="page.homepage_extra.chat_at_a_glance"/></h2>
   <div class="row">

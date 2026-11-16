@@ -49,7 +49,34 @@
             if (service.isBlank()) {
                 panel = "index";
             } else if (service.equals("news")) {
-                Bootstrap.getBoot().getChatServices().news(request, response, map, true);
+                if (Web.isModuleEnabled("news")) {
+                    Bootstrap.getBoot().getChatServices().news(request, response, map, true);
+                } else {
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                    return;
+                }
+            } else if (service.equals("modules")) {
+                panel = "modules";
+                var update = map.getOrDefault("update", "");
+                TreeMap<String, String[]> p = conf.loadModulesWithDefaults();
+                TreeMap<String, String> p1 = new TreeMap<>();
+                var rows = new ArrayList<String[]>();
+                if (!update.isBlank()) {
+                    for (var key : p.keySet()) {
+                        var val = map.getOrDefault(key, "0");
+                        if (!"1".equals(val)) val = "0";
+                        p1.put(key, val);
+                    }
+                    conf.setModules(p1);
+                    conf.saveModules();
+                    request.setAttribute("console_success", true);
+                    p = conf.loadModulesWithDefaults();
+                }
+                for (var key : p.keySet()) {
+                    var arr = p.get(key);
+                    rows.add(new String[]{ut.parseHtml(key), ut.parseHtml(arr[0]), arr[1]});
+                }
+                request.setAttribute("console_rows", rows);
             } else if (service.equals("room")) {
                 Database db = conf.getDb();
                 var room = map.getOrDefault("room", "");
@@ -680,6 +707,7 @@
 <c:when test="${panel eq 'host'}"><h1><fmt:message key="console.host.host_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
 <c:when test="${panel eq 'mail'}"><h1><fmt:message key="console.mail.mail_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
 <c:when test="${panel eq 'mime'}"><h1><fmt:message key="console.mime.mime_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
+<c:when test="${panel eq 'modules'}"><h1>Module configuration</h1></c:when>
 <c:when test="${fn:startsWith(panel, 'rooms')}"><h1><fmt:message key="common.room_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
 <c:when test="${fn:startsWith(panel, 'users')}"><h1><fmt:message key="common.user_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
 <c:when test="${fn:startsWith(panel, 'reg_form')}"><h1>
@@ -853,6 +881,28 @@ ${row[0]}: </td><td><input class="form-control form-control-sm" type="text" name
 </td></tr>
 </table>
 </p>
+</c:when>
+<c:when test="${panel eq 'modules'}">
+<span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
+<p>Enable/disable modules. Unchecked modules are removed from the navbar. The forum remains publicly viewable in read-only mode; registered users keep existing write permissions. When the chat module is enabled, direct chat login can be used instead of community login.</p>
+<form action="${paths.config_index}?service=modules&update=true" method="POST">
+<table class="table table-sm">
+  <thead><tr><th>Module</th><th>Enabled</th><th>Description</th></tr></thead>
+  <tbody>
+  <c:forEach var="row" items="${console_rows}">
+    <tr>
+      <td><strong>${row[0]}</strong></td>
+      <td>
+        <input type="hidden" name="${row[0]}" value="0">
+        <input type="checkbox" name="${row[0]}" value="1" ${row[1] eq '1' ? 'checked' : ''}>
+      </td>
+      <td>${row[2]}</td>
+    </tr>
+  </c:forEach>
+  </tbody>
+</table>
+<input type="submit" class="btn btn-secondary btn-sm" value="<fmt:message key="common.submit"/>">
+</form>
 </c:when>
 <c:when test="${panel eq 'rooms'}">
 <p>

@@ -3,6 +3,10 @@
     if (!Web.begin("page", request, response)) {
         return;
     }
+    if (!Web.isModuleEnabled("stats")) {
+        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        return;
+    }
     Web.Stats stats = Web.stats();
     // The ten most active pairs of users
     java.util.List<java.util.Map<String, Object>> pairs = stats.relationships().subList(0, Math.min(10, stats.relationships().size()));

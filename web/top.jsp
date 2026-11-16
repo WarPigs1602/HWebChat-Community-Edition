@@ -3,6 +3,10 @@
     if (!Web.begin("page", request, response)) {
         return;
     }
+    if (!Web.isModuleEnabled("toplist")) {
+        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        return;
+    }
     // The top list looks like the rest of the community for users that are logged in
     String design = "start";
     HttpSession httpSession = request.getSession(false);

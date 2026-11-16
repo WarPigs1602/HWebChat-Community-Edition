@@ -3,6 +3,10 @@
     if (!Web.begin("page", request, response)) {
         return;
     }
+    if (!Web.isModuleEnabled("news")) {
+        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        return;
+    }
     try {
         request.setAttribute("newsArticles", Web.newsArticles());
     } catch (SQLException ex) {

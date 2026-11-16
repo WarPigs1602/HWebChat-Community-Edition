@@ -34,6 +34,7 @@ public final class Config {
     private Properties p;
     private String uh;
     private String currentDate;
+    private java.util.TreeMap<String, String> modules = new java.util.TreeMap<>();
 
     /**
      * Damit erh&auml;t man das aktuelle Datum
@@ -109,6 +110,8 @@ public final class Config {
             getDb().setHelp(loadDataFromJSON("help.json", "name", "html"));
             out.printf("Done.\r\n* Loading help configuration (en) ");
             getDb().setHelpEn(loadDataFromJSON("help_en.json", "name", "html"));
+            out.printf("Done.\r\n* Loading modules configuration ");
+            setModules(loadModulesConfig());
             out.printf("Done.\r\n* Loading mail configuration ");
             getDb().setMail(loadDataFromJSONasProperties("mail.json", "name", "value"));
             out.printf("Done.\r\n");
@@ -665,6 +668,88 @@ public final class Config {
      *
      * @param db Die Chatdatenbank
      */
+
+
+    public java.util.TreeMap<String, String> getModules() {
+        return modules == null ? new java.util.TreeMap<>() : modules;
+    }
+
+    public void setModules(java.util.TreeMap<String, String> modules) {
+        this.modules = modules == null ? new java.util.TreeMap<>() : modules;
+    }
+
+    public boolean isModuleEnabled(String name) {
+        if (name == null || name.isBlank()) {
+            return true;
+        }
+        var value = getModules().get(name);
+        if (value == null) {
+            return true;
+        }
+        return "1".equals(value) || "true".equalsIgnoreCase(value);
+    }
+
+    public void saveModules() {
+        saveDataToJSON("modules.json", getModules(), "name", "value");
+    }
+
+    private java.util.TreeMap<String, String> loadModulesConfig() {
+        var defaults = new java.util.TreeMap<String, String>();
+        defaults.put("chat", "1");
+        defaults.put("board", "1");
+        defaults.put("news", "1");
+        defaults.put("stats", "1");
+        defaults.put("toplist", "1");
+        defaults.put("direct_chat_login", "0");
+        try {
+            var conf = getProperty("config.dir");
+            if (conf == null) {
+                var sb = new StringBuilder();
+                sb.append(getUh());
+                sb.append(getFs());
+                sb.append(".homewebcom");
+                sb.append(getFs());
+                sb.append("config");
+                sb.append(getFs());
+                sb.append("modules.json");
+                conf = sb.toString();
+            }
+            var file = new File(conf);
+            if (!file.exists()) {
+                return defaults;
+            }
+            try (InputStream is = new FileInputStream(file); var rdr = createReader(is)) {
+                var results = rdr.readArray();
+                for (int i = 0; i < results.size(); i++) {
+                    var jobj = results.getJsonObject(i);
+                    defaults.put(jobj.getString("name"), jobj.getString("value"));
+                }
+            }
+        } catch (Exception e) {
+            logError(e);
+        }
+        return defaults;
+    }
+
+    public TreeMap<String, String[]> loadModulesWithDefaults() {
+        var data = new TreeMap<String, String[]>();
+        var descriptions = new TreeMap<String, String>();
+        descriptions.put("chat", "Enable chat module");
+        descriptions.put("board", "Enable forum/board module");
+        descriptions.put("news", "Enable news module");
+        descriptions.put("stats", "Enable statistics module");
+        descriptions.put("toplist", "Enable toplist module");
+        descriptions.put("direct_chat_login", "When chat module is enabled, use direct chat login instead of community login (1=direct chat login, 0=community login)");
+        var mods = loadModulesConfig();
+        for (var e : mods.entrySet()) {
+            data.put(e.getKey(), new String[]{e.getValue(), descriptions.getOrDefault(e.getKey(), "")});
+        }
+        for (var e : descriptions.entrySet()) {
+            data.putIfAbsent(e.getKey(), new String[]{mods.getOrDefault(e.getKey(), "1"), e.getValue()});
+        }
+        return data;
+    }
+
     protected void setDb(Database db) {
         this.db = db;
     }

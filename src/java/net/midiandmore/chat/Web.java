@@ -200,6 +200,14 @@ public final class Web {
         return Bootstrap.boot.getConfig().getDb().getRoomNameByOwner(owner.toLowerCase());
     }
 
+
+
+    /** Checks whether a module is enabled (defaults to enabled if missing). */
+    public static boolean isModuleEnabled(String name) {
+        var config = master != null ? master.getConfig() : null;
+        return config == null || config.isModuleEnabled(name);
+    }
+
     /** A string-valued chat setting used by JSP page logic. */
     public static String configValue(String key) {
         return Bootstrap.boot.getConfig().getString(key);

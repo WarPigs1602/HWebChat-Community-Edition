@@ -23,6 +23,10 @@
     if (!Web.begin("page", request, response)) {
         return;
     }
+    if (!Web.isModuleEnabled("chat")) {
+        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        return;
+    }
     Map<String, String> map = Web.requestValues(request);
     // Page that is shown by the markup below and the values it differs in from the default ones
     String tpl = null;

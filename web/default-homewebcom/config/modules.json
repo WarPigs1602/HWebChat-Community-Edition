@@ -1,0 +1,8 @@
+[
+  {"name":"chat","value":"1","description":"Enable chat module"},
+  {"name":"board","value":"1","description":"Enable forum/board module"},
+  {"name":"news","value":"1","description":"Enable news module"},
+  {"name":"stats","value":"1","description":"Enable statistics module"},
+  {"name":"toplist","value":"1","description":"Enable toplist module"},
+  {"name":"direct_chat_login","value":"0","description":"When chat module is enabled, use direct chat login instead of community login (1=direct chat login, 0=community login)"}
+]

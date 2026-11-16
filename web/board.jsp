@@ -156,23 +156,38 @@
     String editorId = null;
         var session = request.getSession(false);
         var conf = Bootstrap.getBoot().getConfig();
+        if (!conf.isModuleEnabled("board")) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
         var cm = Bootstrap.getBoot().getChatManager();
         var ut = Bootstrap.getBoot().getUtil();
-        TreeMap<String, UsersCommunity> com = cm.getUsersCommunity();
-        if (session == null || com.get((String) session.getAttribute("nick")) == null) {
-            screen = "timeout";
-        } else {
         var db = conf.getDb();
-        var nick = (String) session.getAttribute("nick");
-        var moderator = db.getData(nick, "moderator").equals("1");
-        com.get((String) session.getAttribute("nick")).setTimeoutTimer(0);
+        TreeMap<String, UsersCommunity> com = cm.getUsersCommunity();
+        var sessionNick = session != null ? (String) session.getAttribute("nick") : null;
+        var communityUser = sessionNick != null ? com.get(sessionNick) : null;
+        var nick = sessionNick != null ? sessionNick : "";
+        var reg = !nick.isBlank() && db.isRegistered(nick);
+        var moderator = reg && db.getData(nick, "moderator").equals("1");
+        var writeRequested = !map.getOrDefault("new", "").isBlank() || !map.getOrDefault("add_board", "").isBlank()
+                || !map.getOrDefault("add_cat", "").isBlank() || !map.getOrDefault("del_cat", "").isBlank()
+                || !map.getOrDefault("edit_cat", "").isBlank() || !map.getOrDefault("delete_boards", "").isBlank()
+                || !map.getOrDefault("close_boards", "").isBlank() || !map.getOrDefault("edit_boards", "").isBlank()
+                || !map.getOrDefault("edit", "").isBlank() || !map.getOrDefault("close", "").isBlank()
+                || !map.getOrDefault("open", "").isBlank() || !map.getOrDefault("del", "").isBlank()
+                || !map.getOrDefault("undel", "").isBlank() || !map.getOrDefault("ban", "").isBlank()
+                || !map.getOrDefault("answer", "").isBlank();
+        if (communityUser != null) {
+            communityUser.setTimeoutTimer(0);
+        }
+        if (writeRequested && (communityUser == null || !reg)) {
+            screen = "nick_not_registered";
+        } else {
         var service = map.getOrDefault("service", "");
-        var skin = (String) session.getAttribute("skin");
+        var skin = session != null ? (String) session.getAttribute("skin") : null;
 
         skin = skin != null ? skin : map.getOrDefault("skin", "");
         skin = ut.parseHost(skin, request)[1];
-        var reg = false;
-        reg = db.isRegistered(nick);
         var bid = map.getOrDefault("id", "0");
         if (!bid.matches("\\d+")) {
             bid = "0";
@@ -269,9 +284,7 @@
             request.setAttribute("reason", db.getTimedBanReason(realIp));
             screen = "banned_temp";
         }
-        if (screen == null && !reg) {
-            screen = "nick_not_registered";
-        } else if (screen == null && !service.isBlank()) {
+        if (screen == null && !service.isBlank()) {
             screen = "board_unknown";
         } else if (screen == null && !ban.isBlank()) {
             var uid = map.getOrDefault("uid", "0");
@@ -434,9 +447,7 @@
             if (ref.equals("0")) {
                 screen = "boards_not_exists";
             } else {
-                if (db.getBoard(Long.valueOf(ref), "closed").equals("1")) {
-                    screen = "boards3";
-                } else if (locked && !moderator) {
+                if (db.getBoard(Long.valueOf(ref), "closed").equals("1") || (locked && !moderator) || !reg) {
                     screen = "boards3";
                 } else {
                     screen = "boards2";
@@ -717,6 +728,8 @@
             var locked = db.getBoards(Long.valueOf(bid), "readonly").equals("1");
             if (locked && !moderator) {
                 screen = "boards3";
+            } else if (!reg) {
+                screen = "boards3";
             } else {
                 screen = "boards";
             }
@@ -777,6 +790,7 @@
         if (screen == null) {
             return;
         }
+        pageContext.setAttribute("registered", reg);
         pageContext.setAttribute("screen", screen);
         if (NOTICES.containsKey(screen)) {
             pageContext.setAttribute("notice", NOTICES.get(screen));
@@ -925,7 +939,7 @@
     </a>
   </div>
 </c:if></section>
-</c:forEach></c:otherwise></c:choose></c:set><t:layout design="${screen eq 'timeout' or screen eq 'banned' or screen eq 'banned_temp' ? 'start' : 'frameset_community_reg'}"><c:choose>
+</c:forEach></c:otherwise></c:choose></c:set><c:set var="boardDesign" value="${screen eq 'timeout' or screen eq 'banned' or screen eq 'banned_temp' ? 'start' : (registered ? 'frameset_community_reg' : 'start')}"/><t:layout design="${boardDesign}"><c:choose>
 <c:when test="${screen eq 'timeout'}"><h1>${SERVER_SOFTWARE}-Timeout</h1>
 <p>
 <fmt:message key="page.timeout.your_session_expired_because_of"/>...
