@@ -382,6 +382,30 @@ public class ChatServices {
         view.defaults().put("user_agent", userAgent != null ? userAgent : "");
         view.defaults().put("designs", new ViewFactory.Texts(design -> selectCommunityDesign(design, session,
                 Bootstrap.boot.getChatManager(), db)));
+        try {
+            var themes = Bootstrap.boot.getConfig().loadDataFromJSON("themes.json", "skin", "data");
+            var tjson = themes.getOrDefault(skin, null);
+            if (tjson == null && "native".equals(skin)) tjson = themes.get("native");
+            if (tjson == null) tjson = themes.get("native");
+            if (tjson != null) {
+                var jr = jakarta.json.Json.createReader(new java.io.StringReader(tjson));
+                var jo = jr.readObject(); jr.close();
+                view.defaults().put("theme_logo", jo.getString("logo", ""));
+                var tcn = jo.getString("chatName", "").trim();
+                if (!tcn.isBlank()) {
+                    view.defaults().put("theme_chat_name", tcn);
+                    view.defaults().put("SERVER_SOFTWARE", tcn);
+                } else {
+                    view.defaults().put("theme_chat_name", "");
+                }
+            } else {
+                view.defaults().put("theme_logo", "");
+                view.defaults().put("theme_chat_name", "");
+            }
+        } catch (Exception e) {
+            view.defaults().put("theme_logo", "");
+            view.defaults().put("theme_chat_name", "");
+        }
         return view;
     }
 
@@ -485,6 +509,34 @@ public class ChatServices {
             view.set("link_color", db.getRoomData(roomName, "linkcolor"));
             view.set("border_color", db.getRoomData(roomName, "bordercolor"));
         }
+        try {
+            var themes = Bootstrap.boot.getConfig().loadDataFromJSON("themes.json", "skin", "data");
+            var tjson = themes.getOrDefault(skin, null);
+            if (tjson == null && "native".equals(skin)) tjson = themes.get("native");
+            if (tjson != null) {
+                var jr = jakarta.json.Json.createReader(new java.io.StringReader(tjson));
+                var jo = jr.readObject(); jr.close();
+                view.set("theme_primary", jo.getString("primary", "#0d6efd"));
+                view.set("theme_primary_dark", jo.getString("primaryDark", "#0a58ca"));
+                view.set("theme_dark", jo.getString("dark", "#212529"));
+                view.set("theme_muted", jo.getString("muted", "#6c757d"));
+                view.set("theme_border", jo.getString("border", "#dee2e6"));
+                view.set("theme_bg", jo.getString("bg", "#f0f2f5"));
+                view.set("theme_surface", jo.getString("surface", "#ffffff"));
+                view.set("theme_custom_css", jo.getString("customCss", ""));
+                view.set("theme_link", jo.getString("link", jo.getString("primary", "#0d6efd")));
+                view.set("theme_radius", jo.getString("radius", "0.75rem"));
+                view.set("theme_font_size", jo.getString("fontSize", "0.9375rem"));
+                view.set("theme_font_family", jo.getString("fontFamily", "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif"));
+                view.set("theme_nav_bg", jo.getString("navBg", "#212529"));
+                view.set("theme_nav_text", jo.getString("navText", "#ffffff"));
+                view.set("theme_success", jo.getString("success", "#198754"));
+                view.set("theme_warning", jo.getString("warning", "#ffc107"));
+                view.set("theme_danger", jo.getString("danger", "#dc3545"));
+                view.set("theme_body_gradient", jo.getString("bodyGradient", "1"));
+                view.set("theme_logo", jo.getString("logo", ""));
+            }
+        } catch (Exception e) {}
         return view;
     }
 

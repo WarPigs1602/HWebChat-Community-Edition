@@ -15,8 +15,8 @@ html, body {
   padding: 0;
   color: #${color};
   background-color: #${bg_color_1};
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
-  font-size: 0.925rem;
+  font-family: var(--hwc-font-family), "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+  font-size: var(--hwc-font-size);
   overflow: hidden;
 }
 
@@ -56,7 +56,7 @@ input, textarea, .form-control {
   padding: 0.45rem 0.75rem;
   font-size: 0.9rem;
   color: #${color};
-  background: #ffffff;
+  background: var(--hwc-surface);
 }
 
 input:focus, textarea:focus, .form-control:focus {
@@ -116,7 +116,7 @@ h3 {
   right: auto !important;
   bottom: auto !important;
   text-align: left;
-  font-size: 0.925rem;
+  font-size: var(--hwc-font-size);
   line-height: 1.45;
 }
 
@@ -366,4 +366,19 @@ cw {
   outline: 2px solid var(--hwc-primary);
   outline-offset: 2px;
 }
+/* Theme overrides */
+body { background: <c:choose><c:when test="${theme_body_gradient eq '0'}">var(--hwc-bg)</c:when><c:otherwise>linear-gradient(180deg, var(--hwc-bg) 0%, var(--hwc-surface) 100%)</c:otherwise></c:choose> !important; }
+a { color: var(--hwc-link); }
+.btn-primary, .btn.btn-primary { background-color: var(--hwc-primary) !important; border-color: var(--hwc-primary) !important; color: #fff !important; }
+.btn-primary:hover, .btn.btn-primary:hover { background-color: var(--hwc-primary-dark) !important; border-color: var(--hwc-primary-dark) !important; }
+.btn-secondary, .btn.btn-secondary { background-color: var(--hwc-primary) !important; border-color: var(--hwc-primary) !important; color: #fff !important; }
+.btn-secondary:hover, .btn.btn-secondary:hover { background-color: var(--hwc-primary-dark) !important; border-color: var(--hwc-primary-dark) !important; }
+.btn-success, .btn.btn-success { background-color: var(--hwc-success) !important; border-color: var(--hwc-success) !important; color: #fff !important; }
+.btn-warning, .btn.btn-warning { background-color: var(--hwc-warning) !important; border-color: var(--hwc-warning) !important; color: #212529 !important; }
+.btn-danger, .btn.btn-danger { background-color: var(--hwc-danger) !important; border-color: var(--hwc-danger) !important; color: #fff !important; }
+.post_frame .btn { border-radius: calc(var(--hwc-radius) * 0.67); }
+.post_frame .form-control { border-color: var(--hwc-border); background: var(--hwc-bg); color: var(--hwc-dark); }
+.post_frame .form-control:focus { border-color: var(--hwc-primary); }
+<c:if test="${not empty theme_custom_css}">${theme_custom_css}</c:if>
+
 </t:css>

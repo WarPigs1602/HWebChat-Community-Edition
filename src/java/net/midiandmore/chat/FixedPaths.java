@@ -32,6 +32,7 @@ final class FixedPaths {
             Map.entry("config_mime", "%path_console%?skin=%skin%&service=mime"),
             Map.entry("config_rooms", "%path_console%?skin=%skin%&service=room"),
             Map.entry("config_users", "%path_console%?skin=%skin%&service=users"),
+            Map.entry("config_theme", "%path_console%?skin=%skin%&service=theme"),
             Map.entry("dataprotection", "%path_base%/content/dataprotection.jsp?skin=%skin%"),
             Map.entry("emot", "%path_base%/emot.jsp?skin=%skin%"),
             Map.entry("file", "%path_file%"),

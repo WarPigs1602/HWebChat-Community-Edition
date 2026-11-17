@@ -63,8 +63,11 @@
                 var rows = new ArrayList<String[]>();
                 if (!update.isBlank()) {
                     for (var key : p.keySet()) {
-                        var val = map.getOrDefault(key, "0");
-                        if (!"1".equals(val)) val = "0";
+                        String[] vals = request.getParameterValues(key);
+                        var val = "0";
+                        if (vals != null) {
+                            for (var v : vals) { if ("1".equals(v)) { val = "1"; break; } }
+                        }
                         p1.put(key, val);
                     }
                     conf.setModules(p1);
@@ -338,6 +341,70 @@
                     rows.add(new String[]{ut.parseHtml(key), ut.parseHtml(value), ""});
                 }
                 request.setAttribute("console_rows", rows);
+            } else if (service.equals("theme")) {
+                var update = map.getOrDefault("update", "");
+                panel = "theme";
+                var themes = conf.loadDataFromJSON("themes.json", "skin", "data");
+                var themeSkin = map.getOrDefault("theme_skin", map.getOrDefault("skin_name", "native"));
+                if (themeSkin.isBlank()) themeSkin = "native";
+                var dataJson = themes.getOrDefault(themeSkin, "{}");
+                var primary = "#0d6efd"; var primaryDark = "#0a58ca"; var dark = "#212529"; var muted = "#6c757d";
+                var border = "#dee2e6"; var bg = "#f0f2f5"; var surface = "#ffffff"; var customCss = "";
+                var link = "#0d6efd"; var radius = "0.75rem"; var fontSize = "0.9375rem"; var fontFamily = "system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, sans-serif";
+                var navBg = "#212529"; var navText = "#ffffff"; var success = "#198754"; var warning = "#ffc107"; var danger = "#dc3545"; var bodyGradient = "1"; var logo = ""; var chatName = "";
+                try {
+                    var jr = jakarta.json.Json.createReader(new java.io.StringReader(dataJson));
+                    var jo = jr.readObject(); jr.close();
+                    primary = jo.getString("primary", primary); primaryDark = jo.getString("primaryDark", primaryDark);
+                    dark = jo.getString("dark", dark); muted = jo.getString("muted", muted);
+                    border = jo.getString("border", border); bg = jo.getString("bg", bg); surface = jo.getString("surface", surface);
+                    customCss = jo.getString("customCss", customCss);
+                    link = jo.getString("link", link); radius = jo.getString("radius", radius);
+                    fontSize = jo.getString("fontSize", fontSize); fontFamily = jo.getString("fontFamily", fontFamily);
+                    navBg = jo.getString("navBg", navBg); navText = jo.getString("navText", navText);
+                    success = jo.getString("success", success); warning = jo.getString("warning", warning); danger = jo.getString("danger", danger);
+                    bodyGradient = jo.getString("bodyGradient", bodyGradient);
+                    logo = jo.getString("logo", logo);
+                    chatName = jo.getString("chatName", chatName);
+                } catch (Exception e) {}
+                if (!update.isBlank()) {
+                    themeSkin = map.getOrDefault("theme_skin", themeSkin);
+                    if (themeSkin.isBlank()) themeSkin = "native";
+                    primary = map.getOrDefault("primary", primary); primaryDark = map.getOrDefault("primaryDark", primaryDark);
+                    dark = map.getOrDefault("dark", dark); muted = map.getOrDefault("muted", muted);
+                    border = map.getOrDefault("border", border); bg = map.getOrDefault("bg", bg); surface = map.getOrDefault("surface", surface);
+                    customCss = map.getOrDefault("customCss", customCss);
+                    link = map.getOrDefault("link", link); radius = map.getOrDefault("radius", radius);
+                    fontSize = map.getOrDefault("fontSize", fontSize); fontFamily = map.getOrDefault("fontFamily", fontFamily);
+                    navBg = map.getOrDefault("navBg", navBg); navText = map.getOrDefault("navText", navText);
+                    success = map.getOrDefault("success", success); warning = map.getOrDefault("warning", warning); danger = map.getOrDefault("danger", danger);
+                    String[] bgv = request.getParameterValues("bodyGradient");
+                    bodyGradient = "0";
+                    if (bgv != null) { for (var v : bgv) { if ("1".equals(v)) { bodyGradient = "1"; break; } } }
+                    logo = map.getOrDefault("logo", logo).trim();
+                    chatName = map.getOrDefault("chatName", chatName).trim();
+                    var jo = jakarta.json.Json.createObjectBuilder()
+                        .add("primary", primary).add("primaryDark", primaryDark).add("dark", dark)
+                        .add("muted", muted).add("border", border).add("bg", bg).add("surface", surface)
+                        .add("customCss", customCss).add("link", link).add("radius", radius)
+                        .add("fontSize", fontSize).add("fontFamily", fontFamily).add("navBg", navBg).add("navText", navText)
+                        .add("success", success).add("warning", warning).add("danger", danger).add("bodyGradient", bodyGradient).add("logo", logo).add("chatName", chatName).build();
+                    themes.put(themeSkin, jo.toString());
+                    conf.saveDataToJSON("themes.json", themes, "skin", "data");
+                    request.setAttribute("console_success", true);
+                    conf.hash();
+                }
+                request.setAttribute("theme_skin", themeSkin);
+                request.setAttribute("theme_primary", primary); request.setAttribute("theme_primaryDark", primaryDark);
+                request.setAttribute("theme_dark", dark); request.setAttribute("theme_muted", muted);
+                request.setAttribute("theme_border", border); request.setAttribute("theme_bg", bg); request.setAttribute("theme_surface", surface);
+                request.setAttribute("theme_customCss", customCss);
+                request.setAttribute("theme_link", link); request.setAttribute("theme_radius", radius);
+                request.setAttribute("theme_fontSize", fontSize); request.setAttribute("theme_fontFamily", fontFamily);
+                request.setAttribute("theme_navBg", navBg); request.setAttribute("theme_navText", navText);
+                request.setAttribute("theme_success", success); request.setAttribute("theme_warning", warning); request.setAttribute("theme_danger", danger);
+                request.setAttribute("theme_bodyGradient", bodyGradient); request.setAttribute("theme_logo", logo); request.setAttribute("theme_chatName", chatName);
+                request.setAttribute("theme_skins", themes.keySet());
             } else if (service.equals("emot")) {
                 var update = map.getOrDefault("update", "");
 
@@ -708,6 +775,7 @@
 <c:when test="${panel eq 'mail'}"><h1><fmt:message key="console.mail.mail_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
 <c:when test="${panel eq 'mime'}"><h1><fmt:message key="console.mime.mime_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
 <c:when test="${panel eq 'modules'}"><h1>Module configuration</h1></c:when>
+<c:when test="${panel eq 'theme'}"><h1>WYSIWYG Theme-Creator</h1></c:when>
 <c:when test="${fn:startsWith(panel, 'rooms')}"><h1><fmt:message key="common.room_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
 <c:when test="${fn:startsWith(panel, 'users')}"><h1><fmt:message key="common.user_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
 <c:when test="${fn:startsWith(panel, 'reg_form')}"><h1>
@@ -882,10 +950,69 @@ ${row[0]}: </td><td><input class="form-control form-control-sm" type="text" name
 </table>
 </p>
 </c:when>
+<c:when test="${panel eq 'theme'}">
+<span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
+<p>WYSIWYG-Theme-Creator für das bestehende Skin-System (z. B. <code>skin=native</code>, host-basierte Skins via Host-/Skin-Konfiguration). Wähle einen Skin-Namen, passe Farben, Typografie und Layout an und speichere das Theme.</p>
+<form action="${paths.config_index}&service=theme&update=true" method="POST" accept-charset="utf-8">
+  <table class="table table-sm" style="max-width:860px">
+    <tr><th colspan="2">Allgemein</th></tr>
+    <tr><td><strong>Skin</strong></td><td><input class="form-control form-control-sm" type="text" name="theme_skin" value="<c:out value='${theme_skin}'/>"> <span class="form-hint">z. B. native (aktiv per <code>?skin=...</code> oder Host-Mapping)</span></td></tr>
+    <tr><td>Chatname</td><td><input class="form-control form-control-sm" type="text" id="tchatname" name="chatName" value="<c:out value='${theme_chatName}'/>" placeholder="z. B. Mein Chat"> <span class="form-hint">Leer = globaler Chatname (config <code>chat_name</code>). Wird als <code>${SERVER_SOFTWARE}</code> in Seiten angezeigt.</span></td></tr>
+    <tr><td>Logo-URL</td><td><input class="form-control form-control-sm" type="text" id="tlogo" name="logo" value="<c:out value='${theme_logo}'/>" placeholder="${path_file}gfx/logo.svg oder https://..."> <span class="form-hint">Leer = Standard-Logo. Relativ zu <code>path_file</code> oder absolute URL.</span></td></tr>
+    <tr><th colspan="2">Farben</th></tr>
+    <tr><td>Primary</td><td><input type="color" id="tp" value="${theme_primary}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tpt" name="primary" value="${theme_primary}"></td></tr>
+    <tr><td>Primary dark</td><td><input type="color" id="tpd" value="${theme_primaryDark}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tpdt" name="primaryDark" value="${theme_primaryDark}"></td></tr>
+    <tr><td>Link</td><td><input type="color" id="tl" value="${theme_link}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tlt" name="link" value="${theme_link}"></td></tr>
+    <tr><td>Text/Dark</td><td><input type="color" id="td" value="${theme_dark}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tdt" name="dark" value="${theme_dark}"></td></tr>
+    <tr><td>Muted</td><td><input type="color" id="tm" value="${theme_muted}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tmt" name="muted" value="${theme_muted}"></td></tr>
+    <tr><td>Border</td><td><input type="color" id="tb" value="${theme_border}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tbt" name="border" value="${theme_border}"></td></tr>
+    <tr><td>Background</td><td><input type="color" id="tbg" value="${theme_bg}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tbgt" name="bg" value="${theme_bg}"></td></tr>
+    <tr><td>Surface</td><td><input type="color" id="ts" value="${theme_surface}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tst" name="surface" value="${theme_surface}"></td></tr>
+    <tr><td>Nav Background</td><td><input type="color" id="tnb" value="${theme_navBg}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tnbt" name="navBg" value="${theme_navBg}"></td></tr>
+    <tr><td>Nav Text</td><td><input type="color" id="tnt" value="${theme_navText}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tntt" name="navText" value="${theme_navText}"></td></tr>
+    <tr><td>Success</td><td><input type="color" id="tsu" value="${theme_success}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tsut" name="success" value="${theme_success}"></td></tr>
+    <tr><td>Warning</td><td><input type="color" id="tw" value="${theme_warning}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="twt" name="warning" value="${theme_warning}"></td></tr>
+    <tr><td>Danger</td><td><input type="color" id="tda" value="${theme_danger}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tdat" name="danger" value="${theme_danger}"></td></tr>
+    <tr><th colspan="2">Layout &amp; Typografie</th></tr>
+    <tr><td>Border-Radius</td><td><input class="form-control form-control-sm" type="text" id="trad" name="radius" value="<c:out value='${theme_radius}'/>" placeholder="z. B. 0.75rem, 8px, 0"></td></tr>
+    <tr><td>Schriftgröße</td><td><input class="form-control form-control-sm" type="text" id="tfs" name="fontSize" value="<c:out value='${theme_fontSize}'/>" placeholder="z. B. 0.9375rem, 15px"></td></tr>
+    <tr><td>Schriftart</td><td><input class="form-control form-control-sm" type="text" id="tff" name="fontFamily" value="<c:out value='${theme_fontFamily}'/>" placeholder="CSS font-family"></td></tr>
+    <tr><td>Hintergrund-Verlauf</td><td><input type="hidden" name="bodyGradient" value="0"><label><input type="checkbox" id="tgrad" name="bodyGradient" value="1" ${theme_bodyGradient eq '1' ? 'checked' : ''}> Verlauf auf Seitenhintergrund aktivieren</label></td></tr>
+    <tr><th colspan="2">Erweitert</th></tr>
+    <tr><td>Custom CSS</td><td><textarea class="form-control form-control-sm" name="customCss" rows="5" style="font-family:monospace"><c:out value="${theme_customCss}"/></textarea></td></tr>
+  </table>
+  <p><strong>Vorschau</strong></p>
+  <div id="theme-preview" style="border:1px solid ${theme_border};border-radius:${theme_radius};overflow:hidden;max-width:860px;margin-bottom:1rem;background:${theme_bg};color:${theme_dark};font-family:${theme_fontFamily};font-size:${theme_fontSize}">
+    <div id="tp-nav" style="background:${theme_navBg};color:${theme_navText};padding:.75rem 1rem;font-weight:600;display:flex;gap:1rem;align-items:center"><span>Beispiel-Navigation (${theme_skin})</span><span style="opacity:.85">Start</span><span style="opacity:.85">Chat</span></div>
+    <div id="tp-body" style="padding:1rem;background:${theme_surface}">
+      <h3 id="tp-h" style="margin:0 0 .5rem 0;color:${theme_dark}">Überschrift</h3>
+      <p id="tp-p" style="color:${theme_muted};margin:0 0 .75rem 0">Dies ist eine Vorschau des gewählten Themes (Farben, Schrift, Radius).</p>
+      <a id="tp-btn" href="#" onclick="return false" style="display:inline-block;background:${theme_primary};color:#fff;padding:.45rem .9rem;border-radius:${theme_radius};text-decoration:none;margin-right:.5rem">Button</a>
+      <a id="tp-link" href="#" onclick="return false" style="color:${theme_link};margin-right:.75rem">Link</a>
+      <span id="tp-succ" style="display:inline-block;background:${theme_success};color:#fff;padding:.2rem .5rem;border-radius:4px;font-size:.85em;margin-right:.25rem">OK</span>
+      <span id="tp-warn" style="display:inline-block;background:${theme_warning};color:#212529;padding:.2rem .5rem;border-radius:4px;font-size:.85em;margin-right:.25rem">Warn</span>
+      <span id="tp-dang" style="display:inline-block;background:${theme_danger};color:#fff;padding:.2rem .5rem;border-radius:4px;font-size:.85em">Fehler</span>
+      <div style="margin-top:.75rem;padding:.6rem;border:1px solid ${theme_border};border-radius:${theme_radius};background:${theme_bg}">Beispiel-Box / Eingabeumgebung</div>
+    </div>
+  </div>
+  <input type="submit" class="btn btn-secondary btn-sm" value="<fmt:message key="common.submit"/>">
+</form>
+<c:if test="${not empty theme_skins}"><p class="mt-3"><strong>Vorhandene Skin-Themes:</strong> <c:forEach var="ts" items="${theme_skins}" varStatus="st"><a href="${paths.config_index}&service=theme&theme_skin=<c:out value='${ts}'/>"><code><c:out value='${ts}'/></code></a><c:if test="${!st.last}">, </c:if></c:forEach></p></c:if>
+<script>(function(){function by(id){return document.getElementById(id);}function val(id){var e=by(id);return e?e.value:'';}function sync(c,t){if(!by(c)||!by(t))return;by(c).addEventListener('input',function(){by(t).value=by(c).value;upd();});by(t).addEventListener('input',function(){if(/^#[0-9a-fA-F]{6}$/.test(by(t).value))by(c).value=by(t).value;upd();});}
+function upd(){var box=by('theme-preview');if(!box)return;var pv=val('tp'),dk=val('td'),mu=val('tm'),bo=val('tb'),bg=val('tbg'),su=val('ts'),ln=val('tl'),nb=val('tnb'),nt=val('tnt'),sc=val('tsu'),wa=val('tw'),da=val('tda'),ra=val('trad')||'0.75rem',fs=val('tfs')||'0.9375rem',ff=val('tff')||'sans-serif';
+box.style.background=bg;box.style.color=dk;box.style.borderColor=bo;box.style.borderRadius=ra;box.style.fontFamily=ff;box.style.fontSize=fs;
+var nav=by('tp-nav');if(nav){nav.style.background=nb;nav.style.color=nt;} var body=by('tp-body');if(body)body.style.background=su;
+var h=by('tp-h');if(h)h.style.color=dk; var p=by('tp-p');if(p)p.style.color=mu; var btn=by('tp-btn');if(btn){btn.style.background=pv;btn.style.borderRadius=ra;} var lnk=by('tp-link');if(lnk)lnk.style.color=ln;
+var ok=by('tp-succ');if(ok)ok.style.background=sc; var w=by('tp-warn');if(w)w.style.background=wa; var d=by('tp-dang');if(d)d.style.background=da;
+var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.borderColor=bo;bx.style.borderRadius=ra;bx.style.background=bg;}}
+[['tp','tpt'],['tpd','tpdt'],['tl','tlt'],['td','tdt'],['tm','tmt'],['tb','tbt'],['tbg','tbgt'],['ts','tst'],['tnb','tnbt'],['tnt','tntt'],['tsu','tsut'],['tw','twt'],['tda','tdat']].forEach(function(x){sync(x[0],x[1]);});
+['trad','tfs','tff'].forEach(function(id){var e=by(id);if(e)e.addEventListener('input',upd);});
+})();</script>
+</c:when>
 <c:when test="${panel eq 'modules'}">
 <span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
 <p>Enable/disable modules. Unchecked modules are removed from the navbar. The forum remains publicly viewable in read-only mode; registered users keep existing write permissions. When the chat module is enabled, direct chat login can be used instead of community login.</p>
-<form action="${paths.config_index}?service=modules&update=true" method="POST">
+<form action="${paths.config_index}&service=modules&update=true" method="POST">
 <table class="table table-sm">
   <thead><tr><th>Module</th><th>Enabled</th><th>Description</th></tr></thead>
   <tbody>

@@ -8,7 +8,7 @@
 <c:when test="${param.variant eq 'brand'}"><nav class="navbar navbar-expand-lg navbar-dark ${param.navclass}">
   <div class="container-fluid">
     <a class="navbar-brand" href="${empty param.home ? '#' : paths[param.home]}">
-      <img src="${path_file}gfx/logo.svg" alt="HWebChat" style="height: 40px;">
+      <img src="${not empty theme_logo ? theme_logo : ''}${empty theme_logo ? path_file : ''}${empty theme_logo ? 'gfx/logo.svg' : ''}" alt="HWebChat" style="height: 40px;">
     </a>
   </div>
 </nav>
@@ -16,7 +16,7 @@
 <c:when test="${param.variant eq 'console'}"><nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
   <div class="container-fluid">
     <a class="navbar-brand" href="${paths.config_index}">
-      <img src="${path_file}gfx/logo.svg" alt="HWebChat" style="height: 40px;">
+      <img src="${not empty theme_logo ? theme_logo : ''}${empty theme_logo ? path_file : ''}${empty theme_logo ? 'gfx/logo.svg' : ''}" alt="HWebChat" style="height: 40px;">
     </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="${com.design_toggle_navigation}">
       <span class="navbar-toggler-icon"></span>
@@ -32,6 +32,7 @@
             <a class="dropdown-item" href="${paths.config_cmdrights}">${com.design_admin_cmd_rights}</a>
             <a class="dropdown-item" href="${paths.config_cmd}">${com.design_admin_cmd_edit}</a>
             <a class="dropdown-item" href="${paths.config_host}">${com.design_admin_host}</a>
+            <a class="dropdown-item" href="${paths.config_theme}">${com.design_admin_theme}</a>
             <a class="dropdown-item" href="${paths.config_mail}">${com.design_admin_mail}</a>
             <a class="dropdown-item" href="${paths.config_help}">${com.design_admin_help}</a>
             <a class="dropdown-item" href="${paths.config_fun}">${com.design_admin_fun}</a>
@@ -39,7 +40,7 @@
             <a class="dropdown-item" href="${paths.config_mime}">${com.design_admin_mime}</a>
             <a class="dropdown-item" href="${paths.config_users}">${com.design_admin_users}</a>
             <a class="dropdown-item" href="${paths.config_rooms}">${com.design_admin_rooms}</a>
-            <a class="dropdown-item" href="${paths.config_index}?service=modules">Modules</a>
+            <a class="dropdown-item" href="${paths.config_index}&service=modules">Modules</a>
           </div>
         </li>
         <li class="nav-item"><a class="nav-link" href="<c:out value="${paths.config_news}"/>"><i class="fa fa-newspaper-o" aria-hidden="true"></i> <fmt:message key="news.manage"/></a></li>
@@ -51,7 +52,7 @@
 <c:otherwise><c:set var="community" value="${param.variant ne 'guest'}"/><c:set var="registered" value="${param.variant eq 'community_reg'}"/><nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
   <div class="container-fluid">
     <a class="navbar-brand" href="${community ? paths.index_com : paths.index}">
-      <img src="${path_file}gfx/logo.svg" alt="HWebChat" style="height: 40px;">
+      <img src="${not empty theme_logo ? theme_logo : ''}${empty theme_logo ? path_file : ''}${empty theme_logo ? 'gfx/logo.svg' : ''}" alt="HWebChat" style="height: 40px;">
     </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="${com.design_toggle_navigation}">
       <span class="navbar-toggler-icon"></span>

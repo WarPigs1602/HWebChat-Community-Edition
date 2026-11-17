@@ -473,7 +473,9 @@ public final class Config {
                 i++;
             }
         } catch (FileNotFoundException fne) {
-            fatalError(fne);
+            return ar;
+        } catch (Exception e) {
+            logError(e);
         }
         return ar;
     }
@@ -515,7 +517,9 @@ public final class Config {
                 i++;
             }
         } catch (FileNotFoundException fne) {
-            fatalError(fne);
+            return ar;
+        } catch (Exception e) {
+            logError(e);
         }
         return ar;
     }
