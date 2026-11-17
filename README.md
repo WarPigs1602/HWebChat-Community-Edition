@@ -3,7 +3,7 @@
 Web-based community chat (Jakarta EE / WebSocket) for Apache Tomcat.
 
 - **Demo:** https://www.hwebchat.de  
-- **Issues:** https://github.com/WarPigs1602/HWebChat-Community-Edition/issues  
+- **Issues:** https://github.com/WarPigs1602/HWebChat/issues  
 
 ---
 
@@ -51,8 +51,8 @@ and, when available, the latest news article. Custom templates can position thes
 ### 1. Clone
 
 ```bash
-git clone https://github.com/WarPigs1602/HWebChat-Community-Edition.git
-cd HWebChat-Community-Edition
+git clone https://github.com/WarPigs1602/HWebChat.git
+cd HWebChat
 ```
 
 ### 1a. Or use the pre-built WAR
@@ -60,7 +60,7 @@ cd HWebChat-Community-Edition
 Alternatively, download the latest release directly:
 
 ```text
-https://github.com/WarPigs1602/HWebChat-Community-Edition/releases/download/261117/HWebChat.war
+https://github.com/WarPigs1602/HWebChat/releases/download/261117/HWebChat.war
 ```
 
 Then skip to step 3 (Deploy to Tomcat).
