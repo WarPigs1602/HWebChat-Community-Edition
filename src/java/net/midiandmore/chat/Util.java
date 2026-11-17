@@ -302,7 +302,7 @@ public final class Util implements Software {
                 }
             }
             if (candidates.isEmpty()) {
-                throw new IllegalStateException("Color restrictions bright_0 to bright_5 prevent readable colors on the dark theme");
+                throw new IllegalStateException("Color restrictions bright_0 to bright_5 prevent readable colors on the light theme");
             }
             int value = candidates.get(random.nextInt(candidates.size()));
             color.append(HEX[value / 16]).append(HEX[value % 16]);

@@ -36,13 +36,27 @@
               <label for="start-pwd"><fmt:message key="common.password_2"/></label>
               <input class="form-control" id="start-pwd" maxlength="20" name="pwd" type="password" autocomplete="current-password" required>
             </div>
+            <c:if test="${directChatLogin}">
+            <div class="form-group">
+              <label for="start-room-select"><fmt:message key="common.room"/></label>
+              <select class="form-control" id="start-room-select" name="room">
+                <c:forEach items="${chat_rooms}" var="r">
+                  <option value="<c:out value='${r}'/>"><c:out value='${r}'/></option>
+                </c:forEach>
+                <option value="__custom__"><fmt:message key="common.room_select_manual"/></option>
+              </select>
+              <fmt:message key="common.room_enter_name" var="roomEnterName"/>
+              <input class="form-control mt-2" id="start-room-custom" type="text" maxlength="64" placeholder="${roomEnterName}" style="display:none" disabled>
+            </div>
+            </c:if>
             <button class="btn btn-primary btn-block" type="submit"><i class="fa fa-sign-in" aria-hidden="true"></i> <fmt:message key="page.start.log_in_2"/></button>
           </form>
           <div class="start-login-links">
             <a href="${paths.register}"><i class="fa fa-user-plus" aria-hidden="true"></i> <fmt:message key="page.start.create_an_account"/></a>
             <a href="${paths.password}"><i class="fa fa-key" aria-hidden="true"></i> <fmt:message key="page.start.forgot_password"/></a>
           </div>
-          <a class="start-guest-link" href="${chatLoginAction}?skin=${skin}"><i class="fa fa-user-o" aria-hidden="true"></i> <fmt:message key="page.start.continue_as_a_guest"/></a>
+          <a class="start-guest-link" id="start-guest-link" href="${chatLoginAction}?skin=${skin}"><i class="fa fa-user-o" aria-hidden="true"></i> <fmt:message key="page.start.continue_as_a_guest"/></a>
+          <c:if test="${directChatLogin}"><script>(function(){var s=document.getElementById('start-room-select'),c=document.getElementById('start-room-custom'),g=document.getElementById('start-guest-link');if(!s||!c)return;var base=g?g.getAttribute('href'):'';function room(){return s.value==='__custom__'?c.value:s.value;}function t(){var m=s.value==='__custom__';c.style.display=m?'block':'none';c.disabled=!m;if(m){s.removeAttribute('name');c.name='room';c.focus();}else{c.removeAttribute('name');s.name='room';}if(g){var r=encodeURIComponent(room()||'');g.setAttribute('href',base+(base.indexOf('?')>=0?'&':'?')+'room='+r);}}s.addEventListener('change',t);c.addEventListener('input',t);t();})();</script></c:if>
         </div>
       </aside>
     </c:if>

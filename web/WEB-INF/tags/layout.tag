@@ -16,18 +16,11 @@
 <c:when test="${name eq 'frameset_napping'}"><c:set var="l_title" value="design_title_welcome_chat"/><c:set var="l_charset" value="true"/><c:set var="l_fonts" value="true"/><c:set var="l_styles" value="@bootstrap,style_iframe,style_chat,style_napping,style_colorpicker,style_nav,@fa4"/><c:set var="l_scripts" value="script_jquery,@popper,@bootstrap,script_emoji,script_colorpicker,script_window"/><c:set var="l_parts" value="chat"/></c:when>
 <c:when test="${name eq 'frameset_privchat'}"><c:set var="l_title" value="design_title_welcome_chat"/><c:set var="l_charset" value="true"/><c:set var="l_fonts" value="true"/><c:set var="l_styles" value="@bootstrap,style_privchat,style_iframe,style_chat_privchat,style_colorpicker,style_nav,@fa4"/><c:set var="l_scripts" value="script_jquery,@popper,@bootstrap,script_emoji,script_colorpicker,script_window"/><c:set var="l_parts" value="chat"/></c:when>
 <c:when test="${name eq 'frameset_privchat_napping'}"><c:set var="l_title" value="design_title_welcome_chat"/><c:set var="l_charset" value="true"/><c:set var="l_fonts" value="true"/><c:set var="l_styles" value="@bootstrap,style_napping_privchat,style_iframe,style_chat_privchat_napping,style_colorpicker,style_nav,@fa4"/><c:set var="l_scripts" value="script_jquery,@popper,@bootstrap,script_emoji,script_colorpicker,script_window"/><c:set var="l_parts" value="chat"/></c:when>
-<c:when test="${name eq 'info'}"><c:set var="l_title" value="design_title_info"/><c:set var="l_charset" value="true"/><c:set var="l_styles" value="@bootstrap,style,@fa4"/><c:set var="l_navbar" value="brand"/><c:set var="l_navclass" value="bg-dark sticky-top"/><c:set var="l_wrapper" value='id="profilecontent" class="container-fluid shadow rounded"'/><c:set var="l_parts" value="embedded"/><c:set var="l_extra"><c:choose><c:when test="${theme eq 'dark'}">
-    body, #profilecontent, #profilecontent * { color: #e5e7eb !important; }
-    body { background-color: #111827; }
-    #profilecontent { background-color: #1f2937; padding: 1rem; }
-    #profilecontent table, #profilecontent td { border-color: #374151; }
-    a { color: #93c5fd !important; }
-</c:when><c:otherwise>
+<c:when test="${name eq 'info'}"><c:set var="l_title" value="design_title_info"/><c:set var="l_charset" value="true"/><c:set var="l_styles" value="@bootstrap,style,@fa4"/><c:set var="l_navbar" value="brand"/><c:set var="l_navclass" value="bg-dark sticky-top"/><c:set var="l_wrapper" value='id="profilecontent" class="container-fluid bg-white shadow rounded"'/><c:set var="l_parts" value="embedded"/><c:set var="l_extra">
     body, #profilecontent, #profilecontent * { color: #212529 !important; }
     body { background-color: #f8f9fa; }
     #profilecontent { background-color: #ffffff; padding: 1rem; }
     a { color: #0d6efd !important; }
-</c:otherwise></c:choose>
     body.embedded nav.navbar { display: none !important; }
     body.embedded { padding-top: 0 !important; }
   </c:set></c:when>
@@ -43,7 +36,7 @@
 <c:when test="${name eq 'profile'}"><c:set var="l_title" value="design_title_profile"/><c:set var="l_charset" value="true"/><c:set var="l_styles" value="@bootstrap,@fa6,style"/><c:set var="l_scripts" value="script_post"/><c:set var="l_embedded" value="true"/><c:set var="l_body" value="bg-light"/><c:set var="l_navbar" value="brand"/><c:set var="l_navclass" value="bg-dark mb-3"/><c:set var="l_wrapper" value='id="profilecontent" class="container-fluid"'/><c:set var="l_parts" value="embedded"/></c:when>
 <c:when test="${name eq 'start'}"><c:set var="l_title" value="design_title_software"/><c:set var="l_software" value="coolchat"/><c:set var="l_contenttype" value="true"/><c:set var="l_fonts" value="true"/><c:set var="l_styles" value="@bootstrap,style,@fa4"/><c:set var="l_scripts" value="script_jquery,@popper,@bootstrap,script_framekiller"/><c:set var="l_navbar" value="guest"/><c:set var="l_wrapper" value='id="pagecontent" class="container-fluid page-main"'/><c:set var="l_parts" value="legal,lang,cookie"/><c:set var="l_cookie" value="true"/></c:when>
 </c:choose><c:choose><c:when test="${empty l_title}"><html><head><title>404 Not Found</title></head><body><h1>404 Not Found</h1><p><b>Error: The requested design '${design}' does not exist!</b></p><hr><address>${SERVER_SOFTWARE} ${SERVER_VERSION}</address></body><html></c:when><c:otherwise><!DOCTYPE html>
-<html lang="${lang}" data-theme="${theme eq 'dark' ? 'dark' : 'light'}"<c:if test="${fn:contains(name, 'napping')}"> data-room-colors="true"</c:if>>
+<html lang="${lang}"<c:if test="${fn:contains(name, 'napping')}"> data-room-colors="true"</c:if>>
 <head>
 <jsp:include page="/WEB-INF/jsp/includes/header.jsp">
   <jsp:param name="title" value="${l_title}"/>

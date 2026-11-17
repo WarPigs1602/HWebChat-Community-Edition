@@ -87,16 +87,17 @@
             <i class="fa fa-comments"></i> ${com.design_nav_chat}
           </a>
           <div class="dropdown-menu dropdown-menu-right p-2" aria-labelledby="chatDropdown">
-            <form method="POST" name="login" action="${paths.login_chat}" target="chat" accept-charset="utf-8" class="form-inline">
+            <form method="POST" name="login" action="${paths.login_chat}" target="chat" accept-charset="utf-8" class="p-1" style="min-width:180px">
               <input name="sid" value="${sid}" type="hidden">
-              <select class="form-control form-control-sm mr-2 mb-2" name="room" style="width: 150px;">
-                <option selected value="Lounge">Lounge</option>
-                <option value="<fmt:message key="common.staff_lounge"/>"><fmt:message key="common.staff_lounge"/></option>
-                <option value="Development">Development</option>
-                <option value="<fmt:message key="common.exile"/>"><fmt:message key="common.exile"/></option>
-              </select>
               <input name="skin" value="${skin}" type="hidden">
-              <input class="btn btn-sm btn-primary mb-2" value="${com.design_btn_chat_start}" type="submit">
+              <select class="form-control form-control-sm mb-2" id="nav-room-select" name="room">
+                <c:forEach items="${chat_rooms}" var="r"><option value="<c:out value='${r}'/>"><c:out value='${r}'/></option></c:forEach>
+                <option value="__custom__"><fmt:message key="common.room_select_manual"/></option>
+              </select>
+              <fmt:message key="common.room_enter_name" var="roomEnterName"/>
+              <input class="form-control form-control-sm mb-2" id="nav-room-custom" type="text" maxlength="64" placeholder="${roomEnterName}" style="display:none" disabled>
+              <input class="btn btn-sm btn-primary btn-block" value="${com.design_btn_chat_start}" type="submit">
+              <script>(function(){var s=document.getElementById('nav-room-select'),c=document.getElementById('nav-room-custom');if(!s||!c)return;function t(){var m=s.value==='__custom__';c.style.display=m?'block':'none';c.disabled=!m;if(m){s.removeAttribute('name');c.name='room';c.focus();}else{c.removeAttribute('name');s.name='room';}}s.addEventListener('change',t);t();})();</script>
             </form>
           </div>
         </li>
@@ -104,7 +105,7 @@
           <a class="nav-link" href="${paths.account_com}"><i class="fa fa-user"></i> ${com.design_nav_account}</a>
         </li>
 </c:if></c:when>
-<c:otherwise><c:set var="chatLoginAction" value="${directChatLogin ? paths.login_chat : paths.login}"/><c:if test="${modules.chat ne '0'}">        <li class="nav-item">
+<c:otherwise><c:set var="chatLoginAction" value="${directChatLogin ? paths.login_chat : paths.login}"/><c:if test="${modules.chat ne '0' and not directChatLogin}">        <li class="nav-item">
           <a class="nav-link" href="${chatLoginAction}?skin=${skin}"><i class="fa fa-sign-in"></i> ${com.design_nav_guest}</a>
         </li>
         <li class="nav-item dropdown">
@@ -134,15 +135,6 @@
         </li>
 </c:if></c:otherwise>
 </c:choose>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="themeDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="fa fa-adjust"></i> ${com.design_nav_theme}
-          </a>
-          <div class="dropdown-menu dropdown-menu-right" aria-labelledby="themeDropdown">
-            <a class="dropdown-item" href="#" data-theme-option="dark" onclick="setTheme('dark'); return false;">${com.design_theme_dark}</a>
-            <a class="dropdown-item" href="#" data-theme-option="light" onclick="setTheme('light'); return false;">${com.design_theme_light}</a>
-          </div>
-        </li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
             <i class="fa fa-language"></i> ${com.design_nav_language}

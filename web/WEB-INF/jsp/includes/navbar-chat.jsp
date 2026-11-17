@@ -49,13 +49,7 @@
           </div>
         </div>
       </div>
-    </li><li class="nav-item dropdown" id="theme">
-      <a class="nav-link dropdown-toggle" href="#" id="themeDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-adjust"></i> <span data-i18n="design_nav_theme">${com.design_nav_theme}</span></a>
-      <div class="dropdown-menu" aria-labelledby="themeDropdown">
-        <a class="dropdown-item" href="#" data-theme-option="dark" onclick="setTheme('dark'); return false;" data-i18n="design_theme_dark">${com.design_theme_dark}</a>
-        <a class="dropdown-item" href="#" data-theme-option="light" onclick="setTheme('light'); return false;" data-i18n="design_theme_light">${com.design_theme_light}</a>
-      </div>
-    </li><li class="nav-item dropdown" id="language">
+</li><li class="nav-item dropdown" id="language">
       <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-language"></i> <span data-i18n="design_nav_language">${com.design_nav_language}</span></a>
       <div class="dropdown-menu" aria-labelledby="languageDropdown">
         <a class="dropdown-item" href="#" data-lang-option="de" onclick="setChatLang('de'); return false;" data-i18n="design_lang_de">${com.design_lang_de}</a>

@@ -12,7 +12,6 @@
 --%><script>if(window.frameElement && window.frameElement.classList.contains('chat-panel-iframe')){document.documentElement.classList.add('chat-panel-embedded');}</script><style>html.chat-panel-embedded body > nav.navbar{display:none!important;}html.chat-panel-embedded body{padding-top:0!important;}</style>
 <c:if test="${param.charset eq 'true'}">  <meta charset="UTF-8">
 </c:if>  <title>${com[param.title]}</title>
-  <script src="${path_file}theme.js"></script>
   <meta content="${SERVER_VENDOR}" name="author">
   <meta content="&copy;${SERVER_YEAR} by ${SERVER_VENDOR}" name="description">
 <c:choose>
@@ -38,7 +37,7 @@
   <link rel="stylesheet" href="https://prismjs.com/plugins/line-numbers/prism-line-numbers.css">
   <link rel="stylesheet" media="screen" href="${path_file}prism-live.css" type="text/css">
 </c:when>
-<c:otherwise>  <link rel="stylesheet" href="${paths[style]}" type="text/css" data-hwc-theme>
+<c:otherwise>  <link rel="stylesheet" href="${paths[style]}" type="text/css">
 </c:otherwise>
 </c:choose>
 </c:forTokens>

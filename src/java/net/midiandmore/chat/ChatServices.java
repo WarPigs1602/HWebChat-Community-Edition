@@ -23,12 +23,9 @@ import static net.midiandmore.chat.Bootstrap.logError;
  */
 public class ChatServices {
 
-    // Style sheets: everything behind this comment belongs to the dark theme only
-    static final String DARK_THEME_MARKER = "/* theme:dark";
-
     /**
-     *
-     * @param master
+     * Prepares the style sheet of a JSP for the browser: delivered file paths
+     * get the context path.
      */
     public ChatServices(Bootstrap master) {
 
@@ -381,7 +378,6 @@ public class ChatServices {
                 reason != null ? reason : "", host, owner, map.getOrDefault("target", ""), map.getOrDefault("user", ""),
                 roomName, (scheme.equals("https") ? "wss" : "ws") + "://" + host, scheme + "://" + host));
         var session = request.getSession(false);
-        view.defaults().put("theme", readTheme(request, map));
         var userAgent = request.getHeader("User-Agent");
         view.defaults().put("user_agent", userAgent != null ? userAgent : "");
         view.defaults().put("designs", new ViewFactory.Texts(design -> selectCommunityDesign(design, session,
@@ -493,48 +489,18 @@ public class ChatServices {
     }
 
     /**
-     * Prepares the style sheet of a JSP for the browser: the paths of the
-     * delivered files get the context path and the dark theme part is only
-     * kept for the dark theme. The headers depend on the "theme" cookie.
+     * Prepares the style sheet of a JSP for the browser: delivered file paths
+     * get the context path.
      *
      * @param css the style sheet
      * @return the style sheet for the request
      */
     String processStyleSheet(String css, HttpServletRequest request, HttpServletResponse response) {
-        var map = requestMap(request);
         css = css.replace("url(\"file/", "url(\"" + request.getContextPath() + "/file/")
                 .replace("url('file/", "url('" + request.getContextPath() + "/file/")
                 .replace("url(file/", "url(" + request.getContextPath() + "/file/");
-        if (!"dark".equals(readTheme(request, map))) {
-            css = stripDarkTheme(css);
-        }
-        response.setHeader("Vary", "Cookie");
         response.setHeader("Cache-Control", "no-cache");
         return css;
-    }
-
-    /**
-     * Theme of the request: the "theme" parameter, else the "theme" cookie,
-     * else the light theme.
-     *
-     * @return "dark" or "light"
-     */
-    private String readTheme(HttpServletRequest request, Map<String, String> map) {
-        var theme = map.getOrDefault("theme", "");
-        if (theme == null || theme.isBlank()) {
-            theme = Bootstrap.boot.getUtil().readCookieValue(request, "theme");
-        }
-        return "dark".equalsIgnoreCase(theme) ? "dark" : "light";
-    }
-
-    /**
-     * Removes the part of a style sheet that is only meant for the dark theme.
-     * The part starts with the comment {@link #DARK_THEME_MARKER} and ends with
-     * the style sheet.
-     */
-    static String stripDarkTheme(String css) {
-        var start = css.indexOf(DARK_THEME_MARKER);
-        return start < 0 ? css : css.substring(0, start);
     }
 
     /**
@@ -618,12 +584,24 @@ public class ChatServices {
             var counts = db.getHomepageCounts();
             var latest = new NewsRepository(db, boot.getConfig().getP().getProperty("sql.prefix", "")).latest();
             var homepageNick = community == null ? "" : org.owasp.encoder.Encode.forHtmlContent(community.getName());
+            var roomNames = new java.util.ArrayList<String>(cm.getRooms().keySet());
+            java.util.Collections.sort(roomNames, String.CASE_INSENSITIVE_ORDER);
+            var configuredDefault = boot.getConfig().getString("default_room");
+            var dr = configuredDefault == null ? "" : configuredDefault.trim();
+            if (dr.isEmpty()) {
+                dr = "Lounge";
+            }
+            var defaultRoomName = dr;
+            roomNames.removeIf(r -> r.equalsIgnoreCase(defaultRoomName));
+            roomNames.add(0, defaultRoomName);
             var page = getTemplate(pageTemplate, request, map)
                     .set("homepage_chatters", org.owasp.encoder.Encode.forHtmlContent(cm.getUserSizeInChat()))
                     .set("homepage_rooms", org.owasp.encoder.Encode.forHtmlContent(String.valueOf(cm.getRooms().size())))
                     .set("homepage_registered", org.owasp.encoder.Encode.forHtmlContent(String.valueOf(counts.registered())))
                     .set("homepage_messages", org.owasp.encoder.Encode.forHtmlContent(String.valueOf(counts.messages())))
-                    .set("homepage_nick", homepageNick);
+                    .set("homepage_nick", homepageNick)
+                    .set("chat_rooms", roomNames)
+                    .set("default_room", org.owasp.encoder.Encode.forHtmlAttribute(defaultRoomName));
             if (latest.isPresent()) {
                 var article = latest.get();
                 page = page

@@ -4,7 +4,7 @@
 <c:set var="errorHeadingKey" value="web.error404.heading"/>
 <c:set var="errorTextKey" value="web.error404.text"/>
 <!DOCTYPE html>
-<html lang="${lang}" data-theme="${cookie.theme.value eq 'dark' ? 'dark' : 'light'}">
+<html lang="${lang}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,14 +17,6 @@
       --surface: #fff;
       --background: linear-gradient(180deg, #e9eef5 0%, #f0f2f5 40%, #eef1f6 100%);
       --shadow: 0 0.25rem 0.75rem rgba(33, 37, 41, 0.08);
-    }
-    :root[data-theme="dark"] {
-      color-scheme: dark;
-      --text: #e5e7eb;
-      --border: #374151;
-      --surface: #1f2937;
-      --background: linear-gradient(180deg, #0b1220 0%, #111827 40%, #111827 100%);
-      --shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.25);
     }
     body {
       min-height: 100vh;

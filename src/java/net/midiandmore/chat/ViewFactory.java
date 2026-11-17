@@ -38,6 +38,16 @@ final class ViewFactory {
         values.put("SERVER_HOMEPAGE", Software.SERVER_HOMEPAGE);
         values.put("SERVER_YEAR", Software.SERVER_YEAR);
         values.put("SERVER_MAIL", Software.SERVER_MAIL);
+        var roomNames = new java.util.ArrayList<String>(cm.getRooms().keySet());
+        java.util.Collections.sort(roomNames, String.CASE_INSENSITIVE_ORDER);
+        var configuredDefault = conf.getString("default_room");
+        var tmp = configuredDefault == null ? "" : configuredDefault.trim();
+        var defaultRoomName = tmp.isEmpty() ? "Lounge" : tmp;
+        roomNames.removeIf(r -> r.equalsIgnoreCase(defaultRoomName));
+        roomNames.add(0, defaultRoomName);
+        values.put("chat_rooms", roomNames);
+        values.put("default_room", org.owasp.encoder.Encode.forHtmlAttribute(defaultRoomName));
+
         values.put("lang", lang);
         values.put("paths", new Texts(key -> {
             var raw = FixedPaths.get(key);
