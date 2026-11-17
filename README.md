@@ -1,4 +1,4 @@
-# HWebChat Community Edition
+# HWebChat
 
 Web-based community chat (Jakarta EE / WebSocket) for Apache Tomcat.
 
