@@ -34,18 +34,18 @@
   height: 101px;
 }
 .farbtastic .wheel {
-  background: url(/HWebChat_Community_Edition/file/farbtastic/wheel.png) no-repeat;
+  background: url("file/farbtastic/wheel.png") no-repeat;
   width: 195px;
   height: 195px;
 }
 .farbtastic .overlay {
-  background: url(/HWebChat_Community_Edition/file/farbtastic/mask.png) no-repeat;
+  background: url("file/farbtastic/mask.png") no-repeat;
 }
 .farbtastic .marker {
   width: 17px;
   height: 17px;
   margin: -8px 0 0 -8px;
   overflow: hidden; 
-  background: url(/HWebChat_Community_Edition/file/farbtastic/marker.png) no-repeat;
+  background: url("file/farbtastic/marker.png") no-repeat;
 }
 </t:css>

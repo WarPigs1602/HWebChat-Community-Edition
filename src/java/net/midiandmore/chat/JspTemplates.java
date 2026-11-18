@@ -70,7 +70,7 @@ final class JspTemplates {
         if (ctx == null || path == null) {
             return null;
         }
-        var language = "en".equalsIgnoreCase(lang) ? "en" : "de";
+        var language = I18n.locale(lang).getLanguage();
         try {
             if (ctx.getResource(path) == null) {
                 return null;

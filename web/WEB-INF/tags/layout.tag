@@ -1,6 +1,6 @@
 <%@ tag description="Page layout: composes the shared header, navigation bar and footer around the body" body-content="scriptless" trimDirectiveWhitespaces="false" %><%@ taglib prefix="c" uri="jakarta.tags.core" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><%@ taglib prefix="fn" uri="jakarta.tags.functions" %><%@ attribute name="design" required="true" description="Name of the design: it selects what header, navigation bar, wrapper and footer are used" %><%--
   Designs (l_* variables):
-    l_title, l_charset, l_software, l_contenttype, l_fonts, l_styles, l_scripts, l_embedded, l_extra  parameters of includes/header.jsp
+    l_title, l_charset, l_software, l_contenttype, l_styles, l_scripts, l_embedded, l_extra           parameters of includes/header.jsp
     l_navbar, l_navhome, l_navclass                                                                  parameters of includes/navbar.jsp (empty: no navigation bar)
     l_wrapper                                                                                          attributes of the <div> around the body (empty: no wrapper)
     l_cookie                                                                                           "true" shows the cookie notice
@@ -43,7 +43,6 @@
   <jsp:param name="charset" value="${l_charset}"/>
   <jsp:param name="software" value="${l_software}"/>
   <jsp:param name="contenttype" value="${l_contenttype}"/>
-  <jsp:param name="fonts" value="${l_fonts}"/>
   <jsp:param name="styles" value="${l_styles}"/>
   <jsp:param name="scripts" value="${l_scripts}"/>
   <jsp:param name="embedded" value="${l_embedded}"/>

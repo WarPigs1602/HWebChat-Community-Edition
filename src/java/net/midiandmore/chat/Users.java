@@ -114,7 +114,7 @@ public final class Users {
     private HttpSession httpSession = null;
     private String serverInfo = null;
     private String jsid = null;
-    private String lang = "de";
+    private String lang = "en";
     /**
      *
      * @return

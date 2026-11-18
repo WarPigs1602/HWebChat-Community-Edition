@@ -71,13 +71,8 @@ public class Chat {
             // Das Cookie (bzw. der ?lang=-Parameter) hat dabei Vorrang vor
             // einem evtl. veralteten Session-Wert.
             var cookieHeader = (String) config.getUserProperties().get("cookie");
-            var langParam = ut.readCookieFromHeader(cookieHeader, "lang");
-            if (langParam == null || langParam.isBlank()) {
-                langParam = getMap().containsKey("lang") ? getMap().get("lang").get(0) : "";
-            }
-            if (langParam != null && !langParam.isBlank()) {
-                getSession().getUserProperties().put("lang", langParam);
-            }
+            var cookieLang = ut.readCookieFromHeader(cookieHeader, "lang");
+            var requestedLang = getMap().containsKey("lang") ? getMap().get("lang").get(0) : "";
             if (getHttpSession() != null) {
                 try {
                     getHttpSession().getCreationTime();
@@ -85,15 +80,18 @@ public class Chat {
                     setHttpSession(null);
                 }
             }
+            var sessionLang = getHttpSession() != null ? getHttpSession().getAttribute("lang") : null;
+            var langParam = I18n.chatLanguage(cookieLang, requestedLang,
+                    sessionLang instanceof String ? (String) sessionLang : null,
+                    (String) config.getUserProperties().get("accept-language"));
+            getSession().getUserProperties().put("lang", langParam);
             if (getHttpSession() == null) {
                 getSession().getUserProperties().put("rejected_no_session", true);
                 ut.sendText(getTemplate("chat_session_expired"), getSession(), "error", "");
                 disconnect();
                 return;
             }
-            if (langParam != null && !langParam.isBlank()) {
-                getHttpSession().setAttribute("lang", langParam);
-            }
+            getHttpSession().setAttribute("lang", langParam);
             var target = getMap().containsKey("target") ? getMap().get("target").get(0) : "";
             if (!getMap().containsKey("target")) {
                 var pwd = getMap().containsKey("pwd") ? getMap().get("pwd").get(0)
@@ -271,8 +269,7 @@ public class Chat {
                         }
                         var ts = ut.getTime(db.getLongData(nick, "timestamp_login"));
                         db.updateLoginTime(oldNick);
-                        var wrLang = langParam != null && !langParam.isBlank() ? langParam : "de";
-                        var wr = db.getCommand("welcome_reg", wrLang);
+                        var wr = db.getCommand("welcome_reg", langParam);
                         wr = wr.replace("%color%", color);
                         wr = wr.replace("%nick%", oldNick);
                         wr = wr.replace("%status%", Integer.toString(status));
@@ -285,10 +282,8 @@ public class Chat {
                                 "chat", "");
                         var msgCount = db.countMessage(oldNick);
                         if (msgCount > 0) {
-                            var msgs = db.getMessages(oldNick,
-                                    langParam != null && !langParam.isBlank() ? langParam : "de");
-                            var block = db.getCommand("messages_box_header",
-                                    langParam != null && !langParam.isBlank() ? langParam : "de");
+                            var msgs = db.getMessages(oldNick, langParam);
+                            var block = db.getCommand("messages_box_header", langParam);
                             block = block.replace("%count%", String.valueOf(msgCount));
                             block = block.replace("%messages%", msgs);
                             ut.sendText(block, getSession(), "chat", "");
@@ -301,14 +296,12 @@ public class Chat {
                     }
                     if (status >= conf.getInt("status_admin")) {
                         ut.sendText(
-                                db.getCommand("welcome_admin",
-                                        langParam != null && !langParam.isBlank() ? langParam : "de"),
+                                db.getCommand("welcome_admin", langParam),
                                 getSession(), "chat", "");
                         sv = db.getData(oldNick, "sv").equals("1");
                     } else if (status >= conf.getInt("status_staff")) {
                         ut.sendText(
-                                db.getCommand("welcome_staff",
-                                        langParam != null && !langParam.isBlank() ? langParam : "de"),
+                                db.getCommand("welcome_staff", langParam),
                                 getSession(), "chat", "");
                     }
                     if (reg && ut.hasBirthday(db.getData(oldNick, "bday_day"), db.getData(oldNick, "bday_month"),
@@ -494,7 +487,7 @@ public class Chat {
         if (lang instanceof String && !((String) lang).isBlank()) {
             return (String) lang;
         }
-        return "de";
+        return "en";
     }
 
     /**

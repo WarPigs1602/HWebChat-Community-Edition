@@ -131,6 +131,11 @@ public final class Web {
         return I18n.get(lang, key);
     }
 
+    /** Language selected by cookie, request parameter or browser preference. */
+    public static String language(HttpServletRequest request) {
+        return I18n.language(request);
+    }
+
     /** Draws the captcha of the request; <code>false</code> if there is none. */
     public static boolean drawCaptcha(HttpServletRequest request, HttpServletResponse response) {
         var captcha = Bootstrap.boot.getCaptcha();
@@ -484,8 +489,7 @@ public final class Web {
 
     /** The messages that are left for a user. */
     public static String messages(String nick, HttpServletRequest request) {
-        return Bootstrap.boot.getConfig().getDb().getMessages(nick, request,
-                Bootstrap.boot.getChatServices().requestMap(request));
+        return Bootstrap.boot.getConfig().getDb().getMessages(nick, I18n.language(request));
     }
 
     /** Deletes the messages that are left for a user. */

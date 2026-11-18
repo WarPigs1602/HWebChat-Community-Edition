@@ -53,13 +53,16 @@ public class Commands implements Software {
                         return l.toString();
                     }
                 }
+                if (u.getLang() != null && !u.getLang().isBlank()) {
+                    return u.getLang();
+                }
             }
         }
-        return "de";
+        return "en";
     }
 
     private String getCommand(String field) {
-        return getMaster().getConfig().getDb().getCommand(field, lang != null ? lang : "de");
+        return getMaster().getConfig().getDb().getCommand(field, lang != null ? lang : "en");
     }
 
     /**
@@ -3234,7 +3237,7 @@ public class Commands implements Software {
         } else {
             var db = conf.getDb();
             db.eraseExpiredBans();
-            cm.sendTextDirect(db.listBans(), nick);
+            cm.sendTextDirect(db.listBans(cm.getUserLang(nick)), nick);
             cm.sendScroll(nick);
         }
     }

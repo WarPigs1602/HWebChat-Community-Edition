@@ -1,235 +1,134 @@
 # HWebChat
 
-Webbasierter Community-Chat (Jakarta EE / WebSocket) für Apache Tomcat.
+Webbasierter Community-Chat für Apache Tomcat, entwickelt mit Jakarta EE, JSP und WebSocket.
 
-- **Demo:** https://www.hwebchat.de  
-- **Issues:** https://github.com/WarPigs1602/HWebChat/issues  
+[English](README.md) · [Demo](https://www.hwebchat.de) · [Releases](https://github.com/WarPigs1602/HWebChat/releases) · [Issues](https://github.com/WarPigs1602/HWebChat/issues)
 
----
+## Funktionen
 
-## Features
+### Chat und Community
 
-- Öffentliche und private Chaträume (Echtzeit per WebSocket)
-- Öffentliche Newsseite mit Verwaltung in der Adminkonsole
-- Schreibanzeige mit Nickfarben für Räume und Privatchats (bis zu fünf Namen)
-- Nick-Vervollständigung mit Tab in der Eingabezeile; mehrfaches Tab wechselt zwischen Treffern
-- Gast-Login und registrierte Benutzer
-- Offline-Nachrichten (Flüstern, wenn der Empfänger offline ist)
-- Emojis, Datei-Uploads
-- Moderation (Kick, Ban, Gag, …)
-- Adminkonsole, Communities / Napping-Räume
-- Eingebauter Skin `native` als JSP-Templates (`web/WEB-INF/jsp`) mit vollständiger i18n (Deutsch/Englisch) über Resource Bundles und nativem EL/JSTL statt `%Platzhaltern%`
-- Speicherung in MySQL / MariaDB, PostgreSQL oder SQLite
+- Raum- und Privatchats in Echtzeit per WebSocket; Gast- und Benutzer-Login, Räume und Napping-Räume.
+- Schreibanzeige mit Nickfarben, Nick-Vervollständigung per Tab, Emojis und Offline-Nachrichten.
+- Moderation mit Kick, Ban und Gag; konfigurierbare Räume, Befehle und Berechtigungen.
+- Benutzerprofile mit Gästebuch und Profilbild-Uploads, Konto- und Passwortverwaltung, Freunde und Nachrichten.
+- Forum mit Kategorien, Themen, Antworten und Moderation. Besucher können lesen; zum Schreiben sind eine registrierte Community-Sitzung und die entsprechenden Berechtigungen nötig.
+- News, Statistik und eine punktbasierte Topliste. Administratoren können News erstellen, bearbeiten und löschen; ursprünglicher Autor und Veröffentlichungsdatum bleiben beim Bearbeiten erhalten.
+- Startseite und angemeldete Community-Seite zeigen Chat-Kennzahlen, hilfreiche Links und, falls vorhanden, die neuesten News.
+- Deutsche und englische Oberfläche: Das Sprach-Cookie hat Vorrang, danach folgen der Parameter `lang` und die Browsereinstellungen; Englisch ist der Standard. Die automatische Erkennung setzt kein Sprach-Cookie. Im Chat ist der Sprachwechsel ohne Neuladen möglich; Filter und eingeklappte Benutzergruppen bleiben erhalten.
+- Helles und dunkles Design; die Auswahl wird im Cookie `theme` gespeichert.
 
-Die Statistik verwendet wie der Chat die Einstellung `time_zone` aus der Konfiguration.
-Bereits gespeicherte Statistikintervalle werden bei einer Änderung der Zeitzone nicht umgerechnet.
-Bei der Zeitumstellung im Herbst werden die beiden gleich benannten Stunden zusammengefasst.
+### Administration und Gestaltung
 
-Die Newsseite ist über `news.jsp` erreichbar. In der Adminkonsole können
-Administratoren Beiträge erstellen, bearbeiten und löschen; Veröffentlichungsdatum
-und ursprünglicher Autor bleiben beim Bearbeiten erhalten.
-Die Startseite und die Community-Seite nach dem Login zeigen Kennzahlen, hilfreiche
-Links und, falls vorhanden, die neueste News. In eigenen Templates kann
-`%homepage_extra%` die Position dieser Bereiche festlegen; fehlt der Platzhalter,
-werden sie am Ende eingefügt.
+- Adminkonsole für Benutzer, Räume, Module, News, Konfiguration, Befehle, Hilfe, Emoticons, Hosts, Mail und MIME-Typen.
+- Bedienelemente und Meldungen der Konsole unterstützen Deutsch und Englisch; das Sprachmenü wechselt die Sprache und führt zur Konsolenstartseite. Konfigurationswerte und eigene Inhalte bleiben unverändert.
+- WYSIWYG-Theme-Creator mit Vorschau, Farben, Typografie, Logo und eigenem CSS für Skins.
+- WYSIWYG-Seitenersteller mit Vorschau und bereinigtem HTML; öffentliche Seiten sind unter `/page.jsp?slug=<name>` erreichbar.
+- Gemeinsame, konfigurierbare Navigation für öffentliche und Community-Seiten mit eigenen Links, Sichtbarkeit, Beschriftung, Zielen und Reihenfolge.
+- Speicherung in SQLite, MySQL/MariaDB und PostgreSQL; browserbasierter Erststart-Assistent.
 
----
+## Module
+
+Im Bereich **Module** der Adminkonsole lassen sich folgende Einstellungen verwalten. Die Standardwerte gelten für eine neue Installation; `1` aktiviert und `0` deaktiviert eine Option. Gespeichert wird in `~/.homewebcom/config/modules.json` des Tomcat-Prozessbenutzers.
+
+| Einstellung | Standard | Zweck |
+|---|---|---|
+| `chat` | `1` | Chat-Login und Chaträume in Echtzeit. |
+| `board` | `1` | Forum mit öffentlichem Lesen und Beteiligung registrierter Benutzer. |
+| `news` | `1` | Öffentliche Newsseite und Newsverwaltung. |
+| `stats` | `1` | Statistikseite mit Nachrichten-, Benutzer-, Raum- und Aktivitätsdiagrammen. |
+| `toplist` | `1` | Rangliste registrierter Benutzer nach Punkten. |
+| `direct_chat_login` | `0` | Bei aktiviertem Chat direkten Chat-Login statt Community-Login verwenden. |
+
+Deaktivierte Module verschwinden aus der Navigation; die zugehörigen Chat-Login-, Forum-, News-, Statistik- und Toplisten-Seiten antworten mit 404. Ist `news` deaktiviert, ist auch dessen Verwaltung in der Konsole nicht verfügbar. `direct_chat_login` wirkt nur bei aktiviertem `chat`; beim direkten Login ist die Community-Login-Seite nicht verfügbar.
 
 ## Voraussetzungen
 
-| Komponente | Version / Hinweis |
-|------------|-------------------|
-| **JDK** | **21** (source/target in der `pom.xml`) |
-| **Maven** | 3.8+ |
-| **Apache Tomcat** | 10.1+ (Jakarta EE 9+, Servlet 6 / WebSocket) |
-| **Datenbank** | MySQL/MariaDB 10.6+, PostgreSQL oder SQLite |
-| **Konfig-Home** | `~/.homewebcom` (Home des Users, unter dem Tomcat läuft) |
+| Komponente | Voraussetzung |
+|---|---|
+| Java | JDK 21 zum Bauen; Java 21 zum Betrieb |
+| Maven | 3.8+ zum Bauen |
+| Servlet-Container | Apache Tomcat 11.x (Servlet 6.1, JSP 4.0, WebSocket 2.2); Tomcat 10.1 stellt diese API-Versionen nicht bereit |
+| Datenbank | SQLite, MySQL/MariaDB oder PostgreSQL |
+| Mail | Erreichbarer SMTP-Server: Das Setup sendet eine Testmail an den ersten Benutzer |
+| Speicher | Schreibbares `~/.homewebcom` im Home-Verzeichnis des Tomcat-Prozessbenutzers |
 
----
+PostgreSQL benötigt `pgcrypto`; das Setup versucht die Erweiterung anzulegen. Der Datenbankbenutzer benötigt dafür die erforderlichen Rechte, oder ein Administrator installiert sie vorab. Für MySQL/MariaDB und PostgreSQL müssen Datenbank und Zugangsdaten vor dem Setup angelegt werden.
 
 ## Schnellstart
 
-### 1. Klonen
+1. **WAR bauen** im Repository-Wurzelverzeichnis oder `HWebChat.war` aus den [Releases](https://github.com/WarPigs1602/HWebChat/releases) herunterladen:
 
-```bash
-git clone https://github.com/WarPigs1602/HWebChat.git
-cd HWebChat
-```
+   ```bash
+   git clone https://github.com/WarPigs1602/HWebChat.git
+   cd HWebChat
+   mvn -f web/WEB-INF/pom.xml clean package
+   ```
 
-### 1a. Oder das fertige WAR verwenden
+   Das Ergebnis liegt im Repository unter `target/HWebChat.war`. Maven kann auch aus `web/WEB-INF` gestartet werden; von dort lautet der Pfad `../../target/HWebChat.war`.
 
-Alternativ das aktuelle Release direkt herunterladen:
+2. **Deployen:** `target/HWebChat.war` nach dem für den Server vorgesehenen Verfahren in das Tomcat-11-Verzeichnis `webapps` deployen. Bei Standard-WAR-Namen und Standardkonfiguration lautet der Kontextpfad `/HWebChat`:
 
-```text
-https://github.com/WarPigs1602/HWebChat/releases/download/261117/HWebChat.war
-```
+   ```text
+   http://localhost:8080/HWebChat/
+   ```
 
-Danach weiter mit Schritt 3 (Auf Tomcat deployen).
+   Ein umbenanntes WAR oder eine eigene Kontextkonfiguration ändert diesen Pfad. Vor Updates Daten sichern und das Tomcat-Deploy-Verfahren befolgen; beim Ersetzen der Anwendung das Datenverzeichnis nicht löschen.
 
-### 2. Mit Maven bauen
+3. **Setup ausführen:** `http://localhost:8080/HWebChat/setup.jsp` aufrufen, bevor die Installation öffentlich erreichbar ist. SQLite (Voreinstellung), MySQL oder PostgreSQL auswählen und SMTP, Konsolenzugang, ersten Chat-Benutzer, Raum und rechtliche Angaben eintragen. Der Assistent kopiert Erststart-Konfiguration und Daten aus `web/default-homewebcom/`, erstellt Datenbanktabellen und den ersten privilegierten Chat-Benutzer, testet SMTP und schreibt die Konfiguration. Der Konsolenzugang ist vom ersten Chat-Benutzer getrennt.
 
-```bash
-cd web/WEB-INF
-mvn clean package
-```
+4. `http://localhost:8080/HWebChat/start.jsp` öffnen und anmelden. Die Konsole liegt standardmäßig unter `/HWebChat/console.jsp` beziehungsweise unter dem im Setup gewählten `console.path`.
 
-Artefakt:
+Das Setup legt die vordefinierten Räume Development, Exil, Lounge und Staff-Lounge an, aber keinen beliebig als Standard eingetragenen Raum. Falls ein anderer Standardraum gewählt wird, diesen in der Konsole anlegen.
 
- ```text
- target/HWebChat_Community_Edition.war
- ```
+Das Setup gilt erst als abgeschlossen, wenn sowohl `~/.homewebcom/config/config.json` als auch `~/.homewebcom/config/.setup_complete` vorhanden sind. Ein fehlgeschlagenes Setup kann bereits Dateien oder Datenbankeinträge angelegt haben; beim erneuten Versuch werden vorhandene Dateien mit Vorlagen überschrieben. Vorher prüfen und sichern.
 
-Weitere Varianten:
+## Administration
 
-```bash
-mvn clean compile               # nur kompilieren
-mvn -o package                  # offline (lokales Repo)
-```
+### Seiten und Navigation
 
-**NetBeans:** Projekt kann weiterhin geöffnet werden; der Build läuft über diese Maven-`pom.xml`.
+In der Konsole **WYSIWYG-Seitenersteller** wählen, URL-Namen, Titel und Inhalt eingeben, Vorschau prüfen und speichern. Der URL-Name besteht aus Kleinbuchstaben, Ziffern und Bindestrichen und ist nach dem Erstellen nicht änderbar; gespeicherte Seiten sind unter `/page.jsp?slug=<name>` öffentlich erreichbar. HTML wird bereinigt, nicht unterstützte Markups und Attribute werden entfernt. Bei Bedarf separat einen Navigationslink hinzufügen.
 
-### 3. Auf Tomcat deployen
+Unter **Navigation** bestehende Punkte konfigurieren oder eigene Links ergänzen, etwa auf eigene Seiten. Filter zeigen das Hauptmenü sowie die Login- und Sprach-Untermenüs; Pfeile sortieren innerhalb des jeweiligen Menüs. Hinzufügen und Sortieren benötigen JavaScript. Leere Beschriftungen oder Ziele bestehender Punkte behalten die Übersetzung beziehungsweise das bisherige Verhalten. Interne Ziele beginnen mit `/` und sind relativ zum Anwendungskontext; externe Links unterstützen `http`, `https` und `mailto`. Eigene Ziele machen Login-, Chat- und Sprachmenü zu normalen Links. Modul- und Sitzungsbedingungen gelten weiterhin.
 
- ```bash
- # Tomcat ggf. stoppen, dann:
- cp target/HWebChat_Community_Edition.war "$CATALINA_HOME/webapps/"
- # Tomcat starten — entpackt das WAR automatisch
- ```
+Öffentliche und Community-Seiten zeigen die zur aktiven Sitzung passende Navigation für registrierte Benutzer, Gäste oder nicht angemeldete Besucher. In einem Chat-Tab eingebettete Seiten blenden ihre eigene Navigation aus.
 
-Oder in deinen bestehenden `webapps`-Pfad (z. B. `/home/du/tomcat/webapps/`).
+### Konfiguration und Daten
 
-Nach dem Deploy typischer Context-Pfad:
-
-```text
-http://localhost:8080/HWebChat_Community_Edition/
-```
-
-Für eine kurzfristige Fehlersuche kann Tomcat mit der JVM-Option
-`-Dhwebchat.showStackTrace=true` gestartet werden. Dann zeigt die 500-Seite
-vorhandene Stacktraces an. Diese können vertrauliche Informationen enthalten:
-nicht auf öffentlich erreichbaren Servern aktivieren und danach wieder abschalten.
-
-### 4. Erststart-Setup
-
-Beim ersten Aufruf erkennt die App, dass `~/.homewebcom` fehlt, und leitet automatisch auf den integrierten Setup-Assistenten weiter:
-
-```text
-http://localhost:8080/HWebChat_Community_Edition/setup.jsp
-```
-
-Der Setup-Assistent:
-
-1. Erstellt `~/.homewebcom` und kopiert alle Templates/Configs aus dem WAR
-2. Fragt Datenbank, SMTP-Mail, Adminkonsole und den ersten Benutzer ab
-3. Legt alle benötigten Datenbanktabellen automatisch an
-4. Legt den ersten Chat-Benutzer an (mit Admin- und Forum-Moderator-Rechten)
-5. Legt den konfigurierten Standardraum an
-6. Schreibt eine vollständige `config.json` mit allen Einstellungen
-
-Nach dem Setup ist die Startseite erreichbar unter:
-
-```text
-http://localhost:8080/HWebChat_Community_Edition/start.jsp
-```
-
-### 5. Nach Code-Änderungen neu deployen
-
-```bash
-cd web/WEB-INF
-mvn clean package
-rm -rf "$CATALINA_HOME/webapps/HWebChat_Community_Edition"
-cp ../../target/HWebChat_Community_Edition.war "$CATALINA_HOME/webapps/"
-# Tomcat neu starten oder Auto-Redeploy abwarten
-```
-
-Templates/Config unter `~/.homewebcom` liegen **nicht** im WAR — dort live editieren; Tomcat-Neustart nur nötig, wenn Klassen neu gebaut wurden.
-
----
-
-## Konfiguration
+Die Laufzeitdateien liegen unter `~/.homewebcom` des Tomcat-Prozessbenutzers:
 
 | Pfad | Zweck |
-|------|--------|
-| `~/.homewebcom/config/config.json` | Haupteinstellungen (SQL, Timeouts, Status-Level, …); `legal.name`, `legal.street`, `legal.zip`, `legal.city`, `legal.phone`, `legal.email` füllen Impressum und Datenschutz (leere Telefonnummer = ausgeblendet); `console.path` legt die Adresse der Adminkonsole relativ zum Context fest (Standard `console.jsp`; die Standardadresse ist dann nicht mehr erreichbar) |
-| `~/.homewebcom/config/hosts.json` | Virtual Host → Skin |
-| `~/.homewebcom/config/commands.json` | Texte der Chat-Befehle |
+|---|---|
+| `config/config.json` | Haupteinstellungen, Datenbank, Zeitzone, rechtliche Angaben und `console.path` |
+| `config/modules.json` | Modul- und Direkt-Login-Schalter |
+| `config/navigation.json` | Gemeinsame Navigation |
+| `config/pages.json` | Eigene Seiten |
+| `config/themes.json` | Theme-Einstellungen je Skin |
+| `config/hosts.json` | Zuordnung virtueller Hosts zu Skins |
+| `config/commands.json`, `config/cmdcfg.json` | Befehlstexte und Berechtigungen |
+| `config/mail.json` | SMTP-Einstellungen |
+| `data/hwebchat.sqlite` | Standard-SQLite-Datenbank, sofern kein anderer Pfad konfiguriert ist |
 
-Der Setup-Assistent unterstützt alle drei Datenbank-Backends. SQLite ist die Voreinstellung. Für eine manuelle Konfiguration setzt `sql.type` den Wert `sqlite`, `mysql` oder `postgresql`. PostgreSQL verwendet `sql.host` (`host:port`), `sql.db`, `sql.user` und `sql.pw`; `pgcrypto` muss in der Datenbank installiert sein (der Setup-Assistent versucht, die Erweiterung anzulegen). SQLite verwendet `sql.path` und standardmäßig `~/.homewebcom/data/hwebchat.sqlite`; `sql.user` und `sql.pw` werden ignoriert.
+Die Kopie unter [web/default-homewebcom/](web/default-homewebcom/) liefert Erststart-Vorlagen und ist nicht die laufende Konfiguration. JSP-Layouts und -Templates liegen im WAR und werden nicht aus `~/.homewebcom/templates` geladen; Änderungen erfolgen im Quellcode und erfordern ein erneutes Deployment. Das Laufzeitverzeichnis **und** bei Serverdatenbanken zusätzlich die Datenbank sichern.
 
-Die Repo-Kopie `web/default-homewebcom/` ist eine Vorlage; beim Erststart erstellt die App automatisch `~/.homewebcom` und kopiert alle Dateien dorthin.
+Für manuelle Datenbankkonfiguration ist `sql.type` gleich `sqlite`, `mysql` oder `postgresql`. SQLite verwendet `sql.path` und ignoriert `sql.user` und `sql.pw`; PostgreSQL verwendet `sql.host` (`host:port`), `sql.db`, `sql.user` und `sql.pw`. Die `legal.*`-Einstellungen füllen Impressum und Datenschutz; eine leere Telefonnummer wird ausgeblendet. Eine Änderung von `console.path` ändert die Konsolenadresse und macht die Standardadresse unerreichbar.
 
-Zufallsfarben für neue Benutzer und Gäste erreichen mindestens 4,5:1 Kontrast zum dunklen Standarddesign. Die Zeichenbeschränkungen `bright_0` bis `bright_5` gelten weiterhin; wenn sie keine ausreichend helle Farbe zulassen, muss die Konfiguration angepasst werden. Individuelle Raumfarben können einen anderen Kontrast ergeben.
+Die Statistik verwendet `time_zone`; bereits gespeicherte Intervalle werden bei Änderungen nicht umgerechnet, und die doppelte Stunde am Ende der Sommerzeit wird zusammengefasst. Zufällige Nickfarben streben mindestens 4,5:1 Kontrast zum dunklen Design an, abhängig von den Einschränkungen `bright_0`–`bright_5`; individuelle Raumfarben können abweichen.
 
-Im Chat-Tab eingebettete Seiten blenden ihre eigene Navigationsleiste aus; außerhalb des Chat-Tabs bleibt sie sichtbar. Dies gilt auch für bereits kopierte Seitendesigns mit einer `nav.navbar` direkt im `body`.
+## Betrieb und Sicherheit
 
-Die Navigationsleiste bietet ein dunkles Alternativdesign zum hellen Standard („Design“-Menü, gespeichert im Cookie `theme`). Der Teil eines Stylesheets hinter dem Kommentar `/* theme:dark` gehört nur zum dunklen Design und entfällt im hellen. Im Chat wechselt das Sprachmenü die Sprache in Echtzeit über die offene WebSocket-Verbindung (ohne Neuladen); Elemente mit `data-i18n="<Command-Schlüssel>"`, der Sende-Button und die Benutzerliste werden übersetzt. Filter und eingeklappte Gruppen bleiben erhalten.
-
-Öffentliche und Community-Seiten wählen die Navigation anhand der aktiven Community-Sitzung: registrierter Benutzer, Gast oder nicht angemeldet. Abgelaufene Sitzungen erhalten die öffentliche Navigation.
-
----
+- Starke, unterschiedliche Passwörter für Konsole, Chat-Administrator und Datenbank wählen. Zugriff auf das Setup während der Installation und auf `~/.homewebcom` mit Zugangsdaten und Daten einschränken.
+- HTTPS für Website und WebSocket-Verbindungen verwenden, Java und Tomcat aktuell halten und den Tomcat Manager schützen. Die `secure`-Einstellung des Sitzungscookies in [web.xml](web/WEB-INF/web.xml) an das HTTPS-Deployment anpassen.
+- Nur zur kurzfristigen Fehlersuche zeigt `-Dhwebchat.showStackTrace=true` vorhandene Stacktraces auf der 500-Seite. Diese können vertrauliche Informationen enthalten: nicht auf öffentlich erreichbaren Servern aktivieren und danach wieder abschalten.
+- Bei Java-Buildfehlern `java -version` und `mvn -v` prüfen. Bei Datenbankproblemen die laufende `config/config.json`, Verbindungsdaten und Berechtigungen prüfen, nicht nur die Vorlagen im Repository.
 
 ## Entwicklung
 
-- **Package:** `net.midiandmore.chat`
-- **Einstiegsseite:** `/start.jsp`; weitere Seiten sind direkt erreichbar, z. B. `/login.jsp`, `/login_chat.jsp`, `/account.jsp`, `/account_com.jsp`, `/board.jsp`, `/profile.jsp`, `/register.jsp`, `/news.jsp` und `/console.jsp` (konfigurierbar über `console.path`).
-- **Inhalte:** Dokumente, Skripte und Stylesheets sind die JSPs unter `/content/`, z. B. `/content/rules.jsp`, `/content/chat.js` und `/content/page.jsp`; jede JSP enthält ihr Template. Dokumente nur für angemeldete Community-Nutzer werden mit `community=true` aufgerufen, z. B. `/content/rules_com.jsp?community=true`; ohne Community-Sitzung erscheint die Timeout-Seite. Skripte und Stylesheets ohne eigenes Template (jQuery, Bootstrap, …) liefert die jeweilige JSP aus dem Skin aus. Die frühere Adresse `/content.jsp?service=...&doc=...` und die `community_`-JSPs entfallen; eigene Links müssen angepasst werden.
-- Dienste ohne jemals vorhandenen Inhalt (`chatstream`, `fader`, `refreshstream`, `refresh_error`) haben keinen Endpunkt und antworten mit der 404-Seite. Eigene Dokument-, Skript- oder Stylesheet-Vorlagen benötigen einen entsprechenden JSP-Endpunkt unter `/content/`.
-- **Setup-Assistent:** `/setup.jsp` (Logik in `SetupService`)
-- **WebSocket:** Klasse `Chat` (`@ServerEndpoint`)
-- **Upload:** `/upload.jsp` (Multipart-POST)
-- Die Seiten rufen gemeinsame Java-Methoden über `Web` auf. Eine direkt aufgerufene Seite beginnt mit `Web.begin(...)`: Das prüft das Setup, übernimmt die Sprache und stellt die Template-Werte als Request-Attribute bereit. Webpfade sind fest vorgegeben und berücksichtigen den Kontextpfad der Anwendung. Vorhandene `paths.json`-Dateien und `path_*`-Einträge in `config.json` werden nicht mehr verwendet oder gelöscht; die Pfadverwaltung entfällt. Alte eigene Links müssen gegebenenfalls angepasst werden.
-- Einige alte Frame-Vorlagen verwenden weiterhin nicht unterstützte `?page=`-Links für die frühere HTTP-Chateingabe; diese sind durch die festen Pfadvorgaben nicht funktionsfähig.
-- Die bisherigen URLs `/Start`, `/Setup` und `/UploadFile` werden nicht mehr bereitgestellt.
-- **Jakarta EE:** APIs unter `jakarta.*` (nicht `javax.*` für Servlet/WebSocket)
-
-Java-Quellen: `src/java/net/midiandmore/chat/`  
-Web-Ressourcen: `web/`
-
----
-
-## Sicherheit
-
-- Starke Passwörter für MySQL und Adminkonsole (werden beim Erststart-Setup vergeben)
-- Tomcat Manager nicht ungeschützt öffentlich freigeben
-- JDK und Tomcat aktuell halten
-- Rechte auf `~/.homewebcom/config` einschränken (enthält DB-Passwort)
-- HTTPS bevorzugen (Tomcat-SSL oder Reverse-Proxy)
-
----
-
-## FAQ
-
-**Sprache?**  
-Standard sind deutsche UI/Templates. Englisch steht über dieselben JSP-Templates bereit, ergänzt um passende Configs wie `help_en.json` und `profile_en.json`. Die Sprache wird automatisch erkannt (`lang`-Cookie, `lang`-Parameter, `Accept-Language`) und kann im Frontend umgestellt werden.
-
-### JSP-Templates und i18n
-
-- Seiten sind JSPs. Die JSPs im Web-Wurzelverzeichnis (`memory.jsp`, `captcha.jsp`, `webchat_stats.jsp`, `link.jsp`, `logout.jsp`, `top.jsp`, `emot.jsp`, `help.jsp`, `read_message.jsp`, `stats.jsp`, `image.jsp`, `news.jsp`, `password.jsp`, `register.jsp`, `login.jsp`, `login_chat.jsp`, `profile.jsp`, `account.jsp`, `account_com.jsp`, `board.jsp`, `console.jsp`) und in `content/` verarbeiten ihre Anfragen direkt. Einige binden weiterhin gemeinsames Markup aus `web/WEB-INF/jsp` ein; andere Seiten verwenden dort ebenfalls noch Templates: `pages`, `console`, `mail`, `system` und `includes`.
-- Eine Seite packt ihren Inhalt mit `<t:layout design="start">…</t:layout>` ein. [layout.tag](web/WEB-INF/tags/layout.tag) ist das einzige Layout: Es setzt `includes/header.jsp` (`<head>`), `includes/navbar.jsp` (Seiten-, Konsolen- und Logo-Navigation) und `includes/footer.jsp` (rechtliche Links und Skripte) um den Inhalt zusammen. Der Design-Name wählt nur die Parameter (Titel, Stylesheets, Navigationsvariante, Wrapper, Footer-Teile) aus der Liste am Anfang des Tags; `includes/navbar-chat.jsp` ist die Navigation im Chatfenster.
-- Werte werden per EL gelesen, es gibt kein `%Platzhalter%`-Ersetzen mehr: `${nick}`, `${sid}`, `${skin}`, `${paths.login}` (fest vorgegebener Pfad), `${com.design_nav_start}` (commands.json), `${help.away}`, `${profile.hobby}`, `${SERVER_SOFTWARE}`, … Seitenspezifische Werte setzt Java mit `view.set("name", wert)` auf dem `View` aus `getTemplate(...)`; ein `View` kann Wert eines anderen `View` sein und sieht dann dessen Werte.
-- Texte stehen in den Resource Bundles `src/resources/i18n/messages.properties` (Deutsch, Standard) und `messages_en.properties` und werden mit `<fmt:message key="…"/>` ausgegeben. Meldungen mit Werten nutzen `{0}`, `{1}`, … und `<fmt:param value="${…}"/>` (in solchen Meldungen `'` als `''` und `{` als `'{'` schreiben). Eine weitere Sprache entsteht mit `messages_<lang>.properties` und denselben Schlüsseln.
-- Zeichenketten in JSON-Konfigurationsdateien und den festen Pfadvorgaben können weiterhin `%name%`, `%PATH_[name]%` und `%com[name]%` verwenden; diese werden beim Lesen aufgelöst. Parameterlose JSP-Pfade enden nicht mit `?`; bestehende Konfigurationen, die Parameter mit `&` anhängen, bleiben kompatibel.
-- Alle Templates, Skripte und Stylesheets (jQuery, Bootstrap, …) sind JSPs im WAR; aus `~/.homewebcom/templates` wird nichts mehr gelesen. Das Layout ändert man in den JSPs im WAR (bzw. mit einem angepassten WAR).
-- Öffentliche Seiten im Web-Root: `index.jsp` (Welcome-Datei, leitet auf `start.jsp` weiter) sowie `404.jsp` und `500.jsp` (Fehlerseiten); sie nutzen die oben beschriebene Spracherkennung.
-
-**Erststart-Setup?**  
-Beim ersten Aufruf verweist die App auf `/setup.jsp`. Der Assistent erstellt automatisch `~/.homewebcom`, alle Datenbanktabellen, den ersten Admin-Benutzer und schreibt eine vollständige `config.json`.
-
-**HTTPS?**  
-TLS an Tomcat oder Reverse-Proxy (nginx/Caddy). Cookie-Flags `secure` in `web.xml` an das Setup anpassen.
-
-**Falsche DB / keine Nachrichten?**  
-`sql.db` / User in **`~/.homewebcom/config/config.json`** prüfen (nicht nur die Repo-Kopie) und mit der importierten Datenbank abgleichen.
-
-**Build schlägt wegen Java-Version fehl?**  
-JDK 21 nutzen: `java -version` und `mvn -v` sollten 21 melden.
-
----
+- Java-Quellen: [src/java/net/midiandmore/chat/](src/java/net/midiandmore/chat/); Web-Ressourcen: [web/](web/); Maven-Projekt: [pom.xml](web/WEB-INF/pom.xml). Der WebSocket-Endpunkt ist `/Chat`; Profilbild-Uploads erfolgen über `/upload.jsp`.
+- Seiten verwenden JSP, EL/JSTL und das gemeinsame [layout.tag](web/WEB-INF/tags/layout.tag). Dessen Inhalt ist skriptlos: Werte vor dem Layout berechnen und darin EL/JSTL verwenden. Deutsche und englische Resource Bundles liegen unter [src/resources/i18n/](src/resources/i18n/); JSON-Konfigurationen können weiterhin unterstützte `%...%`-Platzhalter enthalten.
+- Dokumente, Skripte und Stylesheets besitzen Endpunkte unter `/content/`. Community-Dokumente wie `/content/rules_com.jsp?community=true` benötigen eine Community-Sitzung. Eigene Inhalte benötigen einen entsprechenden JSP-Endpunkt.
+- Die früheren URLs `/content.jsp?service=...&doc=...`, `community_`-JSPs, `/Start`, `/Setup` und `/UploadFile` werden nicht mehr bereitgestellt. Alte `paths.json`- und `path_*`-Einstellungen werden nicht mehr verwendet; eigene Links müssen angepasst werden. Manche alten Frame-Templates enthalten weiterhin nicht unterstützte `?page=`-Links für die frühere HTTP-Chateingabe.
 
 ## Lizenz
 
 Siehe [LICENSE](LICENSE).
-
----
-
-**Viel Spaß mit HWebChat!**

@@ -5,7 +5,6 @@
     charset     "true" to start with <meta charset>
     software    "coolchat" or "version" for <meta name="software">, empty for none
     contenttype "true" for the http-equiv content-type <meta>
-    fonts       "true" to preload the emoji fonts
     styles      comma separated style sheets: "@bootstrap", "@fa4", "@fa6", "@prism" or a fixed path key
     scripts     comma separated scripts: "@popper", "@bootstrap", "@prism" or a fixed path key
     embedded    "true" to hide the navigation bar when the page is shown inside the chat
@@ -24,9 +23,6 @@
 </c:if>  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="${path_file}gfx/favicon.svg" type="image/svg+xml">
   <link rel="shortcut icon" href="${path_file}gfx/favicon.svg" type="image/svg+xml">
-<c:if test="${param.fonts eq 'true'}">  <link rel="preload" href="${path_file}fonts/TwitterColorEmoji-SVGinOT.ttf" as="font">
-  <link rel="preload" href="${path_file}fonts/NotoColorEmoji.ttf" as="font">
-</c:if>
 <c:forTokens items="${param.styles}" delims="," var="style">
 <c:choose>
 <c:when test="${style eq '@bootstrap'}">  <link rel="stylesheet" href="${path_file}bootstrap/css/bootstrap.min.css" type="text/css">

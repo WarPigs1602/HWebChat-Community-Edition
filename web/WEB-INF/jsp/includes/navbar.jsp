@@ -1,9 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="c" uri="jakarta.tags.core" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><%--
-  Navigation bar of the layouts.
-  Parameters:
-    variant  "guest", "community", "community_reg" (main navigation), "console" (administration) or "brand" (logo only)
-    home     brand variant: key of the fixed link target, empty for "#"
-    navclass brand variant: additional CSS classes of the <nav> element
+  Navigation variants: brand (logo only), console (administration), guest,
+  community and community_reg (public navigation).
 --%><c:choose>
 <c:when test="${param.variant eq 'brand'}"><nav class="navbar navbar-expand-lg navbar-dark ${param.navclass}">
   <div class="container-fluid">
@@ -33,6 +30,8 @@
             <a class="dropdown-item" href="${paths.config_cmd}">${com.design_admin_cmd_edit}</a>
             <a class="dropdown-item" href="${paths.config_host}">${com.design_admin_host}</a>
             <a class="dropdown-item" href="${paths.config_theme}">${com.design_admin_theme}</a>
+            <a class="dropdown-item" href="${paths.config_index}&amp;service=pages"><fmt:message key="console.pages.menu"/></a>
+            <a class="dropdown-item" href="${paths.config_index}&amp;service=navigation"><fmt:message key="console.navigation.menu"/></a>
             <a class="dropdown-item" href="${paths.config_mail}">${com.design_admin_mail}</a>
             <a class="dropdown-item" href="${paths.config_help}">${com.design_admin_help}</a>
             <a class="dropdown-item" href="${paths.config_fun}">${com.design_admin_fun}</a>
@@ -40,114 +39,21 @@
             <a class="dropdown-item" href="${paths.config_mime}">${com.design_admin_mime}</a>
             <a class="dropdown-item" href="${paths.config_users}">${com.design_admin_users}</a>
             <a class="dropdown-item" href="${paths.config_rooms}">${com.design_admin_rooms}</a>
-            <a class="dropdown-item" href="${paths.config_index}&service=modules">Modules</a>
+            <a class="dropdown-item" href="${paths.config_index}&amp;service=modules"><fmt:message key="console.modules.menu"/></a>
           </div>
         </li>
         <li class="nav-item"><a class="nav-link" href="<c:out value="${paths.config_news}"/>"><i class="fa fa-newspaper-o" aria-hidden="true"></i> <fmt:message key="news.manage"/></a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="consoleLangDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-language" aria-hidden="true"></i> ${com.design_nav_language}</a>
+          <div class="dropdown-menu" aria-labelledby="consoleLangDropdown">
+            <a class="dropdown-item" href="${paths.config_index}&amp;lang=de" onclick="document.cookie='lang=de;path=/;max-age=31536000'">${com.design_lang_de}</a>
+            <a class="dropdown-item" href="${paths.config_index}&amp;lang=en" onclick="document.cookie='lang=en;path=/;max-age=31536000'">${com.design_lang_en}</a>
+          </div>
+        </li>
       </ul>
     </div>
   </div>
 </nav>
 </c:when>
-<c:otherwise><c:set var="community" value="${param.variant ne 'guest'}"/><c:set var="registered" value="${param.variant eq 'community_reg'}"/><nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="${community ? paths.index_com : paths.index}">
-      <img src="${not empty theme_logo ? theme_logo : ''}${empty theme_logo ? path_file : ''}${empty theme_logo ? 'gfx/logo.svg' : ''}" alt="HWebChat" style="height: 40px;">
-    </a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="${com.design_toggle_navigation}">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav mr-auto">
-        <li class="nav-item active">
-          <a class="nav-link" href="${community ? paths.index_com : paths.index}"><i class="fa fa-home"></i> ${com.design_nav_start}</a>
-        </li>
-<c:if test="${modules.news ne '0'}">        <li class="nav-item">
-          <a class="nav-link" href="${paths.news}"><i class="fa fa-bullhorn" aria-hidden="true"></i> ${com.design_nav_news}</a>
-        </li>
-</c:if><c:if test="${modules.board ne '0'}">        <li class="nav-item">
-          <a class="nav-link" href="${paths.board}"><i class="fa fa-comments"></i> ${com.design_nav_forum}</a>
-        </li>
-</c:if>        <li class="nav-item">
-          <a class="nav-link" href="${registered ? paths.rules_com_reg : community ? paths.rules_com : paths.rules}"><i class="fa fa-info-circle"></i> ${com.design_nav_chattiquette}</a>
-        </li>
-<c:if test="${modules.toplist ne '0'}">        <li class="nav-item">
-          <a class="nav-link" href="${paths.toplist}"><i class="fa fa-trophy"></i> ${com.design_nav_toplist}</a>
-        </li>
-</c:if><c:if test="${modules.stats ne '0'}">        <li class="nav-item">
-          <a class="nav-link" href="${paths.stats}"><i class="fa fa-bar-chart"></i> <fmt:message key="common.statistics"/></a>
-        </li>
-</c:if><c:if test="${community}">        <li class="nav-item">
-          <a class="nav-link" href="${paths.logout}"><i class="fa fa-sign-out"></i> ${com.design_nav_logout}</a>
-        </li>
-</c:if>      </ul>
-      <ul class="navbar-nav">
-<c:choose>
-<c:when test="${community}"><c:if test="${modules.chat ne '0'}">        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="chatDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="fa fa-comments"></i> ${com.design_nav_chat}
-          </a>
-          <div class="dropdown-menu dropdown-menu-right p-2" aria-labelledby="chatDropdown">
-            <form method="POST" name="login" action="${paths.login_chat}" target="chat" accept-charset="utf-8" class="p-1" style="min-width:180px">
-              <input name="sid" value="${sid}" type="hidden">
-              <input name="skin" value="${skin}" type="hidden">
-              <select class="form-control form-control-sm mb-2" id="nav-room-select" name="room">
-                <c:forEach items="${chat_rooms}" var="r"><option value="<c:out value='${r}'/>"><c:out value='${r}'/></option></c:forEach>
-                <option value="__custom__"><fmt:message key="common.room_select_manual"/></option>
-              </select>
-              <fmt:message key="common.room_enter_name" var="roomEnterName"/>
-              <input class="form-control form-control-sm mb-2" id="nav-room-custom" type="text" maxlength="64" placeholder="${roomEnterName}" style="display:none" disabled>
-              <input class="btn btn-sm btn-primary btn-block" value="${com.design_btn_chat_start}" type="submit">
-              <script>(function(){var s=document.getElementById('nav-room-select'),c=document.getElementById('nav-room-custom');if(!s||!c)return;function t(){var m=s.value==='__custom__';c.style.display=m?'block':'none';c.disabled=!m;if(m){s.removeAttribute('name');c.name='room';c.focus();}else{c.removeAttribute('name');s.name='room';}}s.addEventListener('change',t);t();})();</script>
-            </form>
-          </div>
-        </li>
-</c:if><c:if test="${registered}">        <li class="nav-item">
-          <a class="nav-link" href="${paths.account_com}"><i class="fa fa-user"></i> ${com.design_nav_account}</a>
-        </li>
-</c:if></c:when>
-<c:otherwise><c:set var="chatLoginAction" value="${directChatLogin ? paths.login_chat : paths.login}"/><c:if test="${modules.chat ne '0' and not directChatLogin}">        <li class="nav-item">
-          <a class="nav-link" href="${chatLoginAction}?skin=${skin}"><i class="fa fa-sign-in"></i> ${com.design_nav_guest}</a>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="loginDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="fa fa-user"></i> ${com.design_nav_login}
-          </a>
-          <div class="dropdown-menu dropdown-menu-right p-3 login-menu" aria-labelledby="loginDropdown">
-            <h2 class="h6 login-menu-title"><i class="fa fa-sign-in" aria-hidden="true"></i> ${com.design_nav_login}</h2>
-            <p class="login-menu-hint"><fmt:message key="layout.start.log_in_to_your_account"/></p>
-            <form method="POST" name="login" action="${chatLoginAction}" target="_top" accept-charset="utf-8" class="login-menu-form">
-              <input name="skin" value="${skin}" type="hidden">
-              <div class="form-group">
-                <label for="navbar-login-nick">${com.design_placeholder_nick}</label>
-                <input class="form-control form-control-sm" id="navbar-login-nick" maxlength="20" name="nick" type="text" autocomplete="username" required>
-              </div>
-              <div class="form-group">
-                <label for="navbar-login-pwd">${com.design_placeholder_pwd}</label>
-                <input class="form-control form-control-sm" id="navbar-login-pwd" maxlength="20" name="pwd" type="password" autocomplete="current-password" required>
-              </div>
-              <button class="btn btn-primary btn-block" type="submit">${com.design_btn_login_submit}</button>
-            </form>
-            <div class="login-menu-links">
-              <a class="dropdown-item" href="${paths.register}"><i class="fa fa-user-plus" aria-hidden="true"></i> ${com.design_link_register}</a>
-              <a class="dropdown-item" href="${paths.password}"><i class="fa fa-key" aria-hidden="true"></i> ${com.design_link_password_forgot}</a>
-            </div>
-          </div>
-        </li>
-</c:if></c:otherwise>
-</c:choose>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-            <i class="fa fa-language"></i> ${com.design_nav_language}
-          </a>
-          <div class="dropdown-menu dropdown-menu-right" aria-labelledby="langDropdown">
-            <a class="dropdown-item" href="#" onclick="setLang('de', this); return false;">${com.design_lang_de}</a>
-            <a class="dropdown-item" href="#" onclick="setLang('en', this); return false;">${com.design_lang_en}</a>
-          </div>
-        </li>
-      </ul>
-    </div>
-  </div>
-</nav>
-</c:otherwise>
+<c:otherwise><jsp:include page="/WEB-INF/jsp/includes/navbar-public.jsp"><jsp:param name="variant" value="${param.variant}"/></jsp:include></c:otherwise>
 </c:choose>

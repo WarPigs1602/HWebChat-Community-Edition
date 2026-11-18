@@ -77,7 +77,12 @@
                 }
                 for (var key : p.keySet()) {
                     var arr = p.get(key);
-                    rows.add(new String[]{ut.parseHtml(key), ut.parseHtml(arr[0]), arr[1]});
+                    var descriptionKey = switch (key) {
+                        case "chat", "board", "news", "stats", "toplist", "direct_chat_login" -> "console.modules.description_" + key;
+                        default -> null;
+                    };
+                    rows.add(new String[]{ut.parseHtml(key), ut.parseHtml(arr[0]),
+                            descriptionKey != null ? Web.message(lang, descriptionKey) : arr[1]});
                 }
                 request.setAttribute("console_rows", rows);
             } else if (service.equals("room")) {
@@ -405,6 +410,116 @@
                 request.setAttribute("theme_success", success); request.setAttribute("theme_warning", warning); request.setAttribute("theme_danger", danger);
                 request.setAttribute("theme_bodyGradient", bodyGradient); request.setAttribute("theme_logo", logo); request.setAttribute("theme_chatName", chatName);
                 request.setAttribute("theme_skins", themes.keySet());
+            } else if (service.equals("navigation")) {
+                panel = "navigation";
+                var menuSession = request.getSession(true);
+                var csrf = (String) menuSession.getAttribute("navigationCsrf");
+                if (csrf == null) {
+                    var bytes = new byte[32];
+                    new java.security.SecureRandom().nextBytes(bytes);
+                    csrf = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+                    menuSession.setAttribute("navigationCsrf", csrf);
+                }
+                if (!map.getOrDefault("update", "").isBlank()) {
+                    if (!"POST".equalsIgnoreCase(request.getMethod())) {
+                        response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                        return;
+                    }
+                    var submitted = map.getOrDefault("navigation_csrf", "");
+                    if (!java.security.MessageDigest.isEqual(csrf.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                            submitted.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                        return;
+                    }
+                    var ids = request.getParameterValues("nav_id");
+                    var labels = request.getParameterValues("nav_label");
+                    var urls = request.getParameterValues("nav_url");
+                    var enabled = request.getParameterValues("nav_enabled");
+                    var items = new ArrayList<NavigationMenu.Item>();
+                    if (ids == null || labels == null || urls == null || enabled == null
+                            || ids.length != labels.length || ids.length != urls.length || ids.length != enabled.length) {
+                        request.setAttribute("navigation_error", Web.message(lang, "console.navigation.error_items"));
+                    } else {
+                        for (var i = 0; i < ids.length; i++) {
+                            if (!"1".equals(enabled[i]) && !"0".equals(enabled[i])) {
+                                request.setAttribute("navigation_error", Web.message(lang, "console.navigation.error_visibility"));
+                                break;
+                            }
+                            items.add(new NavigationMenu.Item(ids[i], labels[i].strip(), urls[i].strip(), "1".equals(enabled[i])));
+                        }
+                        if (request.getAttribute("navigation_error") == null) {
+                            try {
+                                NavigationMenu.save(items);
+                                request.setAttribute("console_success", true);
+                            } catch (NavigationMenu.ValidationException ex) {
+                                request.setAttribute("navigation_error", Web.message(lang, ex.getMessageKey()));
+                                request.setAttribute("navigation_items", items);
+                            } catch (IOException ex) {
+                                Bootstrap.logError(ex);
+                                request.setAttribute("navigation_error", Web.message(lang, "console.navigation.error_save"));
+                                request.setAttribute("navigation_items", items);
+                            }
+                        }
+                    }
+                }
+                if (request.getAttribute("navigation_items") == null) {
+                    try {
+                        request.setAttribute("navigation_items", NavigationMenu.load());
+                    } catch (IOException ex) {
+                        Bootstrap.logError(ex);
+                        response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Web.message(lang, "console.navigation.error_load"));
+                        return;
+                    }
+                }
+                request.setAttribute("navigation_csrf", csrf);
+            } else if (service.equals("pages")) {
+                panel = "pages";
+                var pages = conf.loadDataFromJSON("pages.json", "slug", "data");
+                var slug = map.getOrDefault("page_slug", "").trim().toLowerCase(Locale.ROOT);
+                var title = "";
+                var content = "";
+                var savedPage = pages.get(slug);
+                if (savedPage != null) {
+                    try (var reader = jakarta.json.Json.createReader(new java.io.StringReader(savedPage))) {
+                        var pageData = reader.readObject();
+                        title = pageData.getString("title");
+                        content = CustomPageContent.sanitize(pageData.getString("content"));
+                    } catch (RuntimeException ex) {
+                        Bootstrap.logError(ex);
+                        request.setAttribute("page_error", Web.message(lang, "console.pages.error_load"));
+                    }
+                }
+                if (!map.getOrDefault("update", "").isBlank()) {
+                    if (!"POST".equalsIgnoreCase(request.getMethod())) {
+                        response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                        return;
+                    }
+                    title = map.getOrDefault("page_title", "").trim();
+                    content = map.getOrDefault("page_content", "");
+                    if (!CustomPageContent.isValidSlug(slug)) {
+                        request.setAttribute("page_error", Web.message(lang, "console.pages.error_slug"));
+                    } else if (title.isBlank() || title.length() > 120) {
+                        request.setAttribute("page_error", Web.message(lang, "console.pages.error_title"));
+                    } else if (content.length() > 100_000) {
+                        request.setAttribute("page_error", Web.message(lang, "console.pages.error_content"));
+                    } else {
+                        content = CustomPageContent.sanitize(content);
+                        var pageData = jakarta.json.Json.createObjectBuilder()
+                                .add("title", title)
+                                .add("content", content)
+                                .build();
+                        pages.put(slug, pageData.toString());
+                        conf.saveDataToJSON("pages.json", pages, "slug", "data");
+                        conf.hash();
+                        request.setAttribute("console_success", true);
+                        request.setAttribute("page_saved", true);
+                    }
+                }
+                request.setAttribute("page_slug", slug);
+                request.setAttribute("page_slug_locked", savedPage != null);
+                request.setAttribute("page_title", title);
+                request.setAttribute("page_content", CustomPageContent.sanitize(content));
+                request.setAttribute("page_slugs", pages.keySet());
             } else if (service.equals("emot")) {
                 var update = map.getOrDefault("update", "");
 
@@ -774,8 +889,10 @@
 <c:when test="${panel eq 'host'}"><h1><fmt:message key="console.host.host_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
 <c:when test="${panel eq 'mail'}"><h1><fmt:message key="console.mail.mail_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
 <c:when test="${panel eq 'mime'}"><h1><fmt:message key="console.mime.mime_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
-<c:when test="${panel eq 'modules'}"><h1>Module configuration</h1></c:when>
-<c:when test="${panel eq 'theme'}"><h1>WYSIWYG Theme-Creator</h1></c:when>
+<c:when test="${panel eq 'modules'}"><h1><fmt:message key="console.modules.title"/></h1></c:when>
+<c:when test="${panel eq 'theme'}"><h1><fmt:message key="console.theme.title"/></h1></c:when>
+<c:when test="${panel eq 'navigation'}"><h1><fmt:message key="console.navigation.title"/></h1></c:when>
+<c:when test="${panel eq 'pages'}"><h1><fmt:message key="console.pages.title"/></h1></c:when>
 <c:when test="${fn:startsWith(panel, 'rooms')}"><h1><fmt:message key="common.room_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
 <c:when test="${fn:startsWith(panel, 'users')}"><h1><fmt:message key="common.user_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
 <c:when test="${fn:startsWith(panel, 'reg_form')}"><h1>
@@ -952,52 +1069,52 @@ ${row[0]}: </td><td><input class="form-control form-control-sm" type="text" name
 </c:when>
 <c:when test="${panel eq 'theme'}">
 <span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
-<p>WYSIWYG-Theme-Creator für das bestehende Skin-System (z. B. <code>skin=native</code>, host-basierte Skins via Host-/Skin-Konfiguration). Wähle einen Skin-Namen, passe Farben, Typografie und Layout an und speichere das Theme.</p>
+<p><fmt:message key="console.theme.intro"/></p>
 <form action="${paths.config_index}&service=theme&update=true" method="POST" accept-charset="utf-8">
   <table class="table table-sm" style="max-width:860px">
-    <tr><th colspan="2">Allgemein</th></tr>
-    <tr><td><strong>Skin</strong></td><td><input class="form-control form-control-sm" type="text" name="theme_skin" value="<c:out value='${theme_skin}'/>"> <span class="form-hint">z. B. native (aktiv per <code>?skin=...</code> oder Host-Mapping)</span></td></tr>
-    <tr><td>Chatname</td><td><input class="form-control form-control-sm" type="text" id="tchatname" name="chatName" value="<c:out value='${theme_chatName}'/>" placeholder="z. B. Mein Chat"> <span class="form-hint">Leer = globaler Chatname (config <code>chat_name</code>). Wird als <code>${SERVER_SOFTWARE}</code> in Seiten angezeigt.</span></td></tr>
-    <tr><td>Logo-URL</td><td><input class="form-control form-control-sm" type="text" id="tlogo" name="logo" value="<c:out value='${theme_logo}'/>" placeholder="${path_file}gfx/logo.svg oder https://..."> <span class="form-hint">Leer = Standard-Logo. Relativ zu <code>path_file</code> oder absolute URL.</span></td></tr>
-    <tr><th colspan="2">Farben</th></tr>
-    <tr><td>Primary</td><td><input type="color" id="tp" value="${theme_primary}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tpt" name="primary" value="${theme_primary}"></td></tr>
-    <tr><td>Primary dark</td><td><input type="color" id="tpd" value="${theme_primaryDark}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tpdt" name="primaryDark" value="${theme_primaryDark}"></td></tr>
+    <tr><th colspan="2"><fmt:message key="console.theme.general"/></th></tr>
+    <tr><td><strong>Skin</strong></td><td><input class="form-control form-control-sm" type="text" name="theme_skin" value="<c:out value='${theme_skin}'/>"> <span class="form-hint"><fmt:message key="console.theme.skin_hint"/></span></td></tr>
+    <tr><td><fmt:message key="console.theme.chat_name"/></td><td><input class="form-control form-control-sm" type="text" id="tchatname" name="chatName" value="<c:out value='${theme_chatName}'/>" placeholder="<fmt:message key='console.theme.chat_name_example'/>"> <span class="form-hint"><fmt:message key="console.theme.chat_name_hint"/></span></td></tr>
+    <tr><td>Logo-URL</td><td><input class="form-control form-control-sm" type="text" id="tlogo" name="logo" value="<c:out value='${theme_logo}'/>" placeholder="${path_file}gfx/logo.svg / https://..."> <span class="form-hint"><fmt:message key="console.theme.logo_hint"/></span></td></tr>
+    <tr><th colspan="2"><fmt:message key="console.theme.colors"/></th></tr>
+    <tr><td><fmt:message key="console.theme.primary"/></td><td><input type="color" id="tp" value="${theme_primary}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tpt" name="primary" value="${theme_primary}"></td></tr>
+    <tr><td><fmt:message key="console.theme.primary_dark"/></td><td><input type="color" id="tpd" value="${theme_primaryDark}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tpdt" name="primaryDark" value="${theme_primaryDark}"></td></tr>
     <tr><td>Link</td><td><input type="color" id="tl" value="${theme_link}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tlt" name="link" value="${theme_link}"></td></tr>
-    <tr><td>Text/Dark</td><td><input type="color" id="td" value="${theme_dark}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tdt" name="dark" value="${theme_dark}"></td></tr>
-    <tr><td>Muted</td><td><input type="color" id="tm" value="${theme_muted}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tmt" name="muted" value="${theme_muted}"></td></tr>
-    <tr><td>Border</td><td><input type="color" id="tb" value="${theme_border}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tbt" name="border" value="${theme_border}"></td></tr>
-    <tr><td>Background</td><td><input type="color" id="tbg" value="${theme_bg}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tbgt" name="bg" value="${theme_bg}"></td></tr>
-    <tr><td>Surface</td><td><input type="color" id="ts" value="${theme_surface}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tst" name="surface" value="${theme_surface}"></td></tr>
-    <tr><td>Nav Background</td><td><input type="color" id="tnb" value="${theme_navBg}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tnbt" name="navBg" value="${theme_navBg}"></td></tr>
-    <tr><td>Nav Text</td><td><input type="color" id="tnt" value="${theme_navText}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tntt" name="navText" value="${theme_navText}"></td></tr>
-    <tr><td>Success</td><td><input type="color" id="tsu" value="${theme_success}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tsut" name="success" value="${theme_success}"></td></tr>
-    <tr><td>Warning</td><td><input type="color" id="tw" value="${theme_warning}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="twt" name="warning" value="${theme_warning}"></td></tr>
-    <tr><td>Danger</td><td><input type="color" id="tda" value="${theme_danger}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tdat" name="danger" value="${theme_danger}"></td></tr>
-    <tr><th colspan="2">Layout &amp; Typografie</th></tr>
-    <tr><td>Border-Radius</td><td><input class="form-control form-control-sm" type="text" id="trad" name="radius" value="<c:out value='${theme_radius}'/>" placeholder="z. B. 0.75rem, 8px, 0"></td></tr>
-    <tr><td>Schriftgröße</td><td><input class="form-control form-control-sm" type="text" id="tfs" name="fontSize" value="<c:out value='${theme_fontSize}'/>" placeholder="z. B. 0.9375rem, 15px"></td></tr>
-    <tr><td>Schriftart</td><td><input class="form-control form-control-sm" type="text" id="tff" name="fontFamily" value="<c:out value='${theme_fontFamily}'/>" placeholder="CSS font-family"></td></tr>
-    <tr><td>Hintergrund-Verlauf</td><td><input type="hidden" name="bodyGradient" value="0"><label><input type="checkbox" id="tgrad" name="bodyGradient" value="1" ${theme_bodyGradient eq '1' ? 'checked' : ''}> Verlauf auf Seitenhintergrund aktivieren</label></td></tr>
-    <tr><th colspan="2">Erweitert</th></tr>
+    <tr><td><fmt:message key="console.theme.text_dark"/></td><td><input type="color" id="td" value="${theme_dark}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tdt" name="dark" value="${theme_dark}"></td></tr>
+    <tr><td><fmt:message key="console.theme.muted"/></td><td><input type="color" id="tm" value="${theme_muted}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tmt" name="muted" value="${theme_muted}"></td></tr>
+    <tr><td><fmt:message key="console.theme.border"/></td><td><input type="color" id="tb" value="${theme_border}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tbt" name="border" value="${theme_border}"></td></tr>
+    <tr><td><fmt:message key="console.theme.background"/></td><td><input type="color" id="tbg" value="${theme_bg}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tbgt" name="bg" value="${theme_bg}"></td></tr>
+    <tr><td><fmt:message key="console.theme.surface"/></td><td><input type="color" id="ts" value="${theme_surface}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tst" name="surface" value="${theme_surface}"></td></tr>
+    <tr><td><fmt:message key="console.theme.nav_background"/></td><td><input type="color" id="tnb" value="${theme_navBg}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tnbt" name="navBg" value="${theme_navBg}"></td></tr>
+    <tr><td><fmt:message key="console.theme.nav_text"/></td><td><input type="color" id="tnt" value="${theme_navText}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tntt" name="navText" value="${theme_navText}"></td></tr>
+    <tr><td><fmt:message key="console.theme.success"/></td><td><input type="color" id="tsu" value="${theme_success}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tsut" name="success" value="${theme_success}"></td></tr>
+    <tr><td><fmt:message key="console.theme.warning"/></td><td><input type="color" id="tw" value="${theme_warning}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="twt" name="warning" value="${theme_warning}"></td></tr>
+    <tr><td><fmt:message key="console.theme.danger"/></td><td><input type="color" id="tda" value="${theme_danger}"> <input class="form-control form-control-sm d-inline-block" style="width:120px" id="tdat" name="danger" value="${theme_danger}"></td></tr>
+    <tr><th colspan="2"><fmt:message key="console.theme.layout"/></th></tr>
+    <tr><td><fmt:message key="console.theme.radius"/></td><td><input class="form-control form-control-sm" type="text" id="trad" name="radius" value="<c:out value='${theme_radius}'/>" placeholder="0.75rem, 8px, 0"></td></tr>
+    <tr><td><fmt:message key="console.theme.font_size"/></td><td><input class="form-control form-control-sm" type="text" id="tfs" name="fontSize" value="<c:out value='${theme_fontSize}'/>" placeholder="0.9375rem, 15px"></td></tr>
+    <tr><td><fmt:message key="console.theme.font_family"/></td><td><input class="form-control form-control-sm" type="text" id="tff" name="fontFamily" value="<c:out value='${theme_fontFamily}'/>" placeholder="CSS font-family"></td></tr>
+    <tr><td><fmt:message key="console.theme.gradient"/></td><td><input type="hidden" name="bodyGradient" value="0"><label><input type="checkbox" id="tgrad" name="bodyGradient" value="1" ${theme_bodyGradient eq '1' ? 'checked' : ''}> <fmt:message key="console.theme.gradient_enable"/></label></td></tr>
+    <tr><th colspan="2"><fmt:message key="console.theme.advanced"/></th></tr>
     <tr><td>Custom CSS</td><td><textarea class="form-control form-control-sm" name="customCss" rows="5" style="font-family:monospace"><c:out value="${theme_customCss}"/></textarea></td></tr>
   </table>
-  <p><strong>Vorschau</strong></p>
+  <p><strong><fmt:message key="console.preview"/></strong></p>
   <div id="theme-preview" style="border:1px solid ${theme_border};border-radius:${theme_radius};overflow:hidden;max-width:860px;margin-bottom:1rem;background:${theme_bg};color:${theme_dark};font-family:${theme_fontFamily};font-size:${theme_fontSize}">
-    <div id="tp-nav" style="background:${theme_navBg};color:${theme_navText};padding:.75rem 1rem;font-weight:600;display:flex;gap:1rem;align-items:center"><span>Beispiel-Navigation (${theme_skin})</span><span style="opacity:.85">Start</span><span style="opacity:.85">Chat</span></div>
+    <div id="tp-nav" style="background:${theme_navBg};color:${theme_navText};padding:.75rem 1rem;font-weight:600;display:flex;gap:1rem;align-items:center"><span><fmt:message key="console.theme.sample_navigation"/> (<c:out value="${theme_skin}"/>)</span><span style="opacity:.85"><c:out value="${com.design_nav_start}"/></span><span style="opacity:.85">Chat</span></div>
     <div id="tp-body" style="padding:1rem;background:${theme_surface}">
-      <h3 id="tp-h" style="margin:0 0 .5rem 0;color:${theme_dark}">Überschrift</h3>
-      <p id="tp-p" style="color:${theme_muted};margin:0 0 .75rem 0">Dies ist eine Vorschau des gewählten Themes (Farben, Schrift, Radius).</p>
-      <a id="tp-btn" href="#" onclick="return false" style="display:inline-block;background:${theme_primary};color:#fff;padding:.45rem .9rem;border-radius:${theme_radius};text-decoration:none;margin-right:.5rem">Button</a>
+      <h3 id="tp-h" style="margin:0 0 .5rem 0;color:${theme_dark}"><fmt:message key="console.pages.heading"/></h3>
+      <p id="tp-p" style="color:${theme_muted};margin:0 0 .75rem 0"><fmt:message key="console.theme.preview_text"/></p>
+      <a id="tp-btn" href="#" onclick="return false" style="display:inline-block;background:${theme_primary};color:#fff;padding:.45rem .9rem;border-radius:${theme_radius};text-decoration:none;margin-right:.5rem"><fmt:message key="console.theme.button"/></a>
       <a id="tp-link" href="#" onclick="return false" style="color:${theme_link};margin-right:.75rem">Link</a>
       <span id="tp-succ" style="display:inline-block;background:${theme_success};color:#fff;padding:.2rem .5rem;border-radius:4px;font-size:.85em;margin-right:.25rem">OK</span>
-      <span id="tp-warn" style="display:inline-block;background:${theme_warning};color:#212529;padding:.2rem .5rem;border-radius:4px;font-size:.85em;margin-right:.25rem">Warn</span>
-      <span id="tp-dang" style="display:inline-block;background:${theme_danger};color:#fff;padding:.2rem .5rem;border-radius:4px;font-size:.85em">Fehler</span>
-      <div style="margin-top:.75rem;padding:.6rem;border:1px solid ${theme_border};border-radius:${theme_radius};background:${theme_bg}">Beispiel-Box / Eingabeumgebung</div>
+      <span id="tp-warn" style="display:inline-block;background:${theme_warning};color:#212529;padding:.2rem .5rem;border-radius:4px;font-size:.85em;margin-right:.25rem"><fmt:message key="console.theme.warning"/></span>
+      <span id="tp-dang" style="display:inline-block;background:${theme_danger};color:#fff;padding:.2rem .5rem;border-radius:4px;font-size:.85em"><fmt:message key="console.theme.danger"/></span>
+      <div style="margin-top:.75rem;padding:.6rem;border:1px solid ${theme_border};border-radius:${theme_radius};background:${theme_bg}"><fmt:message key="console.theme.sample_box"/></div>
     </div>
   </div>
   <input type="submit" class="btn btn-secondary btn-sm" value="<fmt:message key="common.submit"/>">
 </form>
-<c:if test="${not empty theme_skins}"><p class="mt-3"><strong>Vorhandene Skin-Themes:</strong> <c:forEach var="ts" items="${theme_skins}" varStatus="st"><a href="${paths.config_index}&service=theme&theme_skin=<c:out value='${ts}'/>"><code><c:out value='${ts}'/></code></a><c:if test="${!st.last}">, </c:if></c:forEach></p></c:if>
+<c:if test="${not empty theme_skins}"><p class="mt-3"><strong><fmt:message key="console.theme.existing"/>:</strong> <c:forEach var="ts" items="${theme_skins}" varStatus="st"><a href="${paths.config_index}&service=theme&theme_skin=<c:out value='${ts}'/>"><code><c:out value='${ts}'/></code></a><c:if test="${!st.last}">, </c:if></c:forEach></p></c:if>
 <script>(function(){function by(id){return document.getElementById(id);}function val(id){var e=by(id);return e?e.value:'';}function sync(c,t){if(!by(c)||!by(t))return;by(c).addEventListener('input',function(){by(t).value=by(c).value;upd();});by(t).addEventListener('input',function(){if(/^#[0-9a-fA-F]{6}$/.test(by(t).value))by(c).value=by(t).value;upd();});}
 function upd(){var box=by('theme-preview');if(!box)return;var pv=val('tp'),dk=val('td'),mu=val('tm'),bo=val('tb'),bg=val('tbg'),su=val('ts'),ln=val('tl'),nb=val('tnb'),nt=val('tnt'),sc=val('tsu'),wa=val('tw'),da=val('tda'),ra=val('trad')||'0.75rem',fs=val('tfs')||'0.9375rem',ff=val('tff')||'sans-serif';
 box.style.background=bg;box.style.color=dk;box.style.borderColor=bo;box.style.borderRadius=ra;box.style.fontFamily=ff;box.style.fontSize=fs;
@@ -1009,12 +1126,196 @@ var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.
 ['trad','tfs','tff'].forEach(function(id){var e=by(id);if(e)e.addEventListener('input',upd);});
 })();</script>
 </c:when>
+<c:when test="${panel eq 'navigation'}">
+  <fmt:message key="console.navigation.main" var="navMain"/>
+  <fmt:message key="console.navigation.login" var="navLogin"/>
+  <fmt:message key="console.navigation.language" var="navLanguage"/>
+  <fmt:message key="console.navigation.custom" var="navCustom"/>
+  <fmt:message key="console.navigation.visible" var="navVisible"/>
+  <fmt:message key="console.navigation.hidden" var="navHidden"/>
+  <fmt:message key="console.navigation.label" var="navLabel"/>
+  <fmt:message key="console.navigation.default_destination" var="navDefaultDestination"/>
+  <fmt:message key="console.navigation.new_item" var="navNew"/>
+  <fmt:message key="console.navigation.move_up_named" var="navMoveUp"/>
+  <fmt:message key="console.navigation.move_down_named" var="navMoveDown"/>
+  <fmt:message key="console.navigation.remove_named" var="navRemove"/>
+  <fmt:message key="console.navigation.added" var="navAdded"/>
+  <fmt:message key="console.navigation.removed" var="navRemoved"/>
+  <fmt:message key="console.navigation.moved" var="navMoved"/>
+  <c:if test="${console_success}"><div class="alert alert-success" role="status"><fmt:message key="console.navigation.saved"/></div></c:if>
+  <c:if test="${not empty navigation_error}"><div class="alert alert-danger" role="alert"><c:out value="${navigation_error}"/></div></c:if>
+  <p><fmt:message key="console.navigation.intro"/></p>
+  <div class="alert alert-light border" style="max-width:1100px">
+    <strong><fmt:message key="console.navigation.hints_title"/>:</strong> <fmt:message key="console.navigation.hints"/>
+  </div>
+  <form method="post" action="${paths.config_index}&amp;service=navigation&amp;update=true" id="navigation-form" style="max-width:1100px"
+        data-visible="<c:out value='${navVisible}'/>" data-hidden="<c:out value='${navHidden}'/>"
+        data-move-up="<c:out value='${navMoveUp}'/>" data-move-down="<c:out value='${navMoveDown}'/>"
+        data-remove="<c:out value='${navRemove}'/>" data-added="<c:out value='${navAdded}'/>"
+        data-removed="<c:out value='${navRemoved}'/>" data-moved="<c:out value='${navMoved}'/>">
+    <input type="hidden" name="navigation_csrf" value="<c:out value='${navigation_csrf}'/>">
+    <div id="navigation-filters" class="mb-3" role="group" aria-label="<fmt:message key='console.navigation.filter'/>" hidden>
+      <button type="button" class="btn btn-sm btn-secondary" data-filter="all" aria-pressed="true"><fmt:message key="console.navigation.all"/></button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-filter="main" aria-pressed="false"><c:out value="${navMain}"/></button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-filter="login" aria-pressed="false"><c:out value="${navLogin}"/></button>
+      <button type="button" class="btn btn-sm btn-outline-secondary" data-filter="language" aria-pressed="false"><c:out value="${navLanguage}"/></button>
+    </div>
+    <p class="text-muted"><small><fmt:message key="console.navigation.order_hint"/></small></p>
+    <div id="navigation-items">
+      <c:forEach items="${navigation_items}" var="item">
+        <c:set var="navGroup" value="${item.id eq 'register' or item.id eq 'password' ? 'login' : item.id eq 'language-de' or item.id eq 'language-en' ? 'language' : 'main'}"/>
+        <c:set var="navGroupLabel" value="${navGroup eq 'login' ? navLogin : navGroup eq 'language' ? navLanguage : item.custom ? navCustom : navMain}"/>
+        <c:set var="navDefaultLabel" value=""/>
+        <c:choose>
+          <c:when test="${item.id eq 'start'}"><c:set var="navDefaultLabel" value="${com.design_nav_start}"/></c:when>
+          <c:when test="${item.id eq 'news'}"><c:set var="navDefaultLabel" value="${com.design_nav_news}"/></c:when>
+          <c:when test="${item.id eq 'board'}"><c:set var="navDefaultLabel" value="${com.design_nav_forum}"/></c:when>
+          <c:when test="${item.id eq 'rules'}"><c:set var="navDefaultLabel" value="${com.design_nav_chattiquette}"/></c:when>
+          <c:when test="${item.id eq 'toplist'}"><c:set var="navDefaultLabel" value="${com.design_nav_toplist}"/></c:when>
+          <c:when test="${item.id eq 'stats'}"><fmt:message key="common.statistics" var="navDefaultLabel"/></c:when>
+          <c:when test="${item.id eq 'logout'}"><c:set var="navDefaultLabel" value="${com.design_nav_logout}"/></c:when>
+          <c:when test="${item.id eq 'chat'}"><c:set var="navDefaultLabel" value="${com.design_nav_chat}"/></c:when>
+          <c:when test="${item.id eq 'account'}"><c:set var="navDefaultLabel" value="${com.design_nav_account}"/></c:when>
+          <c:when test="${item.id eq 'guest'}"><c:set var="navDefaultLabel" value="${com.design_nav_guest}"/></c:when>
+          <c:when test="${item.id eq 'login'}"><c:set var="navDefaultLabel" value="${com.design_nav_login}"/></c:when>
+          <c:when test="${item.id eq 'register'}"><c:set var="navDefaultLabel" value="${com.design_link_register}"/></c:when>
+          <c:when test="${item.id eq 'password'}"><c:set var="navDefaultLabel" value="${com.design_link_password_forgot}"/></c:when>
+          <c:when test="${item.id eq 'language'}"><c:set var="navDefaultLabel" value="${com.design_nav_language}"/></c:when>
+          <c:when test="${item.id eq 'language-de'}"><c:set var="navDefaultLabel" value="${com.design_lang_de}"/></c:when>
+          <c:when test="${item.id eq 'language-en'}"><c:set var="navDefaultLabel" value="${com.design_lang_en}"/></c:when>
+          <c:otherwise><c:set var="navDefaultLabel" value="${navCustom}"/></c:otherwise>
+        </c:choose>
+        <article class="card mb-2" data-navigation-item data-group="${navGroup}" data-default-label="<c:out value='${navDefaultLabel}'/>">
+          <input type="hidden" name="nav_id" value="<c:out value='${item.id}'/>">
+          <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+            <div class="mr-3"><strong data-navigation-name><c:out value="${empty item.label ? navDefaultLabel : item.label}"/></strong> <span class="badge badge-light"><c:out value="${navGroupLabel}"/></span> <span class="text-muted small" data-navigation-status><c:out value="${item.enabled ? navVisible : navHidden}"/></span></div>
+            <div class="mt-1 mb-1">
+              <button type="button" class="btn btn-sm btn-outline-secondary" data-move="up" aria-label="<fmt:message key='console.navigation.move_up'/>">↑</button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" data-move="down" aria-label="<fmt:message key='console.navigation.move_down'/>">↓</button>
+              <c:if test="${item.custom}"><button type="button" class="btn btn-sm btn-outline-danger" data-remove><fmt:message key="console.navigation.remove"/></button></c:if>
+            </div>
+          </div>
+          <div class="card-body py-2"><div class="form-row">
+            <label class="col-md-2 mb-2"><fmt:message key="console.navigation.visibility"/>
+              <select class="form-control form-control-sm" name="nav_enabled"><option value="1" ${item.enabled ? 'selected' : ''}><c:out value="${navVisible}"/></option><option value="0" ${!item.enabled ? 'selected' : ''}><c:out value="${navHidden}"/></option></select>
+            </label>
+            <label class="col-md-4 mb-2"><c:out value="${navLabel}"/>
+              <input class="form-control form-control-sm" name="nav_label" maxlength="120" placeholder="<c:out value='${item.custom ? navLabel : navDefaultLabel}'/>" value="<c:out value='${item.label}'/>" ${item.custom ? 'required' : ''}>
+            </label>
+            <label class="col-md-6 mb-2"><fmt:message key="console.navigation.destination"/>
+              <input class="form-control form-control-sm" name="nav_url" maxlength="2048" placeholder="<c:out value='${item.custom ? "/page.jsp?slug=..." : navDefaultDestination}'/>" value="<c:out value='${item.url}'/>" ${item.custom ? 'required' : ''}>
+            </label>
+          </div></div>
+        </article>
+      </c:forEach>
+    </div>
+    <p id="navigation-announcement" class="sr-only" aria-live="polite"></p>
+    <button type="button" id="navigation-add" class="btn btn-outline-secondary">+ <fmt:message key="console.navigation.add"/></button>
+    <button type="submit" class="btn btn-primary"><fmt:message key="console.navigation.save"/></button>
+    <noscript><p class="text-muted mt-2"><fmt:message key="console.navigation.javascript"/></p></noscript>
+  </form>
+  <template id="navigation-template"><article class="card mb-2" data-navigation-item data-group="main" data-default-label="<c:out value='${navNew}'/>">
+    <input type="hidden" name="nav_id">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center">
+      <div class="mr-3"><strong data-navigation-name><c:out value="${navNew}"/></strong> <span class="badge badge-light"><c:out value="${navCustom}"/></span> <span class="text-muted small" data-navigation-status><c:out value="${navVisible}"/></span></div>
+      <div class="mt-1 mb-1"><button type="button" class="btn btn-sm btn-outline-secondary" data-move="up" aria-label="<fmt:message key='console.navigation.move_up'/>">↑</button> <button type="button" class="btn btn-sm btn-outline-secondary" data-move="down" aria-label="<fmt:message key='console.navigation.move_down'/>">↓</button> <button type="button" class="btn btn-sm btn-outline-danger" data-remove><fmt:message key="console.navigation.remove"/></button></div>
+    </div>
+    <div class="card-body py-2"><div class="form-row">
+      <label class="col-md-2 mb-2"><fmt:message key="console.navigation.visibility"/><select class="form-control form-control-sm" name="nav_enabled"><option value="1"><c:out value="${navVisible}"/></option><option value="0"><c:out value="${navHidden}"/></option></select></label>
+      <label class="col-md-4 mb-2"><c:out value="${navLabel}"/><input class="form-control form-control-sm" name="nav_label" maxlength="120" placeholder="<c:out value='${navLabel}'/>" required></label>
+      <label class="col-md-6 mb-2"><fmt:message key="console.navigation.destination"/><input class="form-control form-control-sm" name="nav_url" maxlength="2048" placeholder="/page.jsp?slug=..." required></label>
+    </div></div>
+  </article></template>
+  <script src="${path_file}navigation-editor.js"></script>
+</c:when>
+<c:when test="${panel eq 'pages'}">
+  <fmt:message key="console.pages.link_prompt" var="pageLinkPrompt"/>
+  <c:if test="${not empty page_error}"><div class="alert alert-danger" role="alert"><c:out value="${page_error}"/></div></c:if>
+  <c:if test="${console_success}"><div class="alert alert-success" role="status"><fmt:message key="console.pages.saved"/>: <a href="${path_base}/page.jsp?slug=<c:out value='${page_slug}'/>" target="_blank" rel="noopener"><c:out value="${page_slug}"/></a></div></c:if>
+  <p><fmt:message key="console.pages.intro"/> <code>/page.jsp?slug=...</code>.</p>
+  <c:if test="${not empty page_slugs}">
+    <p><strong><fmt:message key="console.pages.existing"/>:</strong>
+      <c:forEach var="existingSlug" items="${page_slugs}" varStatus="st">
+        <a href="${paths.config_index}&amp;service=pages&amp;page_slug=<c:out value='${existingSlug}'/>"><code><c:out value="${existingSlug}"/></code></a><c:if test="${!st.last}">, </c:if>
+      </c:forEach>
+    </p>
+  </c:if>
+  <form id="page-form" action="${paths.config_index}&amp;service=pages&amp;update=true" method="POST" accept-charset="utf-8" data-link-prompt="<c:out value='${pageLinkPrompt}'/>">
+    <div class="form-group">
+      <label for="page-slug"><strong><fmt:message key="console.pages.slug"/></strong></label>
+      <input id="page-slug" class="form-control" type="text" name="page_slug" maxlength="64" pattern="[a-z0-9]+(-[a-z0-9]+)*" required value="<c:out value='${page_slug}'/>" <c:if test="${page_slug_locked}">readonly</c:if>>
+      <small class="form-text text-muted"><fmt:message key="console.pages.slug_hint"/></small>
+    </div>
+    <div class="form-group">
+      <label for="page-title"><strong><fmt:message key="console.pages.page_title"/></strong></label>
+      <input id="page-title" class="form-control" type="text" name="page_title" maxlength="120" required value="<c:out value='${page_title}'/>">
+    </div>
+    <div class="form-group">
+      <label><strong><fmt:message key="console.pages.content"/></strong></label>
+      <div class="btn-toolbar mb-2" role="toolbar" aria-label="<fmt:message key='console.pages.formatting'/>">
+        <div class="btn-group btn-group-sm mr-2" role="group">
+          <button type="button" class="btn btn-outline-secondary" data-command="bold" aria-label="<fmt:message key='console.pages.bold'/>"><strong><fmt:message key="console.pages.bold_initial"/></strong></button>
+          <button type="button" class="btn btn-outline-secondary" data-command="italic" aria-label="<fmt:message key='console.pages.italic'/>"><em><fmt:message key="console.pages.italic_initial"/></em></button>
+          <button type="button" class="btn btn-outline-secondary" data-command="underline" aria-label="<fmt:message key='console.pages.underline'/>"><u><fmt:message key="console.pages.underline_initial"/></u></button>
+        </div>
+        <div class="btn-group btn-group-sm mr-2" role="group">
+          <button type="button" class="btn btn-outline-secondary" data-command="formatBlock" data-value="h2"><fmt:message key="console.pages.heading"/></button>
+          <button type="button" class="btn btn-outline-secondary" data-command="formatBlock" data-value="p"><fmt:message key="console.pages.paragraph"/></button>
+          <button type="button" class="btn btn-outline-secondary" data-command="insertUnorderedList"><fmt:message key="console.pages.list"/></button>
+          <button type="button" class="btn btn-outline-secondary" data-command="insertOrderedList"><fmt:message key="console.pages.numbered_list"/></button>
+          <button type="button" class="btn btn-outline-secondary" data-command="formatBlock" data-value="blockquote"><fmt:message key="console.pages.quote"/></button>
+        </div>
+        <div class="btn-group btn-group-sm" role="group">
+          <button type="button" class="btn btn-outline-secondary" id="page-link">Link</button>
+          <button type="button" class="btn btn-outline-secondary" data-command="removeFormat"><fmt:message key="console.pages.remove_format"/></button>
+        </div>
+      </div>
+      <div id="page-editor" class="form-control" contenteditable="true" role="textbox" aria-multiline="true" style="height:auto;min-height:220px;overflow:auto"><c:out value="${page_content}" escapeXml="false"/></div>
+      <textarea id="page-content" name="page_content" hidden></textarea>
+    </div>
+    <div class="form-group">
+      <label for="page-preview"><strong><fmt:message key="console.preview"/></strong></label>
+      <iframe id="page-preview" title="<fmt:message key='console.pages.preview'/>" sandbox="" style="width:100%;height:280px;border:1px solid #ced4da;border-radius:.25rem;background:#fff"></iframe>
+    </div>
+    <button type="submit" class="btn btn-primary"><fmt:message key="console.pages.save"/></button>
+    <c:if test="${page_saved}"><a class="btn btn-outline-secondary" href="${path_base}/page.jsp?slug=<c:out value='${page_slug}'/>" target="_blank" rel="noopener"><fmt:message key="console.pages.open"/></a></c:if>
+  </form>
+  <script>
+    (function () {
+      var editor = document.getElementById('page-editor');
+      var preview = document.getElementById('page-preview');
+      function updatePreview() {
+        preview.srcdoc = '<!doctype html><html><head><meta charset="utf-8"><style>body{font:16px system-ui,sans-serif;padding:1rem;color:#212529}blockquote{border-left:4px solid #ced4da;padding-left:1rem;color:#6c757d}</style></head><body>' + editor.innerHTML + '</body></html>';
+      }
+      document.querySelectorAll('#page-form [data-command]').forEach(function (button) {
+        button.addEventListener('mousedown', function (event) { event.preventDefault(); });
+        button.addEventListener('click', function () {
+          editor.focus();
+          document.execCommand(button.dataset.command, false, button.dataset.value || null);
+          updatePreview();
+        });
+      });
+      document.getElementById('page-link').addEventListener('mousedown', function (event) { event.preventDefault(); });
+      document.getElementById('page-link').addEventListener('click', function () {
+        editor.focus();
+        var url = window.prompt(document.getElementById('page-form').dataset.linkPrompt);
+        if (url) document.execCommand('createLink', false, url);
+        updatePreview();
+      });
+      editor.addEventListener('input', updatePreview);
+      document.getElementById('page-form').addEventListener('submit', function () {
+        document.getElementById('page-content').value = editor.innerHTML;
+      });
+      updatePreview();
+    }());
+  </script>
+</c:when>
 <c:when test="${panel eq 'modules'}">
 <span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
-<p>Enable/disable modules. Unchecked modules are removed from the navbar. The forum remains publicly viewable in read-only mode; registered users keep existing write permissions. When the chat module is enabled, direct chat login can be used instead of community login.</p>
+<p><fmt:message key="console.modules.intro"/></p>
 <form action="${paths.config_index}&service=modules&update=true" method="POST">
 <table class="table table-sm">
-  <thead><tr><th>Module</th><th>Enabled</th><th>Description</th></tr></thead>
+  <thead><tr><th><fmt:message key="console.modules.menu"/></th><th><fmt:message key="console.modules.enabled"/></th><th><fmt:message key="console.modules.description"/></th></tr></thead>
   <tbody>
   <c:forEach var="row" items="${console_rows}">
     <tr>
@@ -1023,7 +1324,7 @@ var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.
         <input type="hidden" name="${row[0]}" value="0">
         <input type="checkbox" name="${row[0]}" value="1" ${row[1] eq '1' ? 'checked' : ''}>
       </td>
-      <td>${row[2]}</td>
+      <td><c:out value="${row[2]}"/></td>
     </tr>
   </c:forEach>
   </tbody>
@@ -1160,9 +1461,9 @@ var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.
   <p>
   <fmt:message key="console.users_page.what_do_you_want_to"/></br>
   <select class="form-control form-control-sm col-md-6 mb-3" name="change" size="4">
-    <option value="<fmt:message key="console.users_page.profile"/>" selected><fmt:message key="common.processing_profile"/></option>
+    <option value="profile" selected><fmt:message key="common.processing_profile"/></option>
     <option value="password"><fmt:message key="common.processing_the_password"/></option>
-    <option value="<fmt:message key="console.users_page.data"/>"><fmt:message key="common.processing_account_data"/></option>
+    <option value="data"><fmt:message key="common.processing_account_data"/></option>
     <option value="delete"><fmt:message key="common.delete_account"/></option>
   </select>
   </p>

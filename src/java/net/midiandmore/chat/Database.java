@@ -440,7 +440,7 @@ public class Database {
      * @return Der Command
      */
     protected String getCommand(String field) {
-        return getCommand(field, "de");
+        return getCommand(field, "en");
     }
 
     protected String getCommand(String field, String lang) {
@@ -562,7 +562,7 @@ public class Database {
         var nme = getTimedBanName();
         for (var bnr : nme) {
             if (ut.wildcardMatch(bnr.toLowerCase(), input.toLowerCase())) {
-                var suc = getCommand("uban_succes");
+                var suc = cm.getCommand(nick, "uban_succes");
                 var nck = suc.replace("%nick%", ut.preReplace(bnr));
                 cm.sendSystemToOne(nck, nick);
                 delTimedBan(bnr.toLowerCase());
@@ -588,7 +588,7 @@ public class Database {
         StringBuilder sb = new StringBuilder();
         nme.forEach((bnr) -> {
             if (ut.wildcardMatch(bnr.toLowerCase(), input.toLowerCase())) {
-                var suc = getCommand("uban_succes");
+                var suc = cm.getCommand(nick, "uban_succes");
                 var nck = suc.replace("%nick%", ut.preReplace(bnr));
                 if (cm.isOnline(nick)) {
                     cm.sendSystemToOne(nck, nick);
@@ -681,7 +681,7 @@ public class Database {
      *
      * @return Die augelisteten Bans
      */
-    protected synchronized String listBans() {
+    protected synchronized String listBans(String lang) {
         var ut = getMaster().getUtil();
         var bid = getBanList();
         var bid2 = getTimedBanName();
@@ -689,10 +689,10 @@ public class Database {
         var nicks2 = bid2;
         var sb = new StringBuilder();
         String banlist = null;
-        sb.append(getCommand("banlist_title"));
+        sb.append(getCommand("banlist_title", lang));
         sb.append("\r\n");
         if (!bid.isEmpty() || !bid2.isEmpty()) {
-            sb.append(getCommand("banlist_header"));
+            sb.append(getCommand("banlist_header", lang));
             sb.append("\r\n");
         }
         var empty = true;
@@ -700,7 +700,7 @@ public class Database {
             var banner = getBan(nicks.get(count),"banner");
             var color = getMaster().getConfig().getString("default_color");
             var color2 = getMaster().getConfig().getString("default_color");
-            banlist = getCommand("banlist");
+            banlist = getCommand("banlist", lang);
             var name = getBan(nicks.get(count),"name");
             if (isRegistered(name)) {
                 color2 = getData(name, "color");
@@ -716,7 +716,7 @@ public class Database {
             banlist = banlist.replace("%banner%", ut.preReplace(banner));
             banlist = banlist.replace("%banner_color%", ut.preReplace(color));
             banlist = banlist.replace("%time%", ut.preReplace(ut.getTime(Long.valueOf(getBan(nicks.get(count),"time")))));
-            banlist = banlist.replace("%duration%", ut.preReplace(getCommand("empty_duration")));
+            banlist = banlist.replace("%duration%", ut.preReplace(getCommand("empty_duration", lang)));
             sb.append(banlist);
             sb.append("\r\n");
             empty = false;
@@ -725,7 +725,7 @@ public class Database {
             var banner = getTimedBanUser().get(count);
             var color = getMaster().getConfig().getString("default_color");
             var color2 = getMaster().getConfig().getString("default_color");
-            banlist = getCommand("banlist");
+            banlist = getCommand("banlist", lang);
             var name = getTimedBanName().get(count);
             if (isRegistered(name)) {
                 color2 = getData(name, "color");
@@ -747,10 +747,10 @@ public class Database {
             empty = false;
         }
         if (empty) {
-            sb.append(getCommand("banlist_empty"));
+            sb.append(getCommand("banlist_empty", lang));
             sb.append("\r\n");
         } else {
-            sb.append(getCommand("banlist_footer"));
+            sb.append(getCommand("banlist_footer", lang));
             sb.append("\r\n");
         }
         return sb.toString();
@@ -987,19 +987,8 @@ public class Database {
      * @param request
      * @return Die Nachrichten
      */
-    protected String getMessages(String nick, HttpServletRequest request, Map<String, String> map) {
-        var lang = "de";
-        if (map != null) {
-            var l = map.getOrDefault("lang", "");
-            if (l != null && !l.isBlank()) {
-                lang = l;
-            }
-        }
-        return getMessages(nick, lang);
-    }
-
     protected String getMessages(String nick) {
-        return getMessages(nick, "de");
+        return getMessages(nick, "en");
     }
 
     protected String getMessages(String nick, String lang) {
@@ -2711,6 +2700,7 @@ public class Database {
     protected String whois(String sid, String nick) {
         var cm = getMaster().getChatManager();
         var ut = getMaster().getUtil();
+        var lang = cm.getUserLang(cm.getNameFromId(sid));
         var dat = "";
         if (isRegistered(nick)) {
             try {
@@ -2721,11 +2711,11 @@ public class Database {
                     statement.setString(1, nick.toLowerCase());
                     try (var resultset = statement.executeQuery()) {
                         while (resultset.next()) {
-                            dat = getCommand("profil_registered").replace("%nick%", resultset.getString("nick2"));
+                            dat = getCommand("profil_registered", lang).replace("%nick%", resultset.getString("nick2"));
                             dat = dat.replace("%color%", resultset.getString("color"));
                             dat = dat.replace("%sid%", sid);
-                            dat = dat.replace("%online%", cm.isOnline(nick) ? getCommand("profil_registered_online") : getCommand("profil_registered_offline"));
-                            dat = dat.replace("%room%", cm.isOnline(nick) ? cm.getUser(nick).getRoom() : getCommand("profil_registered_no_room"));
+                            dat = dat.replace("%online%", cm.isOnline(nick) ? getCommand("profil_registered_online", lang) : getCommand("profil_registered_offline", lang));
+                            dat = dat.replace("%room%", cm.isOnline(nick) ? cm.getUser(nick).getRoom() : getCommand("profil_registered_no_room", lang));
                         }
                     }
                 }
@@ -2733,11 +2723,11 @@ public class Database {
                 connectDatabase(se);
             }
         } else {
-            dat = getCommand("profil_unregistered").replace("%nick%", cm.isOnline(nick) ? cm.getUser(nick).getName() : nick);
-            dat = dat.replace("%color%", cm.isOnline(nick) ? cm.getUser(nick).getColor() : getCommand("profil_unregistered_no_color"));
+            dat = getCommand("profil_unregistered", lang).replace("%nick%", cm.isOnline(nick) ? cm.getUser(nick).getName() : nick);
+            dat = dat.replace("%color%", cm.isOnline(nick) ? cm.getUser(nick).getColor() : getCommand("profil_unregistered_no_color", lang));
             dat = dat.replace("%sid%", sid);
-            dat = dat.replace("%online%", cm.isOnline(nick) ? getCommand("profil_unregistered_online") : getCommand("profil_unregistered_offline"));
-            dat = dat.replace("%room%", cm.isOnline(nick) ? cm.getUser(nick).getRoom() : getCommand("profil_unregistered_no_room"));
+            dat = dat.replace("%online%", cm.isOnline(nick) ? getCommand("profil_unregistered_online", lang) : getCommand("profil_unregistered_offline", lang));
+            dat = dat.replace("%room%", cm.isOnline(nick) ? cm.getUser(nick).getRoom() : getCommand("profil_unregistered_no_room", lang));
         }
         dat = dat.replace("%skin%", cm.getUser(cm.getNameFromId(sid)).getSkin());
         dat = ut.replaceNoCookies(dat);

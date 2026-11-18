@@ -38,36 +38,18 @@ public class ChatServices {
      * @param request
      * @param response
      */
-    private String readLang(HttpServletRequest request, Map<String, String> map) {
-        var ut = Bootstrap.boot.getUtil();
-        var cookieLang = ut.readCookieValue(request, "lang");
-        if (!cookieLang.isBlank()) {
-            return cookieLang;
-        }
-        var paramLang = map.getOrDefault("lang", "");
-        if (paramLang != null && !paramLang.isBlank()) {
-            return paramLang;
-        }
-        var acceptLang = request.getHeader("Accept-Language");
-        if (acceptLang != null && acceptLang.toLowerCase().startsWith("de")) {
-            return "de";
-        }
-        return "en";
+    private String readLang(HttpServletRequest request) {
+        return I18n.language(request);
     }
 
     private void applyLang(HttpServletRequest request, HttpServletResponse response, Map<String, String> map) {
-        var ut = Bootstrap.boot.getUtil();
-        var lang = readLang(request, map);
-        if (lang.isBlank()) {
-            return;
-        }
+        var lang = readLang(request);
         var session = request.getSession(false);
         if (session != null) {
             session.setAttribute("lang", lang);
         }
-        var existingCookie = ut.readCookieValue(request, "lang");
         var requestedLang = map.getOrDefault("lang", "");
-        if (response != null && (requestedLang != null && !requestedLang.isBlank() || existingCookie.isBlank())) {
+        if (response != null && requestedLang != null && !requestedLang.isBlank()) {
             var cookie = new jakarta.servlet.http.Cookie("lang", lang);
             cookie.setPath("/");
             cookie.setMaxAge(60 * 60 * 24 * 365);
@@ -81,16 +63,7 @@ public class ChatServices {
      * available yet).
      */
     private String setupLang(HttpServletRequest request) {
-        var cookies = request.getCookies();
-        if (cookies != null) {
-            for (var cookie : cookies) {
-                if (cookie.getName().equals("lang") && !cookie.getValue().isBlank()) {
-                    return cookie.getValue();
-                }
-            }
-        }
-        var acceptLang = request.getHeader("Accept-Language");
-        return acceptLang != null && acceptLang.toLowerCase().startsWith("de") ? "de" : "en";
+        return I18n.language(request);
     }
 
     private String detectScheme(HttpServletRequest request) {
@@ -230,10 +203,9 @@ public class ChatServices {
             case "style" ->
                 getStyleSheet("", request, null, map);
             default -> {
-                var lang = readLang(request, map);
+                var lang = readLang(request);
                 request.setAttribute("lang", lang);
-                request.setAttribute(JspTemplates.FMT_LOCALE,
-                        java.util.Locale.forLanguageTag("en".equalsIgnoreCase(lang) ? "en" : "de"));
+                request.setAttribute(JspTemplates.FMT_LOCALE, I18n.locale(lang));
                 yield null;
             }
         };
@@ -373,7 +345,7 @@ public class ChatServices {
         var scheme = detectScheme(request);
         var owner = map.getOrDefault("owner", "");
         var roomName = owner.isBlank() ? "" : db.getRoomNameByOwner(owner.toLowerCase());
-        var view = ViewFactory.create(type, name, readLang(request, map), new ViewFactory.Request(
+        var view = ViewFactory.create(type, name, readLang(request), new ViewFactory.Request(
                 nick != null ? nick : "", sid != null ? sid : "", skin != null ? skin : "", room != null ? room : "",
                 reason != null ? reason : "", host, owner, map.getOrDefault("target", ""), map.getOrDefault("user", ""),
                 roomName, (scheme.equals("https") ? "wss" : "ws") + "://" + host, scheme + "://" + host));
@@ -677,7 +649,7 @@ public class ChatServices {
     public void news(HttpServletRequest request, HttpServletResponse response, Map<String, String> map, boolean admin) {
         var conf = Bootstrap.boot.getConfig();
         var util = Bootstrap.boot.getUtil();
-        var lang = readLang(request, map);
+        var lang = readLang(request);
         var consoleUrl = request.getContextPath() + "/" + Web.consolePath() + "?service=news";
         try {
             var repository = new NewsRepository(conf.getDb(), conf.getP().getProperty("sql.prefix", ""));

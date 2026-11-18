@@ -52,7 +52,7 @@ public final class View implements CharSequence {
      * A view that renders to the given text.
      */
     public static View of(String text) {
-        var view = new View("literal", "", "de", null);
+        var view = new View("literal", "", "en", null);
         view.rendered = text == null ? "" : text;
         view.renderedVersion = Long.MAX_VALUE;
         return view;
@@ -116,8 +116,7 @@ public final class View implements CharSequence {
      * @param request the request of the JSP
      */
     void expose(jakarta.servlet.http.HttpServletRequest request) {
-        request.setAttribute(JspTemplates.FMT_LOCALE,
-                java.util.Locale.forLanguageTag("en".equalsIgnoreCase(lang) ? "en" : "de"));
+        request.setAttribute(JspTemplates.FMT_LOCALE, I18n.locale(lang));
         var all = new HashMap<String, Object>();
         if (defaults != null) {
             all.putAll(defaults);
