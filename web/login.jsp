@@ -140,6 +140,9 @@
                     nick = guestPrefix + "1";
                 }
             }
+            request.changeSessionId();
+            session.removeAttribute("consoleCsrf");
+            session.removeAttribute("navigationCsrf");
             session.setMaxInactiveInterval(-1);
             session.setAttribute("nick", nick);
             session.setAttribute("pwd", password);

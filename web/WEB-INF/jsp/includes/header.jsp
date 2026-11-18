@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="c" uri="jakarta.tags.core" %><%--
   Content of <head> shared by all layouts.
   Parameters:
-    title       key of the page title in commands.json (com.*)
+    title       key of the localized page title (com.*)
     charset     "true" to start with <meta charset>
     software    "coolchat" or "version" for <meta name="software">, empty for none
     contenttype "true" for the http-equiv content-type <meta>

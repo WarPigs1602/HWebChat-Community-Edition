@@ -20,7 +20,7 @@ Webbasierter Community-Chat für Apache Tomcat, entwickelt mit Jakarta EE, JSP u
 
 ### Administration und Gestaltung
 
-- Adminkonsole für Benutzer, Räume, Module, News, Konfiguration, Befehle, Hilfe, Emoticons, Hosts, Mail und MIME-Typen.
+- Adminkonsole für Benutzer, Räume, Module, News, Konfiguration, Befehlsrechte, Hilfe, Emoticons, Hosts, Mail und MIME-Typen.
 - Bedienelemente und Meldungen der Konsole unterstützen Deutsch und Englisch; das Sprachmenü wechselt die Sprache und führt zur Konsolenstartseite. Konfigurationswerte und eigene Inhalte bleiben unverändert.
 - WYSIWYG-Theme-Creator mit Vorschau, Farben, Typografie, Logo und eigenem CSS für Skins.
 - WYSIWYG-Seitenersteller mit Vorschau und bereinigtem HTML; öffentliche Seiten sind unter `/page.jsp?slug=<name>` erreichbar.
@@ -41,6 +41,8 @@ Im Bereich **Module** der Adminkonsole lassen sich folgende Einstellungen verwal
 | `direct_chat_login` | `0` | Bei aktiviertem Chat direkten Chat-Login statt Community-Login verwenden. |
 
 Deaktivierte Module verschwinden aus der Navigation; die zugehörigen Chat-Login-, Forum-, News-, Statistik- und Toplisten-Seiten antworten mit 404. Ist `news` deaktiviert, ist auch dessen Verwaltung in der Konsole nicht verfügbar. `direct_chat_login` wirkt nur bei aktiviertem `chat`; beim direkten Login ist die Community-Login-Seite nicht verfügbar.
+
+Beim Verlassen eines Chats, auch über die Zurück-Taste des Browsers, wird die Verbindung geschlossen. Beim Trennen einer direkten Chat-Sitzung wird die Sitzung beendet; für einen erneuten Zugang ist eine Anmeldung erforderlich. Beim Verlassen eines über die Community betretenen Chats bleibt die Community-Sitzung bestehen.
 
 ## Voraussetzungen
 
@@ -75,7 +77,7 @@ PostgreSQL benötigt `pgcrypto`; das Setup versucht die Erweiterung anzulegen. D
 
    Ein umbenanntes WAR oder eine eigene Kontextkonfiguration ändert diesen Pfad. Vor Updates Daten sichern und das Tomcat-Deploy-Verfahren befolgen; beim Ersetzen der Anwendung das Datenverzeichnis nicht löschen.
 
-3. **Setup ausführen:** `http://localhost:8080/HWebChat/setup.jsp` aufrufen, bevor die Installation öffentlich erreichbar ist. SQLite (Voreinstellung), MySQL oder PostgreSQL auswählen und SMTP, Konsolenzugang, ersten Chat-Benutzer, Raum und rechtliche Angaben eintragen. Der Assistent kopiert Erststart-Konfiguration und Daten aus `web/default-homewebcom/`, erstellt Datenbanktabellen und den ersten privilegierten Chat-Benutzer, testet SMTP und schreibt die Konfiguration. Der Konsolenzugang ist vom ersten Chat-Benutzer getrennt.
+3. **Setup ausführen:** `http://localhost:8080/HWebChat/setup.jsp` aufrufen, bevor die Installation öffentlich erreichbar ist. SQLite (Voreinstellung), MySQL oder PostgreSQL auswählen und SMTP, ersten Chat-Benutzer, Konsolenpfad, Raum und rechtliche Angaben eintragen. Der Assistent kopiert Erststart-Konfiguration und Daten aus `web/default-homewebcom/`, erstellt Datenbanktabellen und den ersten Administrator, testet SMTP und schreibt die Konfiguration. Mit diesem Konto anmelden, um die Konsole zu nutzen.
 
 4. `http://localhost:8080/HWebChat/start.jsp` öffnen und anmelden. Die Konsole liegt standardmäßig unter `/HWebChat/console.jsp` beziehungsweise unter dem im Setup gewählten `console.path`.
 
@@ -105,11 +107,13 @@ Die Laufzeitdateien liegen unter `~/.homewebcom` des Tomcat-Prozessbenutzers:
 | `config/pages.json` | Eigene Seiten |
 | `config/themes.json` | Theme-Einstellungen je Skin |
 | `config/hosts.json` | Zuordnung virtueller Hosts zu Skins |
-| `config/commands.json`, `config/cmdcfg.json` | Befehlstexte und Berechtigungen |
+| `config/cmdcfg.json` | Befehlsberechtigungen |
 | `config/mail.json` | SMTP-Einstellungen |
 | `data/hwebchat.sqlite` | Standard-SQLite-Datenbank, sofern kein anderer Pfad konfiguriert ist |
 
 Die Kopie unter [web/default-homewebcom/](web/default-homewebcom/) liefert Erststart-Vorlagen und ist nicht die laufende Konfiguration. JSP-Layouts und -Templates liegen im WAR und werden nicht aus `~/.homewebcom/templates` geladen; Änderungen erfolgen im Quellcode und erfordern ein erneutes Deployment. Das Laufzeitverzeichnis **und** bei Serverdatenbanken zusätzlich die Datenbank sichern.
+
+Die Befehlstexte stehen in [messages.properties](src/resources/i18n/messages.properties) (Deutsch) und [messages_en.properties](src/resources/i18n/messages_en.properties) (Englisch). Änderungen erfordern einen neuen Build und ein erneutes Deployment; in der Konsole lassen sich nur noch die Befehlsrechte konfigurieren. Vorhandene Laufzeitdateien `commands.json` und `commands_en.json` bleiben unverändert, werden aber nicht mehr gelesen. Eigene Texte bei Bedarf vor dem Upgrade in die Sprachdateien übernehmen.
 
 Für manuelle Datenbankkonfiguration ist `sql.type` gleich `sqlite`, `mysql` oder `postgresql`. SQLite verwendet `sql.path` und ignoriert `sql.user` und `sql.pw`; PostgreSQL verwendet `sql.host` (`host:port`), `sql.db`, `sql.user` und `sql.pw`. Die `legal.*`-Einstellungen füllen Impressum und Datenschutz; eine leere Telefonnummer wird ausgeblendet. Eine Änderung von `console.path` ändert die Konsolenadresse und macht die Standardadresse unerreichbar.
 
@@ -117,7 +121,7 @@ Die Statistik verwendet `time_zone`; bereits gespeicherte Intervalle werden bei 
 
 ## Betrieb und Sicherheit
 
-- Starke, unterschiedliche Passwörter für Konsole, Chat-Administrator und Datenbank wählen. Zugriff auf das Setup während der Installation und auf `~/.homewebcom` mit Zugangsdaten und Daten einschränken.
+- Starke, unterschiedliche Passwörter für Administratorkonten und Datenbank wählen. Zugriff auf die Konsole erhalten registrierte Konten ab dem konfigurierten `status_admin`; die bisherigen separaten Konsolenzugangsdaten werden auch bei bestehenden Installationen ignoriert. Zugriff auf das Setup während der Installation und auf `~/.homewebcom` mit Zugangsdaten und Daten einschränken.
 - HTTPS für Website und WebSocket-Verbindungen verwenden, Java und Tomcat aktuell halten und den Tomcat Manager schützen. Die `secure`-Einstellung des Sitzungscookies in [web.xml](web/WEB-INF/web.xml) an das HTTPS-Deployment anpassen.
 - Nur zur kurzfristigen Fehlersuche zeigt `-Dhwebchat.showStackTrace=true` vorhandene Stacktraces auf der 500-Seite. Diese können vertrauliche Informationen enthalten: nicht auf öffentlich erreichbaren Servern aktivieren und danach wieder abschalten.
 - Bei Java-Buildfehlern `java -version` und `mvn -v` prüfen. Bei Datenbankproblemen die laufende `config/config.json`, Verbindungsdaten und Berechtigungen prüfen, nicht nur die Vorlagen im Repository.

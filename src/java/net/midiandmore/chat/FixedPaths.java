@@ -20,7 +20,6 @@ final class FixedPaths {
             Map.entry("chat_start", "%path_hwebchat%?page=%path_chat_start%&skin=%skin%&skin=%skin%"),
             Map.entry("clear_chat_window", "%path_hwebchat%?page=%path_input%&msg=/c&skin=%skin%"),
             Map.entry("config_chat", "%path_console%?skin=%skin%&service=chat"),
-            Map.entry("config_cmd", "%path_console%?skin=%skin%&service=cmd"),
             Map.entry("config_cmdrights", "%path_console%?skin=%skin%&service=cmdrights"),
             Map.entry("config_emot", "%path_console%?skin=%skin%&service=emot"),
             Map.entry("config_fun", "%path_console%?skin=%skin%&service=fun"),

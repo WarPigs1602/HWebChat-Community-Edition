@@ -51,6 +51,7 @@ function getChatLang() {
     return m ? m[1] : "";
 }
 var socket = new WebSocket("${paths.frame_chat_new}?skin=${skin}" + (getChatLang() ? "&lang=" + encodeURIComponent(getChatLang()) : ""));
+closeChatSocketOnPageHide(socket);
 
 // Language switch in the running chat: the server changes the language of the connection
 // and answers with the translations of the elements marked with data-i18n (see the

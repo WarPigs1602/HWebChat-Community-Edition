@@ -6,27 +6,36 @@
     }
     Map<String, String> map = Web.requestValues(request);
     var lang = (String) request.getAttribute("lang");
-        BasicAuthenticationFilter filter = new BasicAuthenticationFilter();
+        var administrator = Web.consoleAdministrator(request);
         var ut = Bootstrap.getBoot().getUtil();
         var conf = Bootstrap.getBoot().getConfig();
         var cm = Bootstrap.getBoot().getChatManager();
-        try {
-            filter.init(Bootstrap.getBoot());
-        } catch (ServletException ex) {
-            Bootstrap.logError(ex);
-            response.setStatus(500);
-            return;
-        }
-        try {
-            filter.doFilter(request, response);
-        } catch (IOException ex) {
-            Bootstrap.logError(ex);
-            response.setStatus(500);
-            return;
-        } catch (ServletException ex) {
-            Bootstrap.logError(ex);
-            response.setStatus(500);
-            return;
+        response.setHeader("Cache-Control", "no-store");
+        if (administrator != null) {
+            var service = map.getOrDefault("service", "");
+            var change = map.getOrDefault("change", "");
+            if ("POST".equalsIgnoreCase(request.getMethod())) {
+                var token = Web.consoleCsrf(request.getSession(false));
+                var submitted = map.getOrDefault("csrf", "");
+                if (!java.security.MessageDigest.isEqual(token.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                        submitted.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
+                    response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                    return;
+                }
+            } else if (!"GET".equalsIgnoreCase(request.getMethod())
+                    || (!map.getOrDefault("update", "").isBlank()
+                        && !(service.equals("room") && change.equals("add_room")))
+                    || (service.equals("room") && (change.equals("modify")
+                        || change.equals("set_room") || change.equals("delete")))) {
+                response.setHeader("Allow", "GET, POST");
+                response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                return;
+            }
+            request.setAttribute("console_csrf", Web.consoleCsrf(request.getSession(false)));
+            request.setAttribute("console_administrator", administrator);
+            if (!service.equals("news")) {
+                map.remove("csrf");
+            }
         }
         // The console templates see the same defaults as the former console views
         var consoleSid = map.getOrDefault("sid", "");
@@ -43,7 +52,7 @@
         consoleValues.put("reason", "");
         Web.view("page", request, consoleValues);
         var panel = "";
-        if (!filter.hasError()) {
+        if (administrator != null) {
             var service = map.getOrDefault("service", "");
             var change = map.getOrDefault("change", "");
             if (service.isBlank()) {
@@ -187,7 +196,7 @@
                         }
                     }
                     p.forEach((key, value) -> {
-                        if (key.startsWith("path_")) {
+                        if (key.startsWith("path_") || Set.of("admin_username", "admin_password", "admin_realm").contains(key)) {
                             p1.put(key, value);
                         }
                     });
@@ -197,7 +206,7 @@
                 }
                 p = conf.loadDataFromJSON("config.json", "name", "value", "description");
                 for (var key : p.keySet()) {
-                    if (key.startsWith("path_")) {
+                    if (key.startsWith("path_") || Set.of("admin_username", "admin_password", "admin_realm").contains(key)) {
                         continue;
                     }
                     var arr = p.get(key);
@@ -274,33 +283,6 @@
                     conf.hash();
                 }
                 p = conf.loadDataFromJSON("cmdcfg.json", "name", "status");
-                for (var key : p.keySet()) {
-                    var arr = p.get(key);
-                    var value = arr;
-                    rows.add(new String[]{ut.parseHtml(key), ut.parseHtml(value), ""});
-                }
-                request.setAttribute("console_rows", rows);
-            } else if (service.equals("cmd")) {
-                var update = map.getOrDefault("update", "");
-
-                panel = "commands";
-                TreeMap<String, String> p = conf.loadDataFromJSON("commands.json", "name", "command");
-                TreeMap<String, String> p1 = new TreeMap<>();
-                var rows = new ArrayList<String[]>();
-                if (!update.isBlank()) {
-                    for (var key1 : map.keySet()) {
-                        if (key1.equals("service") || key1.equals("update") || key1.equals("skin") || key1.equals("page")) {
-                            continue;
-                        } else {
-                            var arr = map.getOrDefault(key1, "");
-                            p1.put(key1, arr);
-                        }
-                    }
-                    conf.saveDataToJSON("commands.json", p1, "name", "command");
-                    request.setAttribute("console_success", true);
-                    conf.hash();
-                }
-                p = conf.loadDataFromJSON("commands.json", "name", "command");
                 for (var key : p.keySet()) {
                     var arr = p.get(key);
                     var value = arr;
@@ -871,18 +853,17 @@
                 panel = "404";
             }
         } else {
-            response.setStatus(401);
+            response.setStatus(403);
             panel = "401";
         }
         pageContext.setAttribute("panel", panel);
 
 %><c:if test="${not empty panel}"><t:layout design="console"><c:choose>
 <c:when test="${panel eq 'index'}"><h1><fmt:message key="console.index.admin_console"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
-<c:when test="${panel eq '401'}"><h1>${SERVER_SOFTWARE}-401</h1></c:when>
+<c:when test="${panel eq '401'}"><h1>${SERVER_SOFTWARE}-403</h1></c:when>
 <c:when test="${panel eq '404'}"><h1>${SERVER_SOFTWARE}-404</h1></c:when>
 <c:when test="${panel eq 'chat'}"><h1><fmt:message key="console.chat.chat_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
 <c:when test="${panel eq 'cmdcfg'}"><h1><fmt:message key="console.cmdcfg.rights_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
-<c:when test="${panel eq 'commands'}"><h1><fmt:message key="console.commands.command_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
 <c:when test="${panel eq 'emot'}"><h1><fmt:message key="console.emot.emoticon_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
 <c:when test="${panel eq 'fun'}"><h1><fmt:message key="console.fun.fun_command_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
 <c:when test="${panel eq 'help'}"><h1><fmt:message key="console.help.help_configuration"><fmt:param value="${SERVER_SOFTWARE}"/></fmt:message></h1></c:when>
@@ -909,6 +890,7 @@
 <p>
 <fmt:message key="console.401.you_are_not_authorized_to"/><br>
 <fmt:message key="console.401.in_order_to_use_this"/>!
+<br><a href="${paths.index}"><fmt:message key="console.401.return_to_start"/></a>
 </p>
 </c:when>
 <c:when test="${panel eq '404'}">
@@ -918,58 +900,40 @@
 </c:when>
 <c:when test="${panel eq 'chat'}">
 <span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
-<p>
-<table>
 <form action="${paths.config_chat}&update=true" method="POST">
+<input type="hidden" name="csrf" value="${console_csrf}">
+<table>
 <c:forEach var="row" items="${console_rows}"><tr><td>
 ${row[2]}: </td><td><input class="form-control form-control-sm" type="text" name="${row[0]}" value="${row[1]}">
 </td></tr>
 </c:forEach>
 <td>&nbsp;</td><td>
 <input type="submit" class="btn btn-secondary btn-sm" name="" value="<fmt:message key="common.submit"/>">
-</form>
 </td></tr>
 </table>
-</p>
+</form>
 </c:when>
 <c:when test="${panel eq 'cmdcfg'}">
 <span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
-<p>
-<table>
 <form action="${paths.config_cmdrights}&update=true" method="POST">
+<input type="hidden" name="csrf" value="${console_csrf}">
+<table>
 <c:forEach var="row" items="${console_rows}"><tr><td>
 ${row[0]}: </td><td><input class="form-control form-control-sm" type="text" name="${row[0]}" value="${row[1]}">
 </td></tr>
 </c:forEach>
 <td>&nbsp;</td><td>
 <input type="submit" class="btn btn-secondary btn-sm" name="" value="<fmt:message key="console.cmdcfg.submit"/>">
-</form>
 </td></tr>
 </table>
-</p>
-</c:when>
-<c:when test="${panel eq 'commands'}">
-<span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
-<p>
-<table>
-<form [formGroup]="form" action="${paths.config_cmd}&update=true" method="POST">
-<c:forEach var="row" items="${console_rows}"><tr><td>
-${row[0]}</td><td><textarea name="${row[0]}" spellcheck="false" contenteditable>${row[1]}</textarea>
-</td></tr>
-</c:forEach>
-<td>&nbsp;</td><td>
-<input type="submit" class="btn btn-secondary btn-sm" name="" value="<fmt:message key="common.submit"/>">
 </form>
-</td></tr>
-</table>
-</p>
 </c:when>
 <c:when test="${panel eq 'emot'}">
 <span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
-<p>
 <span style="font-weight: bold"><fmt:message key="common.note"/></span> <fmt:message key="common.an_empty_field_removes_the"/>
-<table>
 <form action="${paths.config_emot}&update=true" method="POST">
+<input type="hidden" name="csrf" value="${console_csrf}">
+<table>
 <c:forEach var="row" items="${console_rows}"><tr><td>
 ${row[0]}: </td><td><input class="form-control form-control-sm" type="text" name="${row[0]}" value="${row[1]}">
 </td></tr>
@@ -977,17 +941,16 @@ ${row[0]}: </td><td><input class="form-control form-control-sm" type="text" name
 <td><input type="text" name="name" class="form-control form-control-sm" value=""> </td><td><input type="text" class="form-control form-control-sm" name="value" value=""></td></tr>
 <td>&nbsp;</td><td>
 <input type="submit" class="btn btn-secondary btn-sm" name="" value="<fmt:message key="common.submit"/>">
-</form>
 </td></tr>
 </table>
-</p>
+</form>
 </c:when>
 <c:when test="${panel eq 'fun'}">
 <span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
-<p>
 <span style="font-weight: bold"><fmt:message key="common.note"/></span> <fmt:message key="common.an_empty_field_removes_the"/>
-<table>
 <form action="${paths.config_fun}&update=true" method="POST">
+<input type="hidden" name="csrf" value="${console_csrf}">
+<table>
 <c:forEach var="row" items="${console_rows}"><tr><td>
 ${row[0]}</td><td>${row[2]}: </td><td><textarea class="form-control form-control-sm" name="${row[0]}">${row[1]}</textarea>
 </td></tr>
@@ -995,33 +958,31 @@ ${row[0]}</td><td>${row[2]}: </td><td><textarea class="form-control form-control
 <td><textarea class="form-control form-control-sm" name="command"></textarea></td><td><textarea class="form-control form-control-sm" name="description"></textarea></td><td><textarea class="form-control form-control-sm" name="content"></textarea></td></tr>
 <td>&nbsp;</td><td>
 <input type="submit" class="btn btn-secondary btn-sm" name="" value="<fmt:message key="common.submit"/>">
-</form>
 </td></tr>
 </table>
-</p>
+</form>
 </c:when>
 <c:when test="${panel eq 'help'}">
 <span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
-<p>
-<table>
 <form action="${paths.config_help}&update=true" method="POST">
+<input type="hidden" name="csrf" value="${console_csrf}">
+<table>
 <c:forEach var="row" items="${console_rows}"><tr><td>
 ${row[0]}</td><td><textarea class="form-control form-control-sm" name="${row[0]}" spellcheck="false" contenteditable>${row[1]}</textarea>
 </td></tr>
 </c:forEach>
 <td>&nbsp;</td><td>
 <input type="submit" name="" class="btn btn-secondary btn-sm" value="<fmt:message key="common.submit"/>">
-</form>
 </td></tr>
 </table>
-</p>
+</form>
 </c:when>
 <c:when test="${panel eq 'host'}">
 <span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
-<p>
 <span style="font-weight: bold"><fmt:message key="common.note"/></span> <fmt:message key="common.an_empty_field_removes_the"/>
-<table>
 <form action="${paths.config_host}&update=true" method="POST">
+<input type="hidden" name="csrf" value="${console_csrf}">
+<table>
 <c:forEach var="row" items="${console_rows}"><tr><td>
 ${row[0]}: </td><td><input class="form-control form-control-sm" type="text" name="${row[0]}" value="${row[1]}">
 </td></tr>
@@ -1029,32 +990,30 @@ ${row[0]}: </td><td><input class="form-control form-control-sm" type="text" name
 <td><input type="text" class="form-control form-control-sm"  name="name" value=""> </td><td><input type="text" class="form-control form-control-sm"  name="value" value=""></td></tr>
 <td>&nbsp;</td><td>
 <input type="submit" class="btn btn-secondary btn-sm" name="" value="<fmt:message key="common.submit"/>">
-</form>
 </td></tr>
 </table>
-</p>
+</form>
 </c:when>
 <c:when test="${panel eq 'mail'}">
 <span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
-<p>
-<table>
 <form action="${paths.config_mail}&update=true" method="POST">
+<input type="hidden" name="csrf" value="${console_csrf}">
+<table>
 <c:forEach var="row" items="${console_rows}"><tr><td>
 ${row[0]}: </td><td><input class="form-control form-control-sm" type="text" name="${row[0]}" value="${row[1]}">
 </td></tr>
 </c:forEach>
 <td>&nbsp;</td><td>
 <input type="submit" class="btn btn-secondary btn-sm" name="" value="<fmt:message key="common.submit"/>">
-</form>
 </td></tr>
 </table>
-</p>
+</form>
 </c:when>
 <c:when test="${panel eq 'mime'}">
 <span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
-<p>
-<table>
 <form action="${paths.config_mime}&update=true" method="POST">
+<input type="hidden" name="csrf" value="${console_csrf}">
+<table>
 <c:forEach var="row" items="${console_rows}"><tr><td>
 ${row[0]}: </td><td><input class="form-control form-control-sm" type="text" name="${row[0]}" value="${row[1]}">
 </td></tr>
@@ -1062,15 +1021,15 @@ ${row[0]}: </td><td><input class="form-control form-control-sm" type="text" name
 <td><input type="text" name="name" class="form-control form-control-sm" value=""> </td><td><input type="text" class="form-control form-control-sm" name="value" value=""></td></tr>
 <td>&nbsp;</td><td>
 <input type="submit" name="" class="btn btn-secondary btn-sm" value="<fmt:message key="common.submit"/>">
-</form>
 </td></tr>
 </table>
-</p>
+</form>
 </c:when>
 <c:when test="${panel eq 'theme'}">
 <span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
 <p><fmt:message key="console.theme.intro"/></p>
 <form action="${paths.config_index}&service=theme&update=true" method="POST" accept-charset="utf-8">
+  <input type="hidden" name="csrf" value="${console_csrf}">
   <table class="table table-sm" style="max-width:860px">
     <tr><th colspan="2"><fmt:message key="console.theme.general"/></th></tr>
     <tr><td><strong>Skin</strong></td><td><input class="form-control form-control-sm" type="text" name="theme_skin" value="<c:out value='${theme_skin}'/>"> <span class="form-hint"><fmt:message key="console.theme.skin_hint"/></span></td></tr>
@@ -1153,6 +1112,7 @@ var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.
         data-move-up="<c:out value='${navMoveUp}'/>" data-move-down="<c:out value='${navMoveDown}'/>"
         data-remove="<c:out value='${navRemove}'/>" data-added="<c:out value='${navAdded}'/>"
         data-removed="<c:out value='${navRemoved}'/>" data-moved="<c:out value='${navMoved}'/>">
+    <input type="hidden" name="csrf" value="${console_csrf}">
     <input type="hidden" name="navigation_csrf" value="<c:out value='${navigation_csrf}'/>">
     <div id="navigation-filters" class="mb-3" role="group" aria-label="<fmt:message key='console.navigation.filter'/>" hidden>
       <button type="button" class="btn btn-sm btn-secondary" data-filter="all" aria-pressed="true"><fmt:message key="console.navigation.all"/></button>
@@ -1241,6 +1201,7 @@ var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.
     </p>
   </c:if>
   <form id="page-form" action="${paths.config_index}&amp;service=pages&amp;update=true" method="POST" accept-charset="utf-8" data-link-prompt="<c:out value='${pageLinkPrompt}'/>">
+    <input type="hidden" name="csrf" value="${console_csrf}">
     <div class="form-group">
       <label for="page-slug"><strong><fmt:message key="console.pages.slug"/></strong></label>
       <input id="page-slug" class="form-control" type="text" name="page_slug" maxlength="64" pattern="[a-z0-9]+(-[a-z0-9]+)*" required value="<c:out value='${page_slug}'/>" <c:if test="${page_slug_locked}">readonly</c:if>>
@@ -1314,6 +1275,7 @@ var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.
 <span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
 <p><fmt:message key="console.modules.intro"/></p>
 <form action="${paths.config_index}&service=modules&update=true" method="POST">
+<input type="hidden" name="csrf" value="${console_csrf}">
 <table class="table table-sm">
   <thead><tr><th><fmt:message key="console.modules.menu"/></th><th><fmt:message key="console.modules.enabled"/></th><th><fmt:message key="console.modules.description"/></th></tr></thead>
   <tbody>
@@ -1335,6 +1297,7 @@ var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.
 <c:when test="${panel eq 'rooms'}">
 <p>
 <form action="${paths.config_rooms}&update=true&change=search" method="POST">
+<input type="hidden" name="csrf" value="${console_csrf}">
 <fmt:message key="console.rooms.search_for_space"/> <input type="text" class="form-control form-control-sm" name="room" value="">
 <input type="submit" name="" class="btn btn-secondary btn-sm" value="<fmt:message key="common.submit"/>">
 </form>
@@ -1350,14 +1313,17 @@ var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.
 <c:when test="${panel eq 'rooms_add'}"><fmt:message key="console.rooms_add.the_room"/> <span style="font-weight: bold">${room}</span> <fmt:message key="console.rooms_add.create"/>
 <form action="${paths.config_rooms}&update=true&room=${room}&change=set_room" method="POST" accept-charset="utf-8"></c:when>
 <c:when test="${panel eq 'rooms_config'}">
-<p>
-<a href="${paths.config_rooms}&update=true&room=${room}&change=delete"><fmt:message key="console.rooms_config.here"/></a> <fmt:message key="console.rooms_config.you_can_remove_the_room"/>
-</p>
+<div>
+<form action="${paths.config_rooms}&amp;update=true&amp;change=delete" method="POST" class="d-inline">
+<input type="hidden" name="csrf" value="${console_csrf}"><input type="hidden" name="room" value="<c:out value='${room}'/>">
+<button type="submit" class="btn btn-link p-0 align-baseline"><fmt:message key="console.rooms_config.here"/></button></form> <fmt:message key="console.rooms_config.you_can_remove_the_room"/>
+</div>
 <form action="${paths.config_rooms}&update=true&room=${room}&change=modify" method="POST" accept-charset="utf-8"></c:when>
 <c:otherwise>
 <p style="font-weight: bold"><fmt:message key="common.change_successfully"/>!</p>
 <form action="${paths.config_rooms}&update=true&room=${room}&change=modify" method="POST" accept-charset="utf-8"></c:otherwise>
 </c:choose>
+  <input type="hidden" name="csrf" value="${console_csrf}">
   <p>
     <table>
 	  <tr>
@@ -1413,10 +1379,12 @@ var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.
 </p>
 </c:when>
 <c:when test="${panel eq 'rooms_exist'}">
-<p>
+<div>
 <fmt:message key="common.the_room"/> <span style="font-weight: bold">${room}</span> <fmt:message key="console.rooms_exist.already_exists"/><br>
-<fmt:message key="console.rooms_exist.you_can"/> <a href="${paths.config_rooms}&update=true&change=delete&room=${room}"><fmt:message key="common.here"/><a/> <fmt:message key="console.rooms_exist.click_to_remove_it"/>
-</p>
+<fmt:message key="console.rooms_exist.you_can"/> <form action="${paths.config_rooms}&amp;update=true&amp;change=delete" method="POST" class="d-inline">
+<input type="hidden" name="csrf" value="${console_csrf}"><input type="hidden" name="room" value="<c:out value='${room}'/>">
+<button type="submit" class="btn btn-link p-0 align-baseline"><fmt:message key="common.here"/></button></form> <fmt:message key="console.rooms_exist.click_to_remove_it"/>
+</div>
 </c:when>
 <c:when test="${panel eq 'rooms_fail'}">
 <p>
@@ -1432,16 +1400,19 @@ var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.
 <c:when test="${panel eq 'users'}">
 <p>
 <form action="${paths.config_users}&update=true" method="POST">
+<input type="hidden" name="csrf" value="${console_csrf}">
 <fmt:message key="console.users.search_for_chatter"/> <input type="text" name="user" class="form-control form-control-sm" value="">
 <input type="submit" name="" class="btn btn-secondary btn-sm" value="<fmt:message key="common.submit"/>">
 </form>
 </p>
 </c:when>
 <c:when test="${panel eq 'users_fail'}">
-<p>
+<div>
 <fmt:message key="common.the_user"/> <span style="font-weight: bold">${nick}</span> <fmt:message key="common.does_not_exist"/><br>
-<fmt:message key="common.please_click"/> <a href="${paths.config_users}&update=true&user=${nick}&change=reg"><fmt:message key="common.here"/></a> <fmt:message key="console.users_fail.to_create_the_user"/>
-</p>
+<fmt:message key="common.please_click"/> <form action="${paths.config_users}&amp;update=true&amp;change=reg" method="POST" class="d-inline">
+<input type="hidden" name="csrf" value="${console_csrf}"><input type="hidden" name="user" value="<c:out value='${nick}'/>">
+<button type="submit" class="btn btn-link p-0 align-baseline"><fmt:message key="common.here"/></button></form> <fmt:message key="console.users_fail.to_create_the_user"/>
+</div>
 </c:when>
 <c:when test="${panel eq 'users_delete'}">
 <p>
@@ -1455,6 +1426,7 @@ var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.
 </c:when>
 <c:when test="${panel eq 'users_page'}">
 <form action="${paths.config_users}&update=true&user=${nick}" method="POST" accept-charset="utf-8">
+  <input type="hidden" name="csrf" value="${console_csrf}">
   <p class="form-section-title">
     <fmt:message key="console.users_page.here_you_can_edit_the"><fmt:param value="${nick}"/></fmt:message>
   </p>
@@ -1477,7 +1449,7 @@ var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.
 </c:when>
 <c:when test="${panel eq 'users_pwd'}">
 
-<form action="${paths.config_users}&update=true&user=${nick}&change=password" method="POST" accept-charset="utf-8"><c:if test="${console_failed}">
+<form action="${paths.config_users}&update=true&user=${nick}&change=password" method="POST" accept-charset="utf-8"><input type="hidden" name="csrf" value="${console_csrf}"><c:if test="${console_failed}">
   <p class="form-section-title">
     <fmt:message key="page.account_failed.an_error_has_occurred"/>
   </p>
@@ -1506,6 +1478,7 @@ var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.
 </c:when>
 <c:when test="${panel eq 'users_account'}">
 <form action="${paths.config_users}&update=true&user=${nick}&change=data" method="POST" accept-charset="utf-8">${account_error_if_one}
+  <input type="hidden" name="csrf" value="${console_csrf}">
   <p class="form-section-title">
     <fmt:message key="common.necessary_information"/>
   </p>
@@ -1563,6 +1536,7 @@ var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.
 <span style="font-weight: bold"><c:if test="${console_success}"><fmt:message key="common.change_successfully"/>!</c:if></span>
 <p>
 <form action="${paths.config_users}&update=true&change=profile_change" method="POST">
+  <input type="hidden" name="csrf" value="${console_csrf}">
 	      <input type="hidden" name="user" value="${nick}">
     <table>
       <tr><td><span style="font-weight: bold">Homepage: </span></td><td><input type="url" size="50" maxlength="255" class="form-control form-control-sm" name="homepage" value="${homepage}"></td></tr>
@@ -1598,7 +1572,7 @@ var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.
 </p>
 </c:when>
 <c:when test="${panel eq 'reg_form'}">
-<form action="${paths.config_users}&update=true&user=${nick}&change=reg" method="POST" accept-charset="utf-8"><c:if test="${console_failed}">
+<form action="${paths.config_users}&update=true&user=${nick}&change=reg" method="POST" accept-charset="utf-8"><input type="hidden" name="csrf" value="${console_csrf}"><c:if test="${console_failed}">
   <p class="form-section-title">
     <fmt:message key="page.reg_failed.registration_is_not_possible"/>!
   </p>

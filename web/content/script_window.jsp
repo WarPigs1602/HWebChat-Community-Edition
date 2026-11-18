@@ -1,4 +1,12 @@
 <%@ page contentType="text/javascript; charset=UTF-8" session="false" isELIgnored="true" import="net.midiandmore.chat.Web" %><% Web.start(application); if (!Web.begin("script", request, response)) { return; } %>var win = document.defaultView;
+function closeChatSocketOnPageHide(socket) {
+    window.addEventListener('pagehide', function () {
+        if (socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket.OPEN) {
+            socket.close(1000, 'Page closed');
+        }
+    });
+}
+
 function open_window(add, url) {
     mywin = win.open(add, url, 'toolbar=0, location=0, directories=0, status=0, menubar=0, scrollbars=1, resizable=0, width=800, height=600');
     mywin.focus();

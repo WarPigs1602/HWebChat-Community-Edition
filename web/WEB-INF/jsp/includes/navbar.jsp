@@ -27,7 +27,6 @@
           <div class="dropdown-menu">
             <a class="dropdown-item" href="${paths.config_chat}">${com.design_admin_chat_settings}</a>
             <a class="dropdown-item" href="${paths.config_cmdrights}">${com.design_admin_cmd_rights}</a>
-            <a class="dropdown-item" href="${paths.config_cmd}">${com.design_admin_cmd_edit}</a>
             <a class="dropdown-item" href="${paths.config_host}">${com.design_admin_host}</a>
             <a class="dropdown-item" href="${paths.config_theme}">${com.design_admin_theme}</a>
             <a class="dropdown-item" href="${paths.config_index}&amp;service=pages"><fmt:message key="console.pages.menu"/></a>

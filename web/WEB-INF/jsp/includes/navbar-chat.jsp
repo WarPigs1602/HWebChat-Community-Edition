@@ -1,4 +1,4 @@
-<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="c" uri="jakarta.tags.core" %><%--
+<%@ page contentType="text/html; charset=UTF-8" session="false" %><%@ taglib prefix="c" uri="jakarta.tags.core" %><%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %><%--
   Navigation bar of the chat window.
   Parameters:
     registered  "true" for registered users (adds profile and account)
@@ -56,6 +56,7 @@
         <a class="dropdown-item" href="#" data-lang-option="en" onclick="setChatLang('en'); return false;" data-i18n="design_lang_en">${com.design_lang_en}</a>
       </div>
     </li>
+    <c:if test="${console_link_visible}"><li class="nav-item"><a class="nav-link" href="${paths.config_index}" target="_blank" rel="noopener"><i class="fa fa-cog" aria-hidden="true"></i> <fmt:message key="console.link"/></a></li></c:if>
 </ul>
     </div>
   </div>

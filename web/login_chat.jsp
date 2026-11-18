@@ -233,6 +233,9 @@
                         nick = conf.getString("guest_prefix") + Integer.toString(1);
                     }
                 }
+                request.changeSessionId();
+                session.removeAttribute("consoleCsrf");
+                session.removeAttribute("navigationCsrf");
                 session.setMaxInactiveInterval(-1);
 
                 session.setAttribute("sid", sid);

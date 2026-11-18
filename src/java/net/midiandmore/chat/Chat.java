@@ -46,6 +46,8 @@ public class Chat {
     private String cat;
     private Map<String, List<String>> map;
     private long lastTypingUpdate;
+    private Users chatUser;
+    private UsersPrivchat privateChatUser;
 
     /**
      *
@@ -343,6 +345,7 @@ public class Chat {
                     cm.getUser(oldNick).setServerInfo((String) getHttpSession().getAttribute("server"));
                     cm.getUser(oldNick).setLang(langParam);
                     cm.getUser(oldNick).setChatOnly((String) getHttpSession().getAttribute("chat_only") != null);
+                    chatUser = cm.getUser(oldNick);
                     cm.getRoom(room).optimizeUserList();
                     if (reg) {
                         status = parseInt(db.getData(oldNick, "status"));
@@ -448,6 +451,7 @@ public class Chat {
                     }
                     cm.addUserPrivchat(nick, sid, color, getSession(), skin, target);
                     UsersPrivchat u1 = cm.getUserPrivchat(nick, target);
+                    privateChatUser = u1;
                     u1.setNewName(newName);
                     var text = db.getCommand("join", getLang(nick));
                     text = text.replace("%color%", ut.preReplace(color));
@@ -575,7 +579,7 @@ public class Chat {
     }
 
     /**
-     * Text of the user interface: <code>design_*</code> are commands, the
+     * Text of the user interface: <code>design_*</code> are command texts, the
      * prefix <code>msg:</code> selects an entry of the resource bundle.
      */
     private static String translate(String lang, String key) {
@@ -585,7 +589,7 @@ public class Chat {
             return value.equals(name) ? null : value;
         }
         var db = boot.getConfig().getDb();
-        return key.startsWith("design_") && db.getCom().containsKey(key) ? db.getCommand(key, lang) : null;
+        return key.startsWith("design_") && I18n.has(lang, "command." + key) ? db.getCommand(key, lang) : null;
     }
 
     /**
@@ -621,38 +625,8 @@ public class Chat {
      * @throws IOException
      */
     @OnClose
-    public synchronized void onClose(Session session) throws IOException {
-        if (Boolean.TRUE.equals(session.getUserProperties().get("rejected_no_session"))) {
-            return;
-        }
-        var cm = boot.getChatManager();
-        try {
-            if (session.isOpen()) {
-                var name = getMap().containsKey("nick") ? getMap().get("nick").get(0)
-                        : (String) getSession().getUserProperties().getOrDefault("nick", "");
-                var target = getMap().containsKey("target") ? getMap().get("target").get(0)
-                        : (String) getSession().getUserProperties().getOrDefault("target", "");
-                if (target.equals("")) {
-                    if (cm.isOnline(name)) {
-                        var u = cm.getUser(name);
-                        if (u != null) {
-                            cm.quit(u.getName());
-                        }
-                    }
-                } else {
-                    if (cm.isOnlinePrivchat(name, target)) {
-                        var u = cm.getUserPrivchat(name, target);
-                        if (u != null) {
-                            cm.quitPrivchat(u.getName(), target);
-                        }
-                    }
-                }
-            }
-        } catch (IllegalStateException | NullPointerException e) {
-
-        }
-
-        // WebSocket connection closes
+    public void onClose(Session session) throws IOException {
+        closeConnection(session, null);
     }
 
     /**
@@ -662,42 +636,40 @@ public class Chat {
      */
     @OnError
     public void onError(Session session, Throwable throwable) {
+        ErrorLog.LOG.log(java.util.logging.Level.WARNING, "WebSocket error", throwable);
+        closeConnection(session, throwable);
+    }
+
+    private void closeConnection(Session session, Throwable error) {
         var cm = boot.getChatManager();
-        try {
-            if (session.isOpen()) {
-                var name = getMap().containsKey("nick") ? getMap().get("nick").get(0)
-                        : (String) getSession().getUserProperties().getOrDefault("nick", "");
-                var target = getMap().containsKey("target") ? getMap().get("target").get(0)
-                        : (String) getSession().getUserProperties().getOrDefault("target", "");
-                if (target.equals("")) {
-
-                    if (cm.isOnline(name)) {
-                        var u = cm.getUser(name);
-                        if (u != null) {
-                            u.setQuitReason(throwable.getLocalizedMessage());
-                            cm.quit(u.getName());
-                        }
-                    }
-                } else {
-                    if (cm.isOnlinePrivchat(name, target)) {
-                        var u = cm.getUserPrivchat(name, target);
-                        if (u != null) {
-                            u.setQuitReason(throwable.getLocalizedMessage());
-                            cm.quitPrivchat(u.getName(), target);
-                        }
-                    }
+        synchronized (cm) {
+            if (chatUser != null && chatUser.getSession() == session && cm.getUser(chatUser.getName()) == chatUser) {
+                if (error != null) {
+                    chatUser.setQuitReason(error.getLocalizedMessage());
                 }
+                cm.quit(chatUser.getName());
+            } else if (privateChatUser != null && privateChatUser.getSession() == session
+                    && cm.getUserPrivchat(privateChatUser.getName(), privateChatUser.getTarget()) == privateChatUser) {
+                if (error != null) {
+                    privateChatUser.setQuitReason(error.getLocalizedMessage());
+                }
+                cm.quitPrivchat(privateChatUser.getName(), privateChatUser.getTarget());
             }
-        } catch (IllegalStateException | NullPointerException e) {
-
         }
-        // Do error handling here
     }
 
     private void disconnect() {
         if (getHttpSession() != null && !getMap().containsKey("target")
                 && getHttpSession().getAttribute("chat_only") != null) {
-            getHttpSession().invalidate();
+            var manager = boot.getChatManager();
+            var httpSession = getHttpSession();
+            var sessionId = httpSession.getId();
+            var sid = httpSession.getAttribute("sid");
+            var name = sid instanceof String connectionId ? manager.getNameFromId(connectionId) : null;
+            var activeUser = name != null ? manager.getUser(name) : null;
+            if (activeUser == null || !sessionId.equals(activeUser.getJsid())) {
+                manager.resetChatOnlySession(httpSession, sessionId);
+            }
         }
         if (getSession().isOpen()) {
             try {

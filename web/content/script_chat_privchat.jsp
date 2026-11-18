@@ -36,6 +36,7 @@ function getChatLang() {
     return m ? m[1] : "";
 }
 var socket = new WebSocket("${paths.frame_chat_new}?skin=${skin}&target=${target}&nick=${nick}&sid=${sid}" + (getChatLang() ? "&lang=" + encodeURIComponent(getChatLang()) : ""));
+closeChatSocketOnPageHide(socket);
 
 
 // callback-Funktion wird gerufen, wenn die Verbindung erfolgreich aufgebaut werden konnte

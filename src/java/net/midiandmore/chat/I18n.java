@@ -72,4 +72,8 @@ final class I18n {
             return key;
         }
     }
+
+    static boolean has(String lang, String key) {
+        return ResourceBundle.getBundle(BUNDLE, locale(lang)).containsKey(key);
+    }
 }

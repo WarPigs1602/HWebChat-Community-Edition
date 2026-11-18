@@ -103,6 +103,7 @@
             </c:choose>
           </c:if>
         </c:forEach>
+        <c:if test="${console_link_visible}"><li class="nav-item"><a class="nav-link" href="${paths.config_index}" target="_blank" rel="noopener"><i class="fa fa-cog" aria-hidden="true"></i> <fmt:message key="console.link"/></a></li></c:if>
       </ul>
     </div>
   </div>

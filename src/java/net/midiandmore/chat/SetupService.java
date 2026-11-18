@@ -282,7 +282,7 @@ public final class SetupService {
                                          String dbHost, String dbPort, String dbName, String dbUser, String dbPassword, String dbPrefix,
                                          String smtpHost, String smtpPort, String smtpUser, String smtpPassword, String smtpFrom,
                                          String smtpAuth, String smtpStarttls, String smtpSslFactory,
-                                         String adminUser, String adminPassword, String adminRealm, String consolePath,
+                                         String consolePath,
                                          String charset, String timeZone, String skin, String room,
                                          String legalName, String legalStreet, String legalZip, String legalCity, String legalPhone, String legalEmail) {
         var lines = new ArrayList<String>();
@@ -298,9 +298,6 @@ public final class SetupService {
         lines.add("{\"name\":\"charset\",\"value\":\"" + escapeJson(charset) + "\",\"description\":\"Default charset\"},");
         lines.add("{\"name\":\"default_skin\",\"value\":\"" + escapeJson(skin) + "\",\"description\":\"Default skin\"},");
         lines.add("{\"name\":\"default_room\",\"value\":\"" + escapeJson(room) + "\",\"description\":\"Default room\"},");
-        lines.add("{\"name\":\"admin_username\",\"value\":\"" + escapeJson(adminUser) + "\",\"description\":\"Admin console username\"},");
-        lines.add("{\"name\":\"admin_password\",\"value\":\"" + escapeJson(adminPassword) + "\",\"description\":\"Admin console password\"},");
-        lines.add("{\"name\":\"admin_realm\",\"value\":\"" + escapeJson(adminRealm) + "\",\"description\":\"Admin console realm\"},");
         lines.add("{\"name\":\"console.path\",\"value\":\"" + escapeJson(consolePath) + "\",\"description\":\"Admin console path relative to the context\"},");
         lines.add("{\"name\":\"legal.name\",\"value\":\"" + escapeJson(legalName) + "\",\"description\":\"Imprint and privacy policy: responsible person\"},");
         lines.add("{\"name\":\"legal.street\",\"value\":\"" + escapeJson(legalStreet) + "\",\"description\":\"Imprint and privacy policy: street and number\"},");
@@ -445,9 +442,6 @@ public final class SetupService {
         var smtpAuth = request.getParameter("smtp_auth");
         var smtpStarttls = request.getParameter("smtp_starttls");
         var smtpSslFactory = request.getParameter("smtp_ssl_factory");
-        var adminUser = request.getParameter("admin_user");
-        var adminPassword = request.getParameter("admin_password");
-        var adminRealm = request.getParameter("admin_realm");
         var consolePath = request.getParameter("console_path");
         var firstUserNick = request.getParameter("first_user_nick");
         var firstUserPassword = request.getParameter("first_user_password");
@@ -466,7 +460,6 @@ public final class SetupService {
         if ((dbType != SqlDialect.Type.SQLITE && (dbHost == null || dbHost.isEmpty() || dbPort == null || dbPort.isEmpty() || dbName == null || dbName.isEmpty() ||
             dbUser == null || dbUser.isEmpty() || dbPassword == null || dbPassword.isEmpty())) ||
             smtpHost == null || smtpHost.isEmpty() || smtpPort == null || smtpPort.isEmpty() || smtpFrom == null || smtpFrom.isEmpty() ||
-            adminUser == null || adminUser.isEmpty() || adminPassword == null || adminPassword.isEmpty() ||
             firstUserNick == null || firstUserNick.isEmpty() || firstUserPassword == null || firstUserPassword.isEmpty() || firstUserEmail == null || firstUserEmail.isEmpty() ||
             legalName == null || legalName.isBlank() || legalStreet == null || legalStreet.isBlank() || legalZip == null || legalZip.isBlank() ||
             legalCity == null || legalCity.isBlank() || legalEmail == null || legalEmail.isBlank()) {
@@ -492,7 +485,6 @@ public final class SetupService {
             dbType, sqlitePath, dbHost, dbPort, dbName, dbUser, dbPassword, dbPrefix.isEmpty() ? "hwc_" : dbPrefix,
             smtpHost, smtpPort, smtpUser, smtpPassword, smtpFrom,
             smtpAuth != null ? smtpAuth : "true", smtpStarttls != null ? smtpStarttls : "true", smtpSslFactory != null ? smtpSslFactory : "javax.net.ssl.SSLSocketFactory",
-            adminUser, adminPassword, adminRealm != null ? adminRealm : "Console",
             FixedPaths.consolePath(consolePath),
             charset != null ? charset : "UTF-8",
             timeZone != null ? timeZone : "CET",

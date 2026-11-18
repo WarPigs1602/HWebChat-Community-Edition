@@ -20,7 +20,7 @@ Web-based community chat for Apache Tomcat, built with Jakarta EE, JSP and WebSo
 
 ### Administration and design
 
-- Administration console for users, rooms, modules, news, configuration, commands, help, emoticons, hosts, mail and MIME types.
+- Administration console for users, rooms, modules, news, configuration, command permissions, help, emoticons, hosts, mail and MIME types.
 - Console controls and messages support German and English; use its language menu to switch (this returns to the console home page). Configuration values and custom content remain as entered.
 - WYSIWYG theme creator with preview, colors, typography, logo and custom CSS for skins.
 - WYSIWYG page editor with preview and sanitized HTML; public pages use `/page.jsp?slug=<name>`.
@@ -41,6 +41,8 @@ The **Modules** section of the administration console controls the following set
 | `direct_chat_login` | `0` | When chat is enabled, use direct chat login instead of community login. |
 
 Disabled modules are removed from the navigation; their corresponding chat login, forum, news, statistics or toplist pages return 404. When `news` is disabled, its console administration is also unavailable. `direct_chat_login` only applies while `chat` is enabled; with direct login enabled, the community login page is unavailable.
+
+Navigating away from a chat, including with the browser's Back button, closes its connection. When a direct chat session disconnects, its session is ended and signing in again is required. Disconnecting from a chat entered through the community does not end the community session.
 
 ## Requirements
 
@@ -75,7 +77,7 @@ PostgreSQL requires `pgcrypto`; setup attempts to create the extension, so the d
 
    Renaming the WAR or configuring the context changes this path. For upgrades, back up your data and follow your Tomcat deployment procedure; do not delete the data directory when replacing the application.
 
-3. **Run setup** at `http://localhost:8080/HWebChat/setup.jsp` before exposing the installation publicly. Choose SQLite (the default), MySQL or PostgreSQL; supply SMTP settings, console credentials, the first chat user, room and legal information. The wizard copies the initial configuration and data from `web/default-homewebcom/`, creates database tables and the first privileged chat user, tests SMTP and writes the configuration. The console login is separate from the first chat user.
+3. **Run setup** at `http://localhost:8080/HWebChat/setup.jsp` before exposing the installation publicly. Choose SQLite (the default), MySQL or PostgreSQL; supply SMTP settings, the first chat user, console path, room and legal information. The wizard copies the initial configuration and data from `web/default-homewebcom/`, creates database tables and the first administrator, tests SMTP and writes the configuration. Sign in with that account to access the console.
 
 4. Open `http://localhost:8080/HWebChat/start.jsp` and sign in. The console is at `/HWebChat/console.jsp` by default, or at the `console.path` selected during setup.
 
@@ -105,11 +107,13 @@ Runtime files are under `~/.homewebcom` for the Tomcat process user:
 | `config/pages.json` | Custom pages |
 | `config/themes.json` | Theme settings per skin |
 | `config/hosts.json` | Virtual-host-to-skin mappings |
-| `config/commands.json`, `config/cmdcfg.json` | Command texts and permissions |
+| `config/cmdcfg.json` | Command permissions |
 | `config/mail.json` | SMTP settings |
 | `data/hwebchat.sqlite` | Default SQLite database, unless another path is configured |
 
 The copy in [web/default-homewebcom/](web/default-homewebcom/) supplies first-start defaults, not the live configuration. JSP layouts and templates are packaged in the WAR, not loaded from `~/.homewebcom/templates`; change them in the source and redeploy. Back up the runtime directory **and**, for a server database, the database separately.
+
+Command texts are in [messages.properties](src/resources/i18n/messages.properties) (German) and [messages_en.properties](src/resources/i18n/messages_en.properties) (English). Editing them requires rebuilding and redeploying; the console only configures command permissions. Existing runtime `commands.json` and `commands_en.json` files are left untouched but no longer read. Copy any custom texts you want to keep into the language bundles before upgrading.
 
 For manual database configuration, `sql.type` is `sqlite`, `mysql` or `postgresql`. SQLite uses `sql.path` and ignores `sql.user` and `sql.pw`; PostgreSQL uses `sql.host` (`host:port`), `sql.db`, `sql.user` and `sql.pw`. The `legal.*` settings fill the imprint and privacy pages; an empty phone number is hidden. Changing `console.path` changes the console address and makes the default address unavailable.
 
@@ -117,7 +121,7 @@ Statistics use `time_zone`; previously stored buckets are not converted when it 
 
 ## Operation and security
 
-- Choose strong, distinct passwords for the console, chat administrator and database. Restrict access to setup during installation and to `~/.homewebcom`, which contains credentials and data.
+- Choose strong, distinct passwords for administrator accounts and the database. Console access requires a registered account with at least the configured `status_admin`; the former separate console credentials are ignored, including on existing installations. Restrict access to setup during installation and to `~/.homewebcom`, which contains credentials and data.
 - Use HTTPS for the site and WebSocket traffic, keep Java and Tomcat updated, and protect the Tomcat Manager. Align the session cookie `secure` setting in [web.xml](web/WEB-INF/web.xml) with your HTTPS deployment.
 - For temporary debugging only, `-Dhwebchat.showStackTrace=true` displays available stack traces on the 500 page. They can contain sensitive information: do not enable this on a publicly accessible server, and disable it afterwards.
 - If the build reports a Java version error, check `java -version` and `mvn -v`. For database issues, check the live `config/config.json`, connection details and permissions rather than only the repository defaults.

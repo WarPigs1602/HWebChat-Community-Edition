@@ -350,6 +350,9 @@ public class ChatServices {
                 reason != null ? reason : "", host, owner, map.getOrDefault("target", ""), map.getOrDefault("user", ""),
                 roomName, (scheme.equals("https") ? "wss" : "ws") + "://" + host, scheme + "://" + host));
         var session = request.getSession(false);
+        if ("template".equals(type) || "pages".equals(type)) {
+            view.defaults().put("console_link_visible", Web.consoleAdministrator(request) != null);
+        }
         var userAgent = request.getHeader("User-Agent");
         view.defaults().put("user_agent", userAgent != null ? userAgent : "");
         view.defaults().put("designs", new ViewFactory.Texts(design -> selectCommunityDesign(design, session,
@@ -655,7 +658,7 @@ public class ChatServices {
             var repository = new NewsRepository(conf.getDb(), conf.getP().getProperty("sql.prefix", ""));
             if (admin && "POST".equalsIgnoreCase(request.getMethod())) {
                 var session = request.getSession(false);
-                var token = session == null ? null : (String) session.getAttribute("newsCsrf");
+                var token = session == null ? null : (String) session.getAttribute("consoleCsrf");
                 var submitted = map.getOrDefault("csrf", "");
                 if (token == null || !java.security.MessageDigest.isEqual(
                         token.getBytes(java.nio.charset.StandardCharsets.UTF_8),
@@ -672,7 +675,7 @@ public class ChatServices {
                     return;
                 }
                 if (action.equals("create")) {
-                    repository.create(title, body, conf.getString("admin_username"));
+                    repository.create(title, body, (String) request.getAttribute("console_administrator"));
                 } else if (action.equals("update") || action.equals("delete")) {
                     long id;
                     try {
@@ -701,16 +704,7 @@ public class ChatServices {
             }
             String token = "";
             if (admin) {
-                var session = request.getSession(true);
-                synchronized (session) {
-                    token = (String) session.getAttribute("newsCsrf");
-                    if (token == null) {
-                        var bytes = new byte[32];
-                        new java.security.SecureRandom().nextBytes(bytes);
-                        token = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-                        session.setAttribute("newsCsrf", token);
-                    }
-                }
+                token = Web.consoleCsrf(request.getSession(false));
                 response.setHeader("Cache-Control", "no-store");
             }
             var content = new StringBuilder("<h1>").append(I18n.get(lang, admin ? "news.manage" : "news.title")).append("</h1>");

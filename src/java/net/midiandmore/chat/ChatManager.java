@@ -153,9 +153,8 @@ public final class ChatManager {
             getUsers().remove(name);
             getConnectionIds().remove(connectionId);
             var hs = u.getHttpSession();
-            if (hs != null && u.isChatOnly()) {
-                getUsersCommunity().remove(u.getName());
-                hs.invalidate();
+            if (u.isChatOnly()) {
+                resetChatOnlySession(hs, u.getJsid());
                 try {
                     var s = u.getSession();
                     if (s != null && s.isOpen()) {
@@ -166,11 +165,20 @@ public final class ChatManager {
                 } catch (IOException ex) {
                     logError(ex);
                 }
-                db.delSession(u.getName());
-                u = null;
-                room = null;
-                connectionId = null;
-                name = null;
+            }
+            db.delSession(u.getName());
+        }
+    }
+
+    void resetChatOnlySession(HttpSession session, String sessionId) {
+        if (sessionId != null) {
+            getUsersCommunity().entrySet().removeIf(entry -> sessionId.equals(entry.getValue().getConnectionId()));
+        }
+        if (session != null) {
+            try {
+                session.invalidate();
+            } catch (IllegalStateException ex) {
+                LOG.log(FINE, "Chat-only session was already invalidated", ex);
             }
         }
     }
@@ -1531,26 +1539,17 @@ public final class ChatManager {
      * @param name Nickname
      */
     protected void removeUserPrivchat(String name, String target) {
-        var conf = getMaster().getConfig();
-        var db = conf.getDb();
-        name = name.toLowerCase();
-        if (isOnline(name)) {
-            var u = getUserPrivchat(name, target);
+        var u = getUserPrivchat(name, target);
+        if (u != null) {
             getUsersPrivchat().remove(u.getConnectionId());
             try {
-                try {
-                    var s = u.getSession();
-                    if (s != null && s.isOpen()) {
-                        s.close();
-                    }
-                } catch (IllegalStateException | NullPointerException e) {
-
+                var s = u.getSession();
+                if (s != null && s.isOpen()) {
+                    s.close();
                 }
             } catch (IOException ex) {
+                logError(ex);
             }
-            db.delSession(u.getName());
-            u = null;
-            name = null;
         }
     }
 
@@ -1578,6 +1577,7 @@ public final class ChatManager {
                 u.setQuitted(true);
             }
             if (!isOnline(name)) {
+                removeUserPrivchat(name, target);
                 return;
             }
             name = u == null ? name : u.getName();
@@ -1811,7 +1811,8 @@ public final class ChatManager {
                     sb.append(text);
                 }
                 if (names.size() - 1 != count) {
-                    sb.append(db.getCommand("chat_list_split", lang));
+                    var separator = db.getCommand("chat_list_split", lang);
+                    sb.append(",".equals(separator) ? ", " : separator);
                 }
                 text = null;
                 status = null;

@@ -4,6 +4,7 @@ import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.mail.MessagingException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -124,6 +125,60 @@ public final class Web {
     public static String consolePath() {
         var config = master != null ? master.getConfig() : null;
         return FixedPaths.consolePath(config != null ? config.getString("console.path") : null);
+    }
+
+    /** Returns the current administrator's name only while their login and role remain valid. */
+    public static String consoleAdministrator(HttpServletRequest request) {
+        var session = request.getSession(false);
+        if (session == null || master == null) {
+            return null;
+        }
+        try {
+            if (!"true".equals(session.getAttribute("community"))
+                    && !"true".equals(session.getAttribute("chat_only"))) {
+                return null;
+            }
+            if (!(session.getAttribute("nick") instanceof String nick) || nick.isBlank()
+                    || !(session.getAttribute("pwd") instanceof String password)) {
+                return null;
+            }
+            var user = master.getChatManager().getUsersCommunity().get(nick);
+            if (user == null || !session.getId().equals(user.getConnectionId())) {
+                return null;
+            }
+            var config = master.getConfig();
+            var db = config.getDb();
+            if (!db.isRegistered(nick)) {
+                return null;
+            }
+            int minimum;
+            int status;
+            try {
+                minimum = Integer.parseInt(config.getString("status_admin"));
+                status = Integer.parseInt(db.getData(nick, "status"));
+            } catch (NumberFormatException ex) {
+                Bootstrap.logError(ex);
+                return null;
+            }
+            return status >= minimum && db.checkPassword(nick, password) ? nick : null;
+        } catch (IllegalStateException ex) {
+            Bootstrap.logError(ex);
+            return null;
+        }
+    }
+
+    /** Per-session token shared by the console's state-changing forms. */
+    public static String consoleCsrf(HttpSession session) {
+        synchronized (session) {
+            var token = (String) session.getAttribute("consoleCsrf");
+            if (token == null) {
+                var bytes = new byte[32];
+                new java.security.SecureRandom().nextBytes(bytes);
+                token = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+                session.setAttribute("consoleCsrf", token);
+            }
+            return token;
+        }
     }
 
     /** Text of the resource bundles in a language ("de" or "en"). */

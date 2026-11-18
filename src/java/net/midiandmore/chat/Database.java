@@ -433,8 +433,7 @@ public class Database {
      }
      */
     /**
-     * Ruft die Commands ab (urspr&uuml;nglich in SQL-Datenbank abgespeichert
-     * deswegen nicht in der Config-Klasse)
+     * Ruft einen lokalisierten Command-Text ab.
      *
      * @param field Der abzurufende Command
      * @return Der Command
@@ -445,14 +444,12 @@ public class Database {
 
     protected String getCommand(String field, String lang) {
         var ut = getMaster().getUtil();
-        var value = getCom().get(field);
-        if (value == null) {
+        var key = "command." + field;
+        String value;
+        if (!I18n.has(lang, key)) {
             value = "<span style=\"font-weigt: bold\">(ERROR: The field " + field + " was not defined)</span><br>";
-        } else if (lang != null && lang.equalsIgnoreCase("en") && getComEn() != null) {
-            var enValue = getComEn().get(field);
-            if (enValue != null) {
-                value = enValue;
-            }
+        } else {
+            value = I18n.get(lang, key);
         }
         return ut.replaceFilePaths(ut.replacePaths(value));
     }
@@ -2948,8 +2945,6 @@ public class Database {
         this.prefix = prefix;
     }
 
-    private TreeMap<String, String> com;
-    private TreeMap<String, String> com_en;
 
     /**
      * Speichert die Bans in ArrayListen
@@ -3157,32 +3152,6 @@ public class Database {
      */
     protected void setCmd(TreeMap<String, String> cmd) {
         this.cmd = cmd;
-    }
-
-    /**
-     * Die Com-Parameter abfragen
-     *
-     * @return Die Com-Parameter
-     */
-    protected TreeMap<String, String> getCom() {
-        return com;
-    }
-
-    /**
-     * Die Com-Parameter setzen
-     *
-     * @param com Die Com-Parameter
-     */
-    protected void setCom(TreeMap<String, String> com) {
-        this.com = com;
-    }
-
-    protected TreeMap<String, String> getComEn() {
-        return com_en;
-    }
-
-    protected void setComEn(TreeMap<String, String> com_en) {
-        this.com_en = com_en;
     }
 
     /**
