@@ -63,6 +63,27 @@
         <url-pattern>/upload.jsp</url-pattern>
     </servlet-mapping>   
     <servlet>
+        <servlet-name>FileManager</servlet-name>
+        <jsp-file>/WEB-INF/jsp/endpoints/file_manager.jsp</jsp-file>
+        <multipart-config>
+            <max-file-size>10485760</max-file-size>
+            <max-request-size>10551296</max-request-size>
+            <file-size-threshold>0</file-size-threshold>
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>FileManager</servlet-name>
+        <url-pattern>/file-manager.jsp</url-pattern>
+    </servlet-mapping>
+    <servlet>
+        <servlet-name>DownloadArchive</servlet-name>
+        <jsp-file>/WEB-INF/jsp/endpoints/download_archive.jsp</jsp-file>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>DownloadArchive</servlet-name>
+        <url-pattern>/downloads.jsp</url-pattern>
+    </servlet-mapping>
+    <servlet>
         <servlet-name>Setup</servlet-name>
         <jsp-file>/WEB-INF/jsp/endpoints/setup.jsp</jsp-file>
     </servlet>

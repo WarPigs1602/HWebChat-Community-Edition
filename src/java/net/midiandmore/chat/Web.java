@@ -181,6 +181,20 @@ public final class Web {
         }
     }
 
+    /** Per-session token for user homepage edits. */
+    public static String userHomepageCsrf(HttpSession session) {
+        synchronized (session) {
+            var token = (String) session.getAttribute("userHomepageCsrf");
+            if (token == null) {
+                var bytes = new byte[32];
+                new java.security.SecureRandom().nextBytes(bytes);
+                token = java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+                session.setAttribute("userHomepageCsrf", token);
+            }
+            return token;
+        }
+    }
+
     /** Text of the resource bundles in a language ("de" or "en"). */
     public static String message(String lang, String key) {
         return I18n.get(lang, key);

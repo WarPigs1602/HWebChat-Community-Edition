@@ -17,6 +17,7 @@
             and (id ne 'board' or modules.board ne '0')
             and (id ne 'toplist' or modules.toplist ne '0')
             and (id ne 'stats' or modules.stats ne '0')
+            and (id ne 'downloads' or (modules.download_archive ne '0' and modules.file_manager ne '0'))
             and (id ne 'logout' or community)
             and (id ne 'chat' or (community and modules.chat ne '0'))
             and (id ne 'account' or registered)
@@ -31,6 +32,7 @@
             <c:choose>
               <c:when test="${id eq 'start'}"><c:set var="defaultLabel" value="${com.design_nav_start}"/><c:set var="defaultUrl" value="${community ? paths.index_com : paths.index}"/><c:set var="icon" value="home"/></c:when>
               <c:when test="${id eq 'news'}"><c:set var="defaultLabel" value="${com.design_nav_news}"/><c:set var="defaultUrl" value="${paths.news}"/><c:set var="icon" value="bullhorn"/></c:when>
+              <c:when test="${id eq 'downloads'}"><fmt:message key="page.download_archive.nav_label" var="defaultLabel"/><c:set var="defaultUrl" value="${paths.downloads}"/><c:set var="icon" value="download"/></c:when>
               <c:when test="${id eq 'board'}"><c:set var="defaultLabel" value="${com.design_nav_forum}"/><c:set var="defaultUrl" value="${paths.board}"/><c:set var="icon" value="comments"/></c:when>
               <c:when test="${id eq 'rules'}"><c:set var="defaultLabel" value="${com.design_nav_chattiquette}"/><c:set var="defaultUrl" value="${registered ? paths.rules_com_reg : community ? paths.rules_com : paths.rules}"/><c:set var="icon" value="info-circle"/></c:when>
               <c:when test="${id eq 'toplist'}"><c:set var="defaultLabel" value="${com.design_nav_toplist}"/><c:set var="defaultUrl" value="${paths.toplist}"/><c:set var="icon" value="trophy"/></c:when>

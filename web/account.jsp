@@ -67,6 +67,56 @@
                 }
                 default -> form = "unknown";
             }
+        } else if (service.equals("homepage")) {
+            if (!Web.isModuleEnabled("user_homepage")) {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                return;
+            }
+            if (session == null) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
+            String content = "";
+            try {
+                content = db.getUserHomepageContent(nick);
+                if (data.equals("change")) {
+                    form = "homepage";
+                    if (!"POST".equalsIgnoreCase(request.getMethod())) {
+                        response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+                        return;
+                    }
+                    var token = (String) session.getAttribute("userHomepageCsrf");
+                    var submitted = map.getOrDefault("csrf", "");
+                    if (token == null || !java.security.MessageDigest.isEqual(
+                            token.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                            submitted.getBytes(java.nio.charset.StandardCharsets.UTF_8))) {
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                        return;
+                    }
+                    content = map.getOrDefault("page_content", "");
+                    if (content.length() > 100_000) {
+                        alert = "homepage_content";
+                    } else {
+                        content = CustomPageContent.sanitize(content);
+                        db.updateUserHomepageContent(nick, content);
+                        form = "homepage_success";
+                    }
+                } else if (data.isEmpty()) {
+                    form = "homepage";
+                } else {
+                    form = "unknown";
+                }
+            } catch (SQLException ex) {
+                Bootstrap.logError(ex);
+                response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                return;
+            }
+            if (form.equals("homepage") || form.equals("homepage_success") || !alert.isEmpty()) {
+                request.setAttribute("homepage_content", CustomPageContent.sanitize(content));
+                request.setAttribute("homepage_url", request.getContextPath() + "/~"
+                        + java.net.URLEncoder.encode(nick, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20") + "/");
+                request.setAttribute("homepage_csrf", Web.userHomepageCsrf(session));
+            }
         } else if (service.equals("password")) {
             switch (data) {
                 case "change" -> {
@@ -317,8 +367,9 @@
   </p>
   <p>
   <fmt:message key="page.account_form_napping2.what_do_you_want_to"/></br>
-  <select class="form-control form-control-sm col-md-6 mb-3" name="service" size="6">
+  <select class="form-control form-control-sm col-md-6 mb-3" name="service" size="7">
     <option value="account" selected><fmt:message key="common.processing_profile"/></option>
+    <c:if test="${modules.user_homepage ne '0'}"><option value="homepage"><fmt:message key="page.user_homepage.menu"/></option></c:if>
     <option value="napping">Chatnapping</option>
     <option value="picture"><fmt:message key="common.upload_profile_picture"/></option>
     <option value="password"><fmt:message key="common.processing_the_password"/></option>
@@ -342,8 +393,9 @@
   <div class="row g-2 mb-3">
     <div class="col-md-6">
       <label class="form-label fw-semibold small"><fmt:message key="common.what_do_you_want_to"/></label>
-      <select class="form-select form-select-sm" name="service" size="6">
+      <select class="form-select form-select-sm" name="service" size="7">
         <option value="account" selected><fmt:message key="common.processing_profile"/></option>
+        <c:if test="${modules.user_homepage ne '0'}"><option value="homepage"><fmt:message key="page.user_homepage.menu"/></option></c:if>
         <option value="napping">Chatnapping</option>
         <option value="picture"><fmt:message key="common.upload_profile_picture"/></option>
         <option value="password"><fmt:message key="common.processing_the_password"/></option>
@@ -550,6 +602,76 @@
       </div>
     </div>
   </div></c:when>
+
+  <c:when test="${acc_form eq 'homepage' or acc_form eq 'homepage_success'}"><h1><fmt:message key="page.user_homepage.title"/></h1>
+    <c:if test="${not empty acc_alert}"><div class="alert alert-danger" role="alert"><fmt:message key="page.user_homepage.content_too_long"/></div></c:if>
+    <c:if test="${acc_form eq 'homepage_success'}"><div class="alert alert-success" role="status"><fmt:message key="page.user_homepage.saved"/></div></c:if>
+    <p><fmt:message key="page.user_homepage.intro"/></p>
+    <p><fmt:message key="page.user_homepage.public_url"/> <a href="<c:out value='${homepage_url}'/>" target="_blank" rel="noopener"><c:out value="${homepage_url}"/></a></p>
+    <fmt:message key="page.user_homepage.link_prompt" var="homepageLinkPrompt"/>
+    <form id="homepage-form" action="${paths.account}" method="POST" accept-charset="utf-8" data-link-prompt="<c:out value='${homepageLinkPrompt}'/>">
+      <input type="hidden" name="service" value="homepage">
+      <input type="hidden" name="data" value="change">
+      <input type="hidden" name="csrf" value="<c:out value='${homepage_csrf}'/>">
+      <c:if test="${acc_nap}"><input type="hidden" name="owner" value="${owner}"></c:if>
+      <div class="form-group">
+        <label for="homepage-editor"><strong><fmt:message key="page.user_homepage.content"/></strong></label>
+        <div class="btn-toolbar mb-2" role="toolbar" aria-label="<fmt:message key='page.user_homepage.formatting'/>">
+          <div class="btn-group btn-group-sm mr-2" role="group">
+            <button type="button" class="btn btn-outline-secondary" data-command="bold" aria-label="<fmt:message key='page.user_homepage.bold'/>"><strong>B</strong></button>
+            <button type="button" class="btn btn-outline-secondary" data-command="italic" aria-label="<fmt:message key='page.user_homepage.italic'/>"><em>I</em></button>
+            <button type="button" class="btn btn-outline-secondary" data-command="underline" aria-label="<fmt:message key='page.user_homepage.underline'/>"><u>U</u></button>
+          </div>
+          <div class="btn-group btn-group-sm mr-2" role="group">
+            <button type="button" class="btn btn-outline-secondary" data-command="formatBlock" data-value="h2"><fmt:message key="page.user_homepage.heading"/></button>
+            <button type="button" class="btn btn-outline-secondary" data-command="formatBlock" data-value="p"><fmt:message key="page.user_homepage.paragraph"/></button>
+            <button type="button" class="btn btn-outline-secondary" data-command="insertUnorderedList"><fmt:message key="page.user_homepage.list"/></button>
+            <button type="button" class="btn btn-outline-secondary" data-command="insertOrderedList"><fmt:message key="page.user_homepage.numbered_list"/></button>
+          </div>
+          <div class="btn-group btn-group-sm" role="group">
+            <button type="button" class="btn btn-outline-secondary" id="homepage-link">Link</button>
+            <button type="button" class="btn btn-outline-secondary" data-command="removeFormat"><fmt:message key="page.user_homepage.remove_format"/></button>
+          </div>
+        </div>
+        <div id="homepage-editor" class="form-control" contenteditable="true" role="textbox" aria-multiline="true" style="height:auto;min-height:220px;overflow:auto"><c:out value="${homepage_content}" escapeXml="false"/></div>
+        <textarea id="homepage-content" name="page_content" hidden></textarea>
+      </div>
+      <div class="form-group mt-3">
+        <label for="homepage-preview"><strong><fmt:message key="page.user_homepage.preview"/></strong></label>
+        <iframe id="homepage-preview" title="<fmt:message key='page.user_homepage.preview'/>" sandbox="" style="width:100%;height:280px;border:1px solid #ced4da;border-radius:.25rem;background:#fff"></iframe>
+      </div>
+      <button type="submit" class="btn btn-primary"><fmt:message key="page.user_homepage.save"/></button>
+    </form>
+    <script>
+      (function () {
+        var editor = document.getElementById('homepage-editor');
+        var preview = document.getElementById('homepage-preview');
+        function updatePreview() {
+          preview.srcdoc = '<!doctype html><html><head><meta charset="utf-8"><style>body{font:16px system-ui,sans-serif;padding:1rem;color:#212529}blockquote{border-left:4px solid #ced4da;padding-left:1rem;color:#6c757d}</style></head><body>' + editor.innerHTML + '</body></html>';
+        }
+        document.querySelectorAll('#homepage-form [data-command]').forEach(function (button) {
+          button.addEventListener('mousedown', function (event) { event.preventDefault(); });
+          button.addEventListener('click', function () {
+            editor.focus();
+            document.execCommand(button.dataset.command, false, button.dataset.value || null);
+            updatePreview();
+          });
+        });
+        document.getElementById('homepage-link').addEventListener('mousedown', function (event) { event.preventDefault(); });
+        document.getElementById('homepage-link').addEventListener('click', function () {
+          editor.focus();
+          var url = window.prompt(document.getElementById('homepage-form').dataset.linkPrompt);
+          if (url) document.execCommand('createLink', false, url);
+          updatePreview();
+        });
+        editor.addEventListener('input', updatePreview);
+        document.getElementById('homepage-form').addEventListener('submit', function () {
+          document.getElementById('homepage-content').value = editor.innerHTML;
+        });
+        updatePreview();
+      }());
+    </script>
+  </c:when>
 
 <c:when test="${acc_form eq 'password'}"><h1>${SERVER_SOFTWARE} &ndash; <fmt:message key="common.password_2"/></h1>
 

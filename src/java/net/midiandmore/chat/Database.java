@@ -1879,6 +1879,33 @@ public class Database {
         return dat != null ? dat : "";
     }
 
+    public String getUserHomepageContent(String nick) throws SQLException {
+        if (getCon() == null || !getCon().isValid(1000)) {
+            connectDatabase();
+        }
+        try (var statement = getCon().prepareStatement(
+                "SELECT `homepage_content` FROM `" + getPrefix() + "users` WHERE `nick2`=? OR `nick`=?")) {
+            statement.setString(1, nick);
+            statement.setString(2, nick.toLowerCase(java.util.Locale.ROOT));
+            try (var resultset = statement.executeQuery()) {
+                return resultset.next() ? java.util.Objects.toString(resultset.getString("homepage_content"), "") : "";
+            }
+        }
+    }
+
+    public void updateUserHomepageContent(String nick, String content) throws SQLException {
+        if (getCon() == null || !getCon().isValid(1000)) {
+            connectDatabase();
+        }
+        try (var statement = getCon().prepareStatement(
+                "UPDATE `" + getPrefix() + "users` SET `homepage_content`=? WHERE `nick2`=? OR `nick`=?")) {
+            statement.setString(1, content);
+            statement.setString(2, nick);
+            statement.setString(3, nick.toLowerCase(java.util.Locale.ROOT));
+            statement.executeUpdate();
+        }
+    }
+
     /**
      * Fr&auml;gt Daten aus einem Benutzeraccount ab
      *
@@ -3209,6 +3236,7 @@ public class Database {
                 "reddit", "snapchat", "pinterest", "whatsapp", "telegram",
                 "fam_status", "visitors", "image_url", "login_room", "pwd2"
             };
+            String[] longTextCols = {"homepage_content"};
             String[] intCols = {"points", "status", "moderator"};
             String[] blobCols = {"image_upload"};
             var columns = new java.util.HashSet<String>();
@@ -3222,6 +3250,15 @@ public class Database {
                 if (!columns.contains(col)) {
                     try (var alter = getCon().prepareStatement(
                             "ALTER TABLE `" + table + "` ADD COLUMN IF NOT EXISTS `" + col + "` VARCHAR(255) DEFAULT ''")) {
+                        alter.executeUpdate();
+                    }
+                    columns.add(col);
+                }
+            }
+            for (var col : longTextCols) {
+                if (!columns.contains(col)) {
+                    try (var alter = getCon().prepareStatement(
+                            "ALTER TABLE `" + table + "` ADD COLUMN IF NOT EXISTS `" + col + "` TEXT DEFAULT ''")) {
                         alter.executeUpdate();
                     }
                     columns.add(col);

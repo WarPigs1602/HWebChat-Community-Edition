@@ -87,7 +87,7 @@
                 for (var key : p.keySet()) {
                     var arr = p.get(key);
                     var descriptionKey = switch (key) {
-                        case "chat", "board", "news", "stats", "toplist", "direct_chat_login" -> "console.modules.description_" + key;
+                        case "chat", "board", "news", "stats", "toplist", "user_homepage", "file_manager", "download_archive", "direct_chat_login" -> "console.modules.description_" + key;
                         default -> null;
                     };
                     rows.add(new String[]{ut.parseHtml(key), ut.parseHtml(arr[0]),
@@ -1129,6 +1129,7 @@ var bx=body?body.querySelector('div[style*="margin-top"]'):null;if(bx){bx.style.
         <c:choose>
           <c:when test="${item.id eq 'start'}"><c:set var="navDefaultLabel" value="${com.design_nav_start}"/></c:when>
           <c:when test="${item.id eq 'news'}"><c:set var="navDefaultLabel" value="${com.design_nav_news}"/></c:when>
+          <c:when test="${item.id eq 'downloads'}"><fmt:message key="page.download_archive.nav_label" var="navDefaultLabel"/></c:when>
           <c:when test="${item.id eq 'board'}"><c:set var="navDefaultLabel" value="${com.design_nav_forum}"/></c:when>
           <c:when test="${item.id eq 'rules'}"><c:set var="navDefaultLabel" value="${com.design_nav_chattiquette}"/></c:when>
           <c:when test="${item.id eq 'toplist'}"><c:set var="navDefaultLabel" value="${com.design_nav_toplist}"/></c:when>

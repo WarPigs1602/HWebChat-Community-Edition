@@ -39,6 +39,7 @@
             <a class="dropdown-item" href="${paths.config_users}">${com.design_admin_users}</a>
             <a class="dropdown-item" href="${paths.config_rooms}">${com.design_admin_rooms}</a>
             <a class="dropdown-item" href="${paths.config_index}&amp;service=modules"><fmt:message key="console.modules.menu"/></a>
+            <c:if test="${modules.file_manager ne '0'}"><a class="dropdown-item" href="${paths.file_manager}"><fmt:message key="console.files.menu"/></a></c:if>
           </div>
         </li>
         <li class="nav-item"><a class="nav-link" href="<c:out value="${paths.config_news}"/>"><i class="fa fa-newspaper-o" aria-hidden="true"></i> <fmt:message key="news.manage"/></a></li>

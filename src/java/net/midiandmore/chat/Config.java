@@ -705,6 +705,9 @@ public final class Config {
         defaults.put("news", "1");
         defaults.put("stats", "1");
         defaults.put("toplist", "1");
+        defaults.put("user_homepage", "0");
+        defaults.put("file_manager", "0");
+        defaults.put("download_archive", "0");
         defaults.put("direct_chat_login", "0");
         try {
             var conf = getProperty("config.dir");
@@ -744,6 +747,9 @@ public final class Config {
         descriptions.put("news", "Enable news module");
         descriptions.put("stats", "Enable statistics module");
         descriptions.put("toplist", "Enable toplist module");
+        descriptions.put("user_homepage", "Allow registered users to build public homepages");
+        descriptions.put("file_manager", "Allow administrators to manage private application files");
+        descriptions.put("download_archive", "Allow public downloads of files explicitly published in the file manager");
         descriptions.put("direct_chat_login", "When chat module is enabled, use direct chat login instead of community login (1=direct chat login, 0=community login)");
         var mods = loadModulesConfig();
         for (var e : mods.entrySet()) {

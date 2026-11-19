@@ -2,45 +2,52 @@
 
 Web-based community chat for Apache Tomcat, built with Jakarta EE, JSP and WebSocket.
 
-[Deutsch](README.de.md) · [Demo](https://www.hwebchat.de) · [Releases](https://github.com/WarPigs1602/HWebChat/releases) · [Issues](https://github.com/WarPigs1602/HWebChat/issues)
+[Deutsch](README.de.md) · [Demo](https://www.hwebchat.de) · [Releases](https://github.com/WarPigs1602/HWebChat-Community-Edition/releases) · [Issues](https://github.com/WarPigs1602/HWebChat-Community-Edition/issues)
 
 ## Features
 
 ### Chat and community
 
-- Real-time room and private chats via WebSocket; guest and registered-user login, rooms and napping rooms.
-- Typing indicators with nickname colors, Tab nickname completion, emoji and offline messages.
-- Moderation with kick, ban and gag; configurable rooms, commands and permissions.
-- User profiles with guestbooks and profile-picture uploads, account and password management, friends and messages.
-- Forum with categories, threads, replies and moderation. Visitors can read; writing requires a registered community session and the relevant permissions.
-- News, statistics and a points-based toplist. Administrators can create, edit and delete news; edits preserve the original author and publication date.
-- Home and signed-in community pages show chat counts, useful links and the latest news when available.
-- German and English interface: a language cookie takes precedence, followed by the `lang` parameter and browser preferences; English is the fallback. Automatic detection does not create a language cookie. The chat language can change without reloading; filters and collapsed user groups are preserved.
-- Light and dark themes; the selection is stored in the `theme` cookie.
+- Join public rooms as a guest or registered user; messages and private chats are delivered in real time over WebSocket. Administrators can configure room topics, access restrictions and appearance.
+- Registered users can create a personal napping room with its own title and colors.
+- Typing indicators, nickname colors, a color picker, Tab nickname completion and an emoji catalogue make chat conversations easier to follow and personalize.
+- Slash commands cover chat and moderation actions. The in-chat help lists commands available to the current permission level; administrators configure command rights and room-specific permissions. Moderation includes kick, ban and gag.
+- Registered users can edit account details and public profiles, upload a profile picture, maintain a guestbook, manage friends and send private messages. Messages for offline users are kept for their next visit.
+- Forum with categories, boards, threads, replies and moderation. Visitors can read boards configured for guest access; writing requires a registered community session and the relevant permissions.
+- News, statistics and a points-based toplist. Administrators can publish, edit and delete news; an edit preserves the original author and publication date. Statistics show chat activity over time, busy rooms and user peaks.
+- Public home and signed-in community pages show chat counts, useful links and the latest news when available.
+- Registered users can build public homepages with a sanitized WYSIWYG editor when the user homepage module is enabled.
+- German and English interface: on public pages, the `lang` cookie takes precedence over the `lang` parameter and browser preferences; English is the fallback. The chat also uses its session language before falling back to browser preferences. Automatic detection does not create a language cookie. The chat language can change without reloading; filters and collapsed user groups are preserved.
+- Host-based appearance: map each virtual host to a skin so different hostnames can use different themes. Unmapped hosts use the configured default skin.
 
 ### Administration and design
 
-- Administration console for users, rooms, modules, news, configuration, command permissions, help, emoticons, hosts, mail and MIME types.
+- Administration console for users, rooms, modules, news, configuration, command permissions, help, emoticons, custom fun commands, virtual hosts, mail and MIME types.
+- Optional administrator file manager with private storage, upload, download, delete, file titles and centrally managed categories.
+- Optional public download archive for individually published files, grouped and filterable by category.
 - Console controls and messages support German and English; use its language menu to switch (this returns to the console home page). Configuration values and custom content remain as entered.
-- WYSIWYG theme creator with preview, colors, typography, logo and custom CSS for skins.
+- WYSIWYG theme creator with live preview, colors, typography, logo and custom CSS for each skin. Create or edit skins in the console, then assign them to virtual hosts under **Hosts**.
 - WYSIWYG page editor with preview and sanitized HTML; public pages use `/page.jsp?slug=<name>`.
 - Shared, configurable navigation for public and community pages, including custom links, visibility, labels, destinations and ordering.
 - SQLite, MySQL/MariaDB and PostgreSQL storage; browser-based first-start setup.
 
 ## Modules
 
-The **Modules** section of the administration console controls the following settings. Defaults apply to a new installation; `1` enables and `0` disables an option. Settings are saved in `~/.homewebcom/config/modules.json` for the Tomcat process user.
+The **Modules** section of the administration console controls the following settings. The shown defaults are used for new installations and for settings missing from `modules.json`; `1` enables and `0` disables an option. Settings are saved in `~/.homewebcom/config/modules.json` for the Tomcat process user.
 
 | Setting | Default | Purpose |
 |---|---|---|
 | `chat` | `1` | Chat login and real-time chat rooms. |
-| `board` | `1` | Forum with public reading and registered-user participation. |
+| `board` | `1` | Forum; guest reading can be enabled per board, while participation requires a registered user and the relevant permissions. |
 | `news` | `1` | Public news page and news administration. |
 | `stats` | `1` | Statistics page with message, user, room and activity charts. |
 | `toplist` | `1` | Ranking of registered users by points. |
+| `user_homepage` | `0` | Allows users to create public homepages at `/~<Nick>/`. |
+| `file_manager` | `0` | Private file storage for administrators; public access is only possible through the separately enabled archive and explicit publication. |
+| `download_archive` | `0` | Public archive of files explicitly published through the file manager; requires `file_manager`. |
 | `direct_chat_login` | `0` | When chat is enabled, use direct chat login instead of community login. |
 
-Disabled modules are removed from the navigation; their corresponding chat login, forum, news, statistics or toplist pages return 404. When `news` is disabled, its console administration is also unavailable. `direct_chat_login` only applies while `chat` is enabled; with direct login enabled, the community login page is unavailable.
+Disabled modules are removed from the navigation; their corresponding chat login, forum, news, statistics, toplist, user homepage, file manager or download archive pages return 404. When `news` is disabled, its console administration is also unavailable. `user_homepage`, `file_manager` and `download_archive` are disabled by default. Registered users can edit their public homepage from account settings when `user_homepage` is enabled. The file manager stores files privately in `~/.homewebcom/files` (up to 10 MiB per file, 100 MiB total and 1,000 files total). The public download archive requires both modules; only files explicitly published there are publicly downloadable. `direct_chat_login` only applies while `chat` is enabled; with direct login enabled, the community login page is unavailable.
 
 Navigating away from a chat, including with the browser's Back button, closes its connection. When a direct chat session disconnects, its session is ended and signing in again is required. Disconnecting from a chat entered through the community does not end the community session.
 
@@ -59,11 +66,11 @@ PostgreSQL requires `pgcrypto`; setup attempts to create the extension, so the d
 
 ## Quick start
 
-1. **Build the WAR** from the repository root, or download `HWebChat.war` from [Releases](https://github.com/WarPigs1602/HWebChat/releases):
+1. **Build the WAR** from the repository root, or download `HWebChat.war` from [Releases](https://github.com/WarPigs1602/HWebChat-Community-Edition/releases):
 
    ```bash
    git clone https://github.com/WarPigs1602/HWebChat.git
-   cd HWebChat
+   cd HWebChat-Community-Edition
    mvn -f web/WEB-INF/pom.xml clean package
    ```
 
@@ -81,7 +88,7 @@ PostgreSQL requires `pgcrypto`; setup attempts to create the extension, so the d
 
 4. Open `http://localhost:8080/HWebChat/start.jsp` and sign in. The console is at `/HWebChat/console.jsp` by default, or at the `console.path` selected during setup.
 
-Setup creates the predefined rooms Development, Exil, Lounge and Staff-Lounge; it does not create an arbitrary room entered as the default. If you choose another default room, create it in the console.
+Setup creates the predefined rooms Development, Exil, Lounge and Staff-Lounge; it does not create a room entered in the **Default room** field (which initially says `Lobby`). Choose one of the created rooms as the default, or create your own room in the console before using it.
 
 Setup is complete only when both `~/.homewebcom/config/config.json` and `~/.homewebcom/config/.setup_complete` exist. A failed setup may already have written files or database records, and retrying copies defaults over existing files; inspect and back them up before retrying.
 
@@ -89,11 +96,17 @@ Setup is complete only when both `~/.homewebcom/config/config.json` and `~/.home
 
 ### Pages and navigation
 
-In the console, choose **WYSIWYG-Seitenersteller**, enter a URL name, title and content, preview and save. A URL name uses lowercase letters, digits and hyphens and cannot be changed after creation; saved pages are publicly accessible at `/page.jsp?slug=<name>`. HTML is sanitized, so unsupported markup and attributes are removed. Add a navigation link separately if desired.
+In the console, choose **WYSIWYG pages**, enter a URL name, title and content, preview and save. A URL name uses lowercase letters, digits and hyphens and cannot be changed after creation; saved pages are publicly accessible at `/page.jsp?slug=<name>`. HTML is sanitized, so unsupported markup and attributes are removed. Add a navigation link separately if desired.
 
 Under **Navigation**, configure existing items or add custom links, including links to your pages. Filter the main menu and the login and language submenus; arrows reorder items within their menu. Adding and reordering items requires JavaScript. Empty label or destination fields on built-in items retain their translated label or default behavior. Internal destinations begin with `/` and are relative to the application context; external links support `http`, `https` and `mailto`. Custom destinations turn the login, chat and language menus into ordinary links. Module and session restrictions still apply.
 
 Public and community pages use the navigation appropriate for the active registered-user, guest or signed-out session. Embedded pages hide their own navigation inside a chat tab.
+
+### File manager and download archive
+
+Enable both `file_manager` and `download_archive` in the administration console; both are off by default. Administrators can upload, download and delete files in the private `~/.homewebcom/files` directory. Each file can have a title and an optional category. Categories are managed centrally in the file manager; a category cannot be deleted while files are assigned to it.
+
+Files remain private until individually published, and a title is required before publication. The public archive at `/downloads.jsp` groups files by category and provides a category filter. Downloads are served as attachments; the private storage directory itself is never public.
 
 ### Configuration and data
 
@@ -110,6 +123,7 @@ Runtime files are under `~/.homewebcom` for the Tomcat process user:
 | `config/cmdcfg.json` | Command permissions |
 | `config/mail.json` | SMTP settings |
 | `data/hwebchat.sqlite` | Default SQLite database, unless another path is configured |
+| `files/` | Private files plus title, category and publication metadata managed through the file manager |
 
 The copy in [web/default-homewebcom/](web/default-homewebcom/) supplies first-start defaults, not the live configuration. JSP layouts and templates are packaged in the WAR, not loaded from `~/.homewebcom/templates`; change them in the source and redeploy. Back up the runtime directory **and**, for a server database, the database separately.
 
@@ -117,7 +131,7 @@ Command texts are in [messages.properties](src/resources/i18n/messages.propertie
 
 For manual database configuration, `sql.type` is `sqlite`, `mysql` or `postgresql`. SQLite uses `sql.path` and ignores `sql.user` and `sql.pw`; PostgreSQL uses `sql.host` (`host:port`), `sql.db`, `sql.user` and `sql.pw`. The `legal.*` settings fill the imprint and privacy pages; an empty phone number is hidden. Changing `console.path` changes the console address and makes the default address unavailable.
 
-Statistics use `time_zone`; previously stored buckets are not converted when it changes, and the repeated hour at the end of daylight saving time is combined. Random nickname colors target at least 4.5:1 contrast against the dark theme, subject to the `bright_0`–`bright_5` restrictions; custom room colors may differ.
+Statistics use `time_zone`; previously stored buckets are not converted when it changes, and the repeated hour at the end of daylight saving time is combined. Random nickname colors are generated for readable contrast; the `bright_0`–`bright_5` settings restrict color-channel values, and custom room colors may affect contrast.
 
 ## Operation and security
 

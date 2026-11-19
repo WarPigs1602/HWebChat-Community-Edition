@@ -18,11 +18,11 @@ import java.util.Set;
 /** Persistent configuration for the public navigation bar. */
 public final class NavigationMenu {
     private static final List<String> BUILTINS = List.of(
-            "start", "news", "board", "rules", "toplist", "stats", "logout",
+            "start", "news", "downloads", "board", "rules", "toplist", "stats", "logout",
             "chat", "account", "guest", "login", "register", "password",
             "language", "language-de", "language-en");
     private static final Set<String> BUILTIN_SET = Set.copyOf(BUILTINS);
-    private static final int MAX_ITEMS = 100;
+    private static final int MAX_ITEMS = 101;
 
     public static final class ValidationException extends IllegalArgumentException {
         private final String messageKey;
@@ -76,6 +76,16 @@ public final class NavigationMenu {
                 var object = value.asJsonObject();
                 items.add(new Item(object.getString("id"), object.getString("label"),
                         object.getString("url"), object.getBoolean("enabled")));
+            }
+            if (items.stream().noneMatch(item -> "downloads".equals(item.getId()))) {
+                var insertAt = 0;
+                for (var i = 0; i < items.size(); i++) {
+                    if ("news".equals(items.get(i).getId())) {
+                        insertAt = i + 1;
+                        break;
+                    }
+                }
+                items.add(insertAt, new Item("downloads", "", "", true));
             }
             validate(items);
             return items;
