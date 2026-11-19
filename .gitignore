@@ -24,4 +24,5 @@ replay_pid*
 
 # Maven build output
 target/
+.hwebchat-build.lock/
 .vscode/

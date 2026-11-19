@@ -163,7 +163,7 @@ body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:linear-g
 </c:otherwise>
 </c:choose>
 </div>
-<div class="footer">HWebChat Community Edition | (c) 2005-2026 by Andreas Pschorn</div>
+<div class="footer">HWebChat | (c) 2005-2026 by Andreas Pschorn</div>
 </div>
 </body>
 </html>

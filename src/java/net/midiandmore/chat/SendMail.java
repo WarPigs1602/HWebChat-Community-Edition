@@ -84,7 +84,7 @@ public final class SendMail implements Software {
         message.setFrom(new InternetAddress(smtpFrom));
         message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
         message.setSubject("Test from HWebChat Setup");
-        message.setText("This is a test email from HWebChat Community Edition setup.");
+        message.setText("This is a test email from HWebChat setup.");
         Transport.send(message);
     }
 }

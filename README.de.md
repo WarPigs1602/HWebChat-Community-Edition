@@ -2,7 +2,7 @@
 
 Webbasierter Community-Chat für Apache Tomcat, entwickelt mit Jakarta EE, JSP und WebSocket.
 
-[English](README.md) · [Demo](https://www.hwebchat.de) · [Releases](https://github.com/WarPigs1602/HWebChat-Community-Edition/releases) · [Issues](https://github.com/WarPigs1602/HWebChat-Community-Edition/issues)
+[English](README.md) · [Demo](https://www.hwebchat.de) · [Releases](https://github.com/WarPigs1602/HWebChat/releases) · [Issues](https://github.com/WarPigs1602/HWebChat/issues)
 
 ## Funktionen
 
@@ -66,15 +66,17 @@ PostgreSQL benötigt `pgcrypto`; das Setup versucht die Erweiterung anzulegen. D
 
 ## Schnellstart
 
-1. **WAR bauen** im Repository-Wurzelverzeichnis oder `HWebChat.war` aus den [Releases](https://github.com/WarPigs1602/HWebChat-Community-Edition/releases) herunterladen:
+1. **WAR bauen** im Repository-Wurzelverzeichnis oder `HWebChat.war` aus den [Releases](https://github.com/WarPigs1602/HWebChat/releases) herunterladen:
 
    ```bash
    git clone https://github.com/WarPigs1602/HWebChat.git
-   cd HWebChat-Community-Edition
-   mvn -f web/WEB-INF/pom.xml clean package
+   cd HWebChat
+   ./build.sh
    ```
 
-   Das Ergebnis liegt im Repository unter `target/HWebChat.war`. Maven kann auch aus `web/WEB-INF` gestartet werden; von dort lautet der Pfad `../../target/HWebChat.war`.
+   Das Ergebnis liegt im Repository unter `target/HWebChat.war`. `build.sh` erhöht vor dem Maven-Aufruf die letzte Komponente der Version in `pom.xml`; WAR-Metadaten und Anwendung verwenden dieselbe Version. Auch bei einem Maven-Fehler bleibt die Änderung bestehen, sodass der fehlgeschlagene Versuch eine Nummer verbraucht. Das Skript weist gleichzeitige Builds in diesem Checkout ab; separate Klone haben unabhängige Zähler. Ein verbliebenes Verzeichnis `.hwebchat-build.lock` kann entfernt werden, nachdem sichergestellt wurde, dass kein Build läuft. Versionsänderungen müssen committet werden, wenn sie geteilt werden sollen.
+
+   Das Skript führt `mvn clean package` aus. Maven-Optionen können übergeben werden, zum Beispiel `./build.sh -DskipTests`. Direkte Maven-Aufrufe wie `mvn package` erhöhen die Version nicht.
 
 2. **Deployen:** `target/HWebChat.war` nach dem für den Server vorgesehenen Verfahren in das Tomcat-11-Verzeichnis `webapps` deployen. Bei Standard-WAR-Namen und Standardkonfiguration lautet der Kontextpfad `/HWebChat`:
 
@@ -142,7 +144,7 @@ Die Statistik verwendet `time_zone`; bereits gespeicherte Intervalle werden bei 
 
 ## Entwicklung
 
-- Java-Quellen: [src/java/net/midiandmore/chat/](src/java/net/midiandmore/chat/); Web-Ressourcen: [web/](web/); Maven-Projekt: [pom.xml](web/WEB-INF/pom.xml). Der WebSocket-Endpunkt ist `/Chat`; Profilbild-Uploads erfolgen über `/upload.jsp`.
+- Java-Quellen: [src/java/net/midiandmore/chat/](src/java/net/midiandmore/chat/); Web-Ressourcen: [web/](web/); Maven-Projekt: [pom.xml](pom.xml). Der WebSocket-Endpunkt ist `/Chat`; Profilbild-Uploads erfolgen über `/upload.jsp`.
 - Seiten verwenden JSP, EL/JSTL und das gemeinsame [layout.tag](web/WEB-INF/tags/layout.tag). Dessen Inhalt ist skriptlos: Werte vor dem Layout berechnen und darin EL/JSTL verwenden. Deutsche und englische Resource Bundles liegen unter [src/resources/i18n/](src/resources/i18n/); JSON-Konfigurationen können weiterhin unterstützte `%...%`-Platzhalter enthalten.
 - Dokumente, Skripte und Stylesheets besitzen Endpunkte unter `/content/`. Community-Dokumente wie `/content/rules_com.jsp?community=true` benötigen eine Community-Sitzung. Eigene Inhalte benötigen einen entsprechenden JSP-Endpunkt.
 - Die früheren URLs `/content.jsp?service=...&doc=...`, `community_`-JSPs, `/Start`, `/Setup` und `/UploadFile` werden nicht mehr bereitgestellt. Alte `paths.json`- und `path_*`-Einstellungen werden nicht mehr verwendet; eigene Links müssen angepasst werden. Manche alten Frame-Templates enthalten weiterhin nicht unterstützte `?page=`-Links für die frühere HTTP-Chateingabe.

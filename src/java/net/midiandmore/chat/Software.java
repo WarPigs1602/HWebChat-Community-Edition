@@ -14,7 +14,7 @@ public interface Software {
     /**
      * 
      */
-    public static final String SERVER_HOMEPAGE     = "github.com/WarPigs1602/HWebChat-Community-Edition";
+    public static final String SERVER_HOMEPAGE     = "github.com/WarPigs1602/HWebChat";
     /**
      * 
      */
@@ -26,7 +26,7 @@ public interface Software {
     /**
      * 
      */
-    public static final String SERVER_SOFTWARE     = "HWebChat Community Edition";
+    public static final String SERVER_SOFTWARE     = "HWebChat";
     /**
      * 
      */
@@ -38,9 +38,26 @@ public interface Software {
     /**
      * 
      */
-    public static final String SERVER_VERSION      = "2.0.0.78";
+    public static final String SERVER_VERSION      = loadVersion();
     /**
      * 
      */
     public static final String SERVER_YEAR         = "2005-2026";
+
+    private static String loadVersion() {
+        try (var input = Software.class.getResourceAsStream("/hwebchat-version.properties")) {
+            if (input == null) {
+                throw new IllegalStateException("Missing HWebChat version resource");
+            }
+            var properties = new java.util.Properties();
+            properties.load(input);
+            var version = properties.getProperty("version");
+            if (version == null || version.isBlank()) {
+                throw new IllegalStateException("Missing HWebChat version");
+            }
+            return version;
+        } catch (java.io.IOException ex) {
+            throw new java.io.UncheckedIOException("Cannot read HWebChat version", ex);
+        }
+    }
 }
