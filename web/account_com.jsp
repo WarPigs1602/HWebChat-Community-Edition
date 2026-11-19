@@ -125,11 +125,11 @@
             }
         } else if (service.equals("napping")) {
             String title = "";
-            String bg_color_1 = "";
-            String bg_color_2 = "";
-            String color = "";
-            String border_color = "";
-            String link_color = "";
+            String bg_color_1 = "ffffff";
+            String bg_color_2 = "ffffff";
+            String color = "000000";
+            String border_color = "cccccc";
+            String link_color = "0000ff";
             String room = "";
             switch (data) {
                 case "change" -> {
@@ -173,11 +173,16 @@
                     room = db.getRoomNameByOwner(nick.toLowerCase());
                     if (!room.isBlank()) {
                         title = db.getRoomData(room, "page_title");
-                        bg_color_1 = db.getRoomData(room, "first_bgcolor");
-                        bg_color_2 = db.getRoomData(room, "second_bgcolor");
-                        color = db.getRoomData(room, "textcolor");
-                        border_color = db.getRoomData(room, "bordercolor");
-                        link_color = db.getRoomData(room, "linkcolor");
+                        var savedColor = db.getRoomData(room, "first_bgcolor");
+                        bg_color_1 = savedColor.isBlank() ? "ffffff" : savedColor;
+                        savedColor = db.getRoomData(room, "second_bgcolor");
+                        bg_color_2 = savedColor.isBlank() ? "ffffff" : savedColor;
+                        savedColor = db.getRoomData(room, "textcolor");
+                        color = savedColor.isBlank() ? "000000" : savedColor;
+                        savedColor = db.getRoomData(room, "bordercolor");
+                        border_color = savedColor.isBlank() ? "cccccc" : savedColor;
+                        savedColor = db.getRoomData(room, "linkcolor");
+                        link_color = savedColor.isBlank() ? "0000ff" : savedColor;
                         room = db.getRoomData(room, "room");
                     }
                     section = "napping";
@@ -619,15 +624,16 @@ ${SERVER_SOFTWARE} &ndash; Chatnapping
   <fmt:message key="common.you_can_only_register_one"/>
 </p>
 </c:if>
-<form action="${paths.account_com}" method="POST" accept-charset="utf-8">
+<form id="napping-form" action="${paths.account_com}" method="POST" accept-charset="utf-8">
   <input type="hidden" name="service" value="napping">
   <input type="hidden" name="data" value="change">
 
   <p class="form-section-title"><fmt:message key="common.preview"/></p>
 
+  <fmt:message key="common.preview_2" var="napPreviewTitle"><fmt:param value="__TITLE__"/></fmt:message>
   <div class="card mb-3">
     <div class="card-header" id="preview_header" style="background-color: #${bg_color_2}; color: #${bg_color_1};">
-      <fmt:message key="common.preview_2"><fmt:param value="${title}"/></fmt:message>
+      <span id="preview_title" data-template="<c:out value='${napPreviewTitle}'/>"><c:out value="${title}"/></span>
     </div>
     <div class="card-body" id="preview_body" style="background-color: #${bg_color_1}; color: #${color};">
       <p id="preview_text"><fmt:message key="common.sample_text_in_the_chosen"/></p>
@@ -647,7 +653,7 @@ ${SERVER_SOFTWARE} &ndash; Chatnapping
     </div>
     <div class="col-md-6">
       <label class="form-label fw-semibold small"><fmt:message key="common.your_chat_title"/></label>
-      <input type="text" class="form-control form-control-sm" name="title" value="${title}" placeholder="<fmt:message key="common.your_chat_title"/>">
+      <input type="text" class="form-control form-control-sm" id="room-title" name="title" value="${title}" placeholder="<fmt:message key="common.your_chat_title"/>">
     </div>
   </div>
 
@@ -656,7 +662,7 @@ ${SERVER_SOFTWARE} &ndash; Chatnapping
       <label class="form-label fw-semibold small"><fmt:message key="common.background_colour_1"/></label>
       <div class="input-group input-group-sm">
         <span class="input-group-text">#</span>
-        <input type="text" class="form-control form-control-sm color-hex" id="bg_color_1" name="bg_color_1" value="${bg_color_1}" placeholder="RRGGBB" maxlength="6">
+        <input type="text" class="form-control form-control-sm color-hex" id="bg_color_1" name="bg_color_1" value="${bg_color_1}" placeholder="RRGGBB" maxlength="7">
         <input type="color" class="color-picker" id="bg_color_1_picker" value="#${bg_color_1}">
       </div>
     </div>
@@ -664,7 +670,7 @@ ${SERVER_SOFTWARE} &ndash; Chatnapping
       <label class="form-label fw-semibold small"><fmt:message key="common.background_colour_2"/></label>
       <div class="input-group input-group-sm">
         <span class="input-group-text">#</span>
-        <input type="text" class="form-control form-control-sm color-hex" id="bg_color_2" name="bg_color_2" value="${bg_color_2}" placeholder="RRGGBB <fmt:message key="common.menu"/>" maxlength="6">
+        <input type="text" class="form-control form-control-sm color-hex" id="bg_color_2" name="bg_color_2" value="${bg_color_2}" placeholder="RRGGBB" maxlength="7">
         <input type="color" class="color-picker" id="bg_color_2_picker" value="#${bg_color_2}">
       </div>
     </div>
@@ -675,7 +681,7 @@ ${SERVER_SOFTWARE} &ndash; Chatnapping
       <label class="form-label fw-semibold small"><fmt:message key="common.text_colour"/></label>
       <div class="input-group input-group-sm">
         <span class="input-group-text">#</span>
-        <input type="text" class="form-control form-control-sm color-hex" id="color" name="color" value="${color}" placeholder="RRGGBB" maxlength="6">
+        <input type="text" class="form-control form-control-sm color-hex" id="color" name="color" value="${color}" placeholder="RRGGBB" maxlength="7">
         <input type="color" class="color-picker" id="color_picker" value="#${color}">
       </div>
     </div>
@@ -683,7 +689,7 @@ ${SERVER_SOFTWARE} &ndash; Chatnapping
       <label class="form-label fw-semibold small"><fmt:message key="common.link_colour"/></label>
       <div class="input-group input-group-sm">
         <span class="input-group-text">#</span>
-        <input type="text" class="form-control form-control-sm color-hex" id="link_color" name="link_color" value="${link_color}" placeholder="RRGGBB" maxlength="6">
+        <input type="text" class="form-control form-control-sm color-hex" id="link_color" name="link_color" value="${link_color}" placeholder="RRGGBB" maxlength="7">
         <input type="color" class="color-picker" id="link_color_picker" value="#${link_color}">
       </div>
     </div>
@@ -694,7 +700,7 @@ ${SERVER_SOFTWARE} &ndash; Chatnapping
       <label class="form-label fw-semibold small"><fmt:message key="common.border_colour"/></label>
       <div class="input-group input-group-sm">
         <span class="input-group-text">#</span>
-        <input type="text" class="form-control form-control-sm color-hex" id="border_color" name="border_color" value="${border_color}" placeholder="RRGGBB" maxlength="6">
+        <input type="text" class="form-control form-control-sm color-hex" id="border_color" name="border_color" value="${border_color}" placeholder="RRGGBB" maxlength="7">
         <input type="color" class="color-picker" id="border_color_picker" value="#${border_color}">
       </div>
     </div>
@@ -718,7 +724,8 @@ ${SERVER_SOFTWARE} &ndash; Chatnapping
         });
 
         text.addEventListener('input', function() {
-            var val = this.value.replace(/^#/, '');
+            var val = this.value.trim().replace(/^#/, '').slice(0, 6);
+            this.value = val;
             if (val.length === 6 && /^[a-fA-F0-9]+$/.test(val)) {
                 picker.value = '#' + val;
             }
@@ -727,11 +734,15 @@ ${SERVER_SOFTWARE} &ndash; Chatnapping
     }
 
     function updatePreview() {
-        var bg1 = document.getElementById('bg_color_1').value || 'ffffff';
-        var bg2 = document.getElementById('bg_color_2').value || 'ffffff';
-        var color = document.getElementById('color').value || '000000';
-        var link = document.getElementById('link_color').value || '0000ff';
-        var border = document.getElementById('border_color').value || 'cccccc';
+        function colorValue(id, fallback) {
+            var value = document.getElementById(id).value.trim().replace(/^#/, '');
+            return /^[a-fA-F0-9]{6}$/.test(value) ? value : fallback;
+        }
+        var bg1 = colorValue('bg_color_1', 'ffffff');
+        var bg2 = colorValue('bg_color_2', 'ffffff');
+        var color = colorValue('color', '000000');
+        var link = colorValue('link_color', '0000ff');
+        var border = colorValue('border_color', 'cccccc');
 
         var header = document.getElementById('preview_header');
         var body = document.getElementById('preview_body');
@@ -753,16 +764,25 @@ ${SERVER_SOFTWARE} &ndash; Chatnapping
     syncColor('link_color_picker', 'link_color');
     syncColor('border_color_picker', 'border_color');
 
-    var form = document.querySelector('form');
+    var titleInput = document.getElementById('room-title');
+    var previewTitle = document.getElementById('preview_title');
+    function updatePreviewTitle() {
+        if (titleInput && previewTitle) {
+            previewTitle.textContent = previewTitle.dataset.template.replace('__TITLE__', titleInput.value);
+        }
+    }
+    if (titleInput) titleInput.addEventListener('input', updatePreviewTitle);
+
+    var form = document.getElementById('napping-form');
     if (form) {
         form.addEventListener('submit', function() {
-            document.querySelectorAll('.color-hex').forEach(function(input) {
-                if (input.value.startsWith('#')) {
-                    input.value = input.value.substring(1);
-                }
+            form.querySelectorAll('.color-hex').forEach(function(input) {
+                input.value = input.value.trim().replace(/^#/, '').slice(0, 6);
             });
         });
     }
+    updatePreviewTitle();
+    updatePreview();
 })();
 </script>
 </c:when>

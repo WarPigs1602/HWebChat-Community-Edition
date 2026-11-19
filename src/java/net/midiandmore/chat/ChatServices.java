@@ -472,17 +472,28 @@ public class ChatServices {
         var room = map.getOrDefault("room", "");
         var view = newView("style", template, request, map, "", "", skin, "", "");
         String roomName = null;
+        String[] nappingColors = null;
         if (!owner.isBlank()) {
             roomName = db.getRoomNameByOwner(owner.toLowerCase());
         } else if (!room.isBlank()) {
             roomName = room;
         }
         if (roomName != null && db.roomExists(roomName) && db.getRoomData(roomName, "chat_napping").equals("1")) {
-            view.set("bg_color_1", db.getRoomData(roomName, "first_bgcolor"));
-            view.set("bg_color_2", db.getRoomData(roomName, "second_bgcolor"));
-            view.set("color", db.getRoomData(roomName, "textcolor"));
-            view.set("link_color", db.getRoomData(roomName, "linkcolor"));
-            view.set("border_color", db.getRoomData(roomName, "bordercolor"));
+            var colors = new String[] {
+                db.getRoomData(roomName, "first_bgcolor"),
+                db.getRoomData(roomName, "second_bgcolor"),
+                db.getRoomData(roomName, "textcolor"),
+                db.getRoomData(roomName, "bordercolor"),
+                db.getRoomData(roomName, "linkcolor")
+            };
+            if (java.util.Arrays.stream(colors).allMatch(color -> color.matches("[a-fA-F0-9]{6}"))) {
+                nappingColors = colors;
+                view.set("bg_color_1", colors[0]);
+                view.set("bg_color_2", colors[1]);
+                view.set("color", colors[2]);
+                view.set("border_color", colors[3]);
+                view.set("link_color", colors[4]);
+            }
         }
         try {
             var themes = Bootstrap.boot.getConfig().loadDataFromJSON("themes.json", "skin", "data");
@@ -512,6 +523,18 @@ public class ChatServices {
                 view.set("theme_logo", jo.getString("logo", ""));
             }
         } catch (Exception e) {}
+        if (nappingColors != null) {
+            view.set("theme_primary", "#" + nappingColors[4]);
+            view.set("theme_primary_dark", "#" + nappingColors[4]);
+            view.set("theme_link", "#" + nappingColors[4]);
+            view.set("theme_dark", "#" + nappingColors[2]);
+            view.set("theme_muted", "#" + nappingColors[2]);
+            view.set("theme_border", "#" + nappingColors[3]);
+            view.set("theme_bg", "#" + nappingColors[0]);
+            view.set("theme_surface", "#" + nappingColors[0]);
+            view.set("theme_nav_bg", "#" + nappingColors[1]);
+            view.set("theme_nav_text", "#" + nappingColors[0]);
+        }
         return view;
     }
 
